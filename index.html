@@ -10,11 +10,20 @@
     textarea, input[type="text"], select, input[type="file"] {
       width: 100%; padding: 0.5rem; margin-top: 0.25rem;
     }
-    button { margin-top: 1rem; padding: 0.75rem 1.5rem; }
-    img { vertical-align: middle; }
+    button {
+      position: relative;
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+    }
+    .spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      vertical-align: middle;
+      margin-left: 0.5rem;
+    }
     .box { border: 1px solid #ccc; padding: 1rem; margin-top: 1rem; }
     .model-box { text-align: center; font-size: 1.2em; line-height: 1.5; }
-    #loading, #print-loading { display: none; }
     @media print {
       #submit-btn, #tts-btn, #print-btn { display: none !important; }
     }
@@ -42,8 +51,10 @@
         <option value="고급">고급</option>
       </select>
     </label>
-    <button type="submit" id="submit-btn">Submit</button>
-    <img id="loading" src="https://i.imgur.com/LLF5iyg.gif" alt="Loading..." width="24" />
+    <button type="submit" id="submit-btn">
+      Submit
+      <img id="submit-loading" class="spinner" src="https://i.imgur.com/LLF5iyg.gif" alt="Loading" />
+    </button>
   </form>
 
   <div id="result"></div>
@@ -53,16 +64,20 @@
 
     document.getElementById("feedback-form").addEventListener("submit", async (e) => {
       e.preventDefault();
-      // show loading
-      document.getElementById('loading').style.display = 'inline';
 
+      // submit spinner
+      const submitBtn = document.getElementById("submit-btn");
+      const submitSpinner = document.getElementById("submit-loading");
+      submitBtn.disabled = true;
+      submitSpinner.style.display = "inline-block";
+
+      // gather inputs
       const topic = document.getElementById("topic").value;
       const keywords = document.getElementById("keywords").value;
       const contentText = document.getElementById("contentText").value;
       const fileInput = document.getElementById("contentFile");
       let contentPayload = contentText;
 
-      // if an image was selected, convert to Base64
       if (fileInput.files.length) {
         contentPayload = await new Promise(resolve => {
           const reader = new FileReader();
@@ -71,6 +86,7 @@
         });
       }
 
+      // request feedback
       const res = await fetch(`${WORKER_URL}/api/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -81,10 +97,11 @@
           level: document.getElementById("level").value
         })
       });
-
       const data = await res.json();
-      // hide loading
-      document.getElementById('loading').style.display = 'none';
+
+      // hide spinner
+      submitSpinner.style.display = "none";
+      submitBtn.disabled = false;
 
       if (!res.ok) {
         document.getElementById("result").innerHTML = `
@@ -96,24 +113,27 @@
 
       const { feedback, modelAnswer } = data;
 
+      // render result
       document.getElementById("result").innerHTML = `
         <div class="box">
           <h2>Feedback</h2>
-          <div>${feedback.replace(/\n/g, '<br>')}</div>
+          <div>${feedback.replace(/\n/g,'<br>')}</div>
         </div>
         <div class="box model-box" id="model-answer-box">
-          ${modelAnswer.replace(/\n/g, '<br>')}
+          ${modelAnswer.replace(/\n/g,'<br>')}
         </div>
         <button id="tts-btn">Generate TTS</button>
         <audio id="tts-audio" controls style="display:none;"></audio>
         <a id="download-link" style="display:none; margin-top:1rem; display:block;">
           Download Audio
         </a>
-        <button id="print-btn" type="button">Print Model Answer</button>
-        <img id="print-loading" src="https://i.imgur.com/LLF5iyg.gif" alt="Loading..." width="24" />
+        <button id="print-btn" type="button">
+          Print Model Answer
+          <img id="print-loading" class="spinner" src="https://i.imgur.com/LLF5iyg.gif" alt="Loading" />
+        </button>
       `;
 
-      // TTS 버튼 핸들러
+      // TTS handler
       document.getElementById("tts-btn").addEventListener("click", async () => {
         const ttsBtn = document.getElementById('tts-btn');
         ttsBtn.disabled = true;
@@ -134,12 +154,12 @@
         ttsBtn.disabled = false;
       });
 
-      // Print 버튼 핸들러
+      // Print handler
       document.getElementById("print-btn").addEventListener("click", () => {
         const printBtn = document.getElementById("print-btn");
-        const printLoading = document.getElementById("print-loading");
-        printBtn.style.display = "none";
-        printLoading.style.display = "inline";
+        const printSpinner = document.getElementById("print-loading");
+        printBtn.disabled = true;
+        printSpinner.style.display = "inline-block";
 
         const w = window.open(
           "",
@@ -171,9 +191,10 @@
 </html>
         `);
         w.document.close();
-        printLoading.style.display = "none";
-      });
 
+        printSpinner.style.display = "none";
+        printBtn.disabled = false;
+      });
     });
   </script>
 </body>
