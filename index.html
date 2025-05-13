@@ -14,18 +14,21 @@
 </head>
 <body>
   <h1>Writing Feedback</h1>
-  <form id="feedback-form">
+  <form id="feedback-form" enctype="multipart/form-data">
     <label>Topic/Title (optional)
-      <input type="text" id="topic" placeholder="Enter topic or leave blank">
+      <input type="text" name="topic" id="topic" placeholder="Enter topic or leave blank">
     </label>
     <label>Keywords (optional)
-      <input type="text" id="keywords" placeholder="Comma-separated keywords">
+      <input type="text" name="keywords" id="keywords" placeholder="Comma-separated keywords">
     </label>
-    <label>Content (text or image URL)
-      <textarea id="content" rows="6" placeholder="Paste your writing here or image URL"></textarea>
+    <label>Content Text (optional)
+      <textarea name="contentText" id="contentText" rows="4" placeholder="Paste your writing here"></textarea>
+    </label>
+    <label>Content Image (optional)
+      <input type="file" name="contentFile" id="contentFile" accept="image/*">
     </label>
     <label>Level
-      <select id="level">
+      <select name="level" id="level">
         <option value="초급">초급</option>
         <option value="중급">중급</option>
         <option value="고급">고급</option>
@@ -39,43 +42,68 @@
   <script>
     const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
 
-    document.getElementById("feedback-form").addEventListener("submit", async (e) => {
+    document.getElementById('feedback-form').addEventListener('submit', async e => {
       e.preventDefault();
-      const topic = document.getElementById("topic").value;
-      const keywords = document.getElementById("keywords").value;
-      const content = document.getElementById("content").value;
-      const level = document.getElementById("level").value;
-      
-      const res = await fetch(`${WORKER_URL}/api/feedback`, {  
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, keywords, content, level })
+      const form = document.getElementById('feedback-form');
+      const formData = new FormData(form);
+
+      const res = await fetch(`${WORKER_URL}/api/feedback`, {
+        method: 'POST',
+        body: formData
       });
-      const { feedback, modelAnswer } = await res.json();
-      const result = document.getElementById("result");
+      const data = await res.json();
+      const result = document.getElementById('result');
+
+      if (!res.ok) {
+        result.innerHTML = `<p style="color:red;">Error ${res.status}: ${data.error?.message || JSON.stringify(data)}</p>`;
+        return;
+      }
+
+      const { feedback, modelAnswer } = data;
       result.innerHTML = `
         <h2>Feedback</h2>
         <p>${feedback.replace(/\n/g, '<br>')}</p>
         <h2>Model Answer</h2>
-        <p id="model-answer">${modelAnswer.replace(/\n/g, '<br>')}</p>
-        <button id="tts-btn">Generate TTS</button>
-        <audio id="tts-audio" controls style="display:none;"></audio>
-        <a id="download-link" style="display:none; margin-top:1rem; display:block;">Download Audio</a>
+        <div id="model-wrapper">
+          <h3>${document.getElementById('topic').value || 'Model Answer'}</h3>
+          <p id="model-answer">${modelAnswer.replace(/\n/g, '<br>')}</p>
+          <button id="print-model">Print Model Answer</button>
+        </div>
       `;
 
-      document.getElementById("tts-btn").addEventListener("click", async () => {
+      // TTS button
+      const ttsBtn = document.createElement('button');
+      ttsBtn.textContent = 'Generate TTS';
+      ttsBtn.onclick = async () => {
         const ttsRes = await fetch(`${WORKER_URL}/api/tts`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text: modelAnswer })
         });
         const blob = await ttsRes.blob();
         const url = URL.createObjectURL(blob);
-        const audioEl = document.getElementById('tts-audio');
+        const audioEl = document.createElement('audio');
+        audioEl.controls = true;
         audioEl.src = url;
-        audioEl.style.display = 'block';
-        const linkEl = document.getElementById('download-link');
+        result.appendChild(audioEl);
+        const linkEl = document.createElement('a');
         linkEl.href = url;
         linkEl.download = 'model-answer.mp3';
+        linkEl.textContent = 'Download Audio';
         linkEl.style.display = 'block';
+        result.appendChild(linkEl);
+      };
+      result.appendChild(ttsBtn);
+
+      // Print functionality
+      document.getElementById('print-model').addEventListener('click', () => {
+        const content = document.getElementById('model-wrapper').innerHTML;
+        const w = window.open('', '', 'width=600,height=400');
+        w.document.write(`<html><head><title>Print</title></head><body>${content}</body></html>`);
+        w.document.close();
+        w.focus();
+        w.print();
+        w.close();
       });
     });
   </script>
