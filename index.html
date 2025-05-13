@@ -95,19 +95,35 @@
       };
       result.appendChild(ttsBtn);
 
-      // Print functionality with onafterprint
+      // Improved print functionality
       const printBtn = document.getElementById('print-model');
       printBtn.addEventListener('click', () => {
-        const content = document.getElementById('model-wrapper').innerHTML;
-        const w = window.open('', '', 'width=600,height=400');
-        w.document.write(`
-          <html><head><title>Print</title></head>
-          <body>${content}</body></html>
-        `);
-        w.document.close();
-        w.focus();
-        w.onafterprint = () => w.close();
-        w.print();
+        const contentHTML = document.getElementById('model-wrapper').outerHTML;
+        const printWindow = window.open('', '_blank', 'menubar=no,toolbar=no,location=no,status=no,width=800,height=600');
+        printWindow.document.write(
+          `<!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <title>Print Model Answer</title>
+            <style>
+              body { font-family: sans-serif; margin: 2rem; }
+              h3 { font-size: 1.5rem; margin-bottom: 1rem; }
+              p { white-space: pre-wrap; font-size: 1rem; margin-bottom: 1rem; }
+              @media print { 
+                body { margin: 0; }
+                button { display: none; }
+              }
+            </style>
+          </head>
+          <body>
+            ${contentHTML}
+          </body>
+          </html>`
+        );
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
       });
     });
   </script>
