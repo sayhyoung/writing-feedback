@@ -15,17 +15,13 @@
       margin-top: 1rem;
       padding: 0.75rem 1.5rem;
     }
-    /* red CSS spinner */
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
     .spinner {
       display: none;
       border: 2px solid red;
       border-top: 2px solid transparent;
       border-radius: 50%;
-      width: 16px;
-      height: 16px;
+      width: 16px; height: 16px;
       animation: spin 1s linear infinite;
       vertical-align: middle;
       margin-left: 0.5rem;
@@ -36,6 +32,8 @@
       #submit-btn, #tts-btn, #print-btn { display: none !important; }
     }
   </style>
+  <!-- Tesseract.js CDN -->
+  <script src="https://unpkg.com/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
 </head>
 <body>
   <h1>Writing Feedback</h1>
@@ -70,7 +68,7 @@
   <script>
     const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
 
-    document.getElementById("feedback-form").addEventListener("submit", async (e) => {
+    document.getElementById("feedback-form").addEventListener("submit", async e => {
       e.preventDefault();
 
       // show submit spinner
@@ -82,18 +80,33 @@
       // gather inputs
       const topic = document.getElementById("topic").value;
       const keywords = document.getElementById("keywords").value;
-      const contentText = document.getElementById("contentText").value;
+      const textInput = document.getElementById("contentText").value;
       const fileInput = document.getElementById("contentFile");
-      let contentPayload = contentText;
+
+      let contentPayload = textInput;
+
+      // if an image is selected, run OCR
       if (fileInput.files.length) {
-        contentPayload = await new Promise(resolve => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(fileInput.files[0]);
-        });
+        const file = fileInput.files[0];
+        // show spinner during OCR
+        submitSpinner.style.display = "inline-block";
+
+        try {
+          const { data: { text } } = await Tesseract.recognize(
+            file,
+            'eng',
+            { logger: m => console.log(m) }
+          );
+          // combine text input + OCR result, or use OCR alone:
+          contentPayload = (textInput ? textInput + '\n' : '') + text;
+        } catch (err) {
+          console.error('OCR failed:', err);
+          // fallback to textInput only
+          contentPayload = textInput;
+        }
       }
 
-      // request feedback
+      // send to worker
       const res = await fetch(`${WORKER_URL}/api/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -104,9 +117,9 @@
           level: document.getElementById("level").value
         })
       });
-      const data = await res.json();
 
-      // hide submit spinner
+      const data = await res.json();
+      // hide spinner
       submitSpinner.style.display = "none";
       submitBtn.disabled = false;
 
@@ -120,7 +133,7 @@
 
       const { feedback, modelAnswer } = data;
 
-      // render result with separate Model Answer header
+      // render result
       document.getElementById("result").innerHTML = `
         <div class="box">
           <h2>Feedback</h2>
@@ -143,7 +156,7 @@
         </button>
       `;
 
-      // TTS handler
+      // TTS handler (unchanged)
       document.getElementById("tts-btn").addEventListener("click", async () => {
         const ttsBtn = document.getElementById('tts-btn');
         ttsBtn.disabled = true;
@@ -155,16 +168,13 @@
         const blob = await ttsRes.blob();
         const url = URL.createObjectURL(blob);
         const audioEl = document.getElementById('tts-audio');
-        audioEl.src = url;
-        audioEl.style.display = 'block';
+        audioEl.src = url; audioEl.style.display = 'block';
         const linkEl = document.getElementById('download-link');
-        linkEl.href = url;
-        linkEl.download = 'model-answer.mp3';
-        linkEl.style.display = 'block';
+        linkEl.href = url; linkEl.download = 'model-answer.mp3'; linkEl.style.display = 'block';
         ttsBtn.disabled = false;
       });
 
-      // Print handler with spinner
+      // Print handler (unchanged)
       document.getElementById("print-btn").addEventListener("click", () => {
         const printBtn = document.getElementById("print-btn");
         const printSpinner = document.getElementById("print-spinner");
@@ -198,8 +208,6 @@
 </html>
         `);
         w.document.close();
-
-        // hide print spinner and re-enable
         printSpinner.style.display = "none";
         printBtn.disabled = false;
       });
