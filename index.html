@@ -95,15 +95,19 @@
       };
       result.appendChild(ttsBtn);
 
-      // Print functionality
-      document.getElementById('print-model').addEventListener('click', () => {
+      // Print functionality with onafterprint
+      const printBtn = document.getElementById('print-model');
+      printBtn.addEventListener('click', () => {
         const content = document.getElementById('model-wrapper').innerHTML;
         const w = window.open('', '', 'width=600,height=400');
-        w.document.write(`<html><head><title>Print</title></head><body>${content}</body></html>`);
+        w.document.write(`
+          <html><head><title>Print</title></head>
+          <body>${content}</body></html>
+        `);
         w.document.close();
         w.focus();
+        w.onafterprint = () => w.close();
         w.print();
-        w.close();
       });
     });
   </script>
