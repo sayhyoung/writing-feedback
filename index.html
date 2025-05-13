@@ -51,8 +51,7 @@
       </select>
     </label>
     <button type="submit" id="submit-btn">
-      Submit
-      <span id="submit-spinner" class="spinner"></span>
+      Submit<span id="submit-spinner" class="spinner"></span>
     </button>
   </form>
 
@@ -60,61 +59,57 @@
 
   <script>
     const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
-    const PROXY_URL  = 'https://twilight-cell-92de.kyojun75.workers.dev/proxy';
+    const PROXY_URL  = `${WORKER_URL}/proxy`;
 
-    // --- OCR: Cloudflare Worker proxy 로 이미지 전송해서 GPT에 텍스트 추출 ---
-    async function handleImageUpload(e) {
+    // OCR: same-origin proxy 호출
+    document.getElementById('contentFile').addEventListener('change', async e => {
       const file = e.target.files[0];
       if (!file) return;
       const ta = document.getElementById('contentText');
       const spinner = document.getElementById('ocr-spinner');
-      ta.value = '이미지에서 텍스트를 추출 중입니다...';
+      ta.value = '이미지에서 텍스트 추출 중...';
       spinner.style.display = 'inline-block';
 
-      // 1) Base64 인코딩
-      const base64 = await new Promise((res, rej) => {
-        const reader = new FileReader();
-        reader.onload = () => res(reader.result.split(',')[1]);
-        reader.onerror = rej;
-        reader.readAsDataURL(file);
+      // Base64
+      const b64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result.split(',')[1]);
+        r.onerror = rej;
+        r.readAsDataURL(file);
       });
 
       try {
-        // 2) Worker proxy 호출
         const resp = await fetch(PROXY_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            model:'gpt-4o-mini',
+            messages:[
               { role:'user', content:[
                   { type:'text', text:'Please extract the exact text from the image as it appears. Do not provide any additional commentary or corrections.'},
-                  { type:'image_url', image_url:{ url:`data:${file.type};base64,${base64}` } }
+                  { type:'image_url', image_url:{ url:`data:${file.type};base64,${b64}` } }
                 ]
               }
             ],
             max_tokens:500
           })
         });
-        if (!resp.ok) throw new Error(`OCR 요청 실패 ${resp.status}`);
-        const j = await resp.json();
-        const extracted = j.choices?.[0]?.message?.content?.trim() || '';
-        ta.value = extracted;
+        if (!resp.ok) throw new Error(resp.statusText);
+        const { choices } = await resp.json();
+        ta.value = choices?.[0]?.message?.content?.trim() || '';
       } catch(err) {
-        console.error(err);
         ta.value = 'OCR 에러: '+ err.message;
       } finally {
         spinner.style.display = 'none';
       }
-    }
-    document.getElementById('contentFile').addEventListener('change', handleImageUpload);
+    });
 
-    // --- Submit / 피드백 & 모범답안 호출 ---
+    // Submit → feedback & modelAnswer
     document.getElementById('feedback-form').addEventListener('submit', async e => {
       e.preventDefault();
       const btn = document.getElementById('submit-btn');
-      const spn = document.getElementById('submit-spinner');
-      btn.disabled = true; spn.style.display = 'inline-block';
+      const sp = document.getElementById('submit-spinner');
+      btn.disabled=true; sp.style.display='inline-block';
 
       const payload = {
         topic: document.getElementById('topic').value,
@@ -128,45 +123,40 @@
         body:JSON.stringify(payload)
       });
       const data = await res.json();
-      btn.disabled = false; spn.style.display = 'none';
+      btn.disabled=false; sp.style.display='none';
 
       if (!res.ok) {
-        return document.getElementById('result').innerHTML =
-          `<p style="color:red;">Error ${res.status}: ${data.error?.message||JSON.stringify(data)}</p>`;
+        document.getElementById('result').innerHTML = `<p style="color:red;">Error ${res.status}: ${data.error?.message||data.error}</p>`;
+        return;
       }
 
       const { feedback, modelAnswer } = data;
       document.getElementById('result').innerHTML = `
         <div class="box"><h2>Feedback</h2><div>${feedback.replace(/\n/g,'<br>')}</div></div>
-        <div class="box"><h2>Model Answer</h2>
-          <div class="model-box" id="model-answer-box">${modelAnswer.replace(/\n/g,'<br>')}</div>
-        </div>
+        <div class="box"><h2>Model Answer</h2><div class="model-box" id="model-answer-box">${modelAnswer.replace(/\n/g,'<br>')}</div></div>
         <button id="tts-btn">Generate TTS</button>
         <audio id="tts-audio" controls style="display:none;"></audio>
         <a id="download-link" style="display:none;margin-top:1rem;display:block;">Download Audio</a>
         <button id="print-btn" type="button">Print Model Answer<span id="print-spinner" class="spinner"></span></button>
       `;
 
-      // --- TTS 핸들러 ---
-      document.getElementById('tts-btn').addEventListener('click', async () => {
-        const b = document.getElementById('tts-btn'); b.disabled = true;
+      // TTS
+      document.getElementById('tts-btn').addEventListener('click', async ()=> {
+        const b = document.getElementById('tts-btn'); b.disabled=true;
         const r = await fetch(`${WORKER_URL}/api/tts`, {
           method:'POST', headers:{'Content-Type':'application/json'},
           body:JSON.stringify({ text: modelAnswer })
         });
         const blob = await r.blob(), url = URL.createObjectURL(blob);
-        const audio = document.getElementById('tts-audio');
-        audio.src = url; audio.style.display='block';
-        const link = document.getElementById('download-link');
-        link.href = url; link.download='model-answer.mp3'; link.style.display='block';
-        b.disabled = false;
+        document.getElementById('tts-audio').src=url; document.getElementById('tts-audio').style.display='block';
+        const link = document.getElementById('download-link'); link.href=url; link.download='model-answer.mp3'; link.style.display='block';
+        b.disabled=false;
       });
 
-      // --- Print 핸들러 ---
-      document.getElementById('print-btn').addEventListener('click', () => {
-        const b = document.getElementById('print-btn');
-        const s = document.getElementById('print-spinner');
-        b.disabled = true; s.style.display = 'inline-block';
+      // Print
+      document.getElementById('print-btn').addEventListener('click', ()=> {
+        const b = document.getElementById('print-btn'), s = document.getElementById('print-spinner');
+        b.disabled=true; s.style.display='inline-block';
         const w = window.open('','_blank',`width=${screen.availWidth},height=${screen.availHeight}`);
         w.document.write(`
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><title>Print</title>
@@ -174,8 +164,7 @@
 </head><body>${document.getElementById('model-answer-box').outerHTML}
 <script>window.onafterprint=()=>window.close();window.print();<\/script>
 </body></html>`);
-        w.document.close();
-        s.style.display = 'none'; b.disabled = false;
+        w.document.close(); s.style.display='none'; b.disabled=false;
       });
     });
   </script>
