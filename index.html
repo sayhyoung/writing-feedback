@@ -10,14 +10,19 @@
     textarea, input[type="text"], select, input[type="file"] {
       width: 100%; padding: 0.5rem; margin-top: 0.25rem;
     }
-    button { position: relative; margin-top: 1rem; padding: 0.75rem 1.5rem; }
+    button {
+      position: relative;
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
     .spinner {
       display: none;
       border: 2px solid red;
       border-top: 2px solid transparent;
       border-radius: 50%;
-      width: 16px; height: 16px;
+      width: 16px;
+      height: 16px;
       animation: spin 1s linear infinite;
       vertical-align: middle;
       margin-left: 0.5rem;
@@ -28,7 +33,7 @@
       #submit-btn, #tts-btn, #print-btn { display: none !important; }
     }
   </style>
-  <!-- Tesseract.js -->
+  <!-- Tesseract.js for OCR -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2/dist/tesseract.min.js"></script>
 </head>
 <body>
@@ -65,17 +70,14 @@
   <script>
     const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
 
-    // 1) 이미지 선택 시 OCR 수행
+    // OCR on image upload
     document.getElementById('contentFile').addEventListener('change', async e => {
       const file = e.target.files[0];
       if (!file) return;
-
       const ocrSpinner = document.getElementById('ocr-spinner');
       ocrSpinner.style.display = 'inline-block';
-
       try {
-        const { data:{ text } } = await Tesseract.recognize(file, 'eng');
-        // OCR 결과를 textarea에 채워 넣음
+        const { data: { text } } = await Tesseract.recognize(file, 'eng');
         const ta = document.getElementById('contentText');
         ta.value = (ta.value ? ta.value + '\n' : '') + text.trim();
       } catch (err) {
@@ -85,23 +87,19 @@
       }
     });
 
-    // 2) 제출 핸들러
+    // Submit handler
     document.getElementById("feedback-form").addEventListener("submit", async e => {
       e.preventDefault();
-
-      // submit spinner 표시
       const submitBtn = document.getElementById("submit-btn");
       const submitSpinner = document.getElementById("submit-spinner");
       submitBtn.disabled = true;
       submitSpinner.style.display = "inline-block";
 
-      // 입력값 수집
       const topic = document.getElementById("topic").value;
       const keywords = document.getElementById("keywords").value;
       const contentText = document.getElementById("contentText").value;
       const level = document.getElementById("level").value;
 
-      // API 호출
       const res = await fetch(`${WORKER_URL}/api/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -109,7 +107,6 @@
       });
       const data = await res.json();
 
-      // spinner 숨기기
       submitSpinner.style.display = "none";
       submitBtn.disabled = false;
 
@@ -121,8 +118,8 @@
         return;
       }
 
-      // 응답 출력
       const { feedback, modelAnswer } = data;
+
       document.getElementById("result").innerHTML = `
         <div class="box">
           <h2>Feedback</h2>
@@ -145,7 +142,61 @@
         </button>
       `;
 
-      // … (TTS, Print 핸들러는 앞에서 드린 대로) …
+      // TTS handler
+      document.getElementById("tts-btn").addEventListener("click", async () => {
+        const ttsBtn = document.getElementById('tts-btn');
+        ttsBtn.disabled = true;
+        const ttsRes = await fetch(`${WORKER_URL}/api/tts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: modelAnswer })
+        });
+        const blob = await ttsRes.blob();
+        const url = URL.createObjectURL(blob);
+        const audioEl = document.getElementById('tts-audio');
+        audioEl.src = url; audioEl.style.display = 'block';
+        const linkEl = document.getElementById('download-link');
+        linkEl.href = url; linkEl.download = 'model-answer.mp3'; linkEl.style.display = 'block';
+        ttsBtn.disabled = false;
+      });
+
+      // Print handler
+      document.getElementById("print-btn").addEventListener("click", () => {
+        const printBtn = document.getElementById("print-btn");
+        const printSpinner = document.getElementById("print-spinner");
+        printBtn.disabled = true;
+        printSpinner.style.display = "inline-block";
+
+        const w = window.open(
+          "",
+          "_blank",
+          `width=${screen.availWidth},height=${screen.availHeight}`
+        );
+        w.document.write(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Print Model Answer</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    .model-box { text-align: center; font-size: 1.2em; line-height: 1.5; }
+    @media print { button { display: none; } }
+  </style>
+</head>
+<body>
+  ${document.getElementById("model-answer-box").outerHTML}
+  <script>
+    window.onafterprint = function() { window.close(); };
+    window.print();
+  <\/script>
+</body>
+</html>
+        `);
+        w.document.close();
+        printSpinner.style.display = "none";
+        printBtn.disabled = false;
+      });
     });
   </script>
 </body>
