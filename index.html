@@ -6,10 +6,11 @@
   <title>Writing Feedback</title>
   <style>
     body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; padding: 1rem; }
-    label { display: block; margin: 0.5rem 0; }
-    textarea, input, select { width: 100%; padding: 0.5rem; margin-top: 0.25rem; }
-    button { margin-top: 1rem; padding: 0.75rem 1.5rem; }
+    .loader { display: none; }
+    .box { border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; }
+    button { position: relative; }
     #result { margin-top: 2rem; }
+    @media print { .no-print { display: none; } }
   </style>
 </head>
 <body>
@@ -34,26 +35,30 @@
         <option value="고급">고급</option>
       </select>
     </label>
-    <button type="submit">Submit</button>
+    <button type="submit" id="submit-btn">Submit</button>
+    <img src="spinner.gif" alt="Loading..." class="loader" id="submit-loader" width="24">
   </form>
 
   <div id="result"></div>
 
   <script>
     const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
+    const submitBtn = document.getElementById('submit-btn');
+    const submitLoader = document.getElementById('submit-loader');
 
     document.getElementById('feedback-form').addEventListener('submit', async e => {
       e.preventDefault();
-      const form = document.getElementById('feedback-form');
-      const formData = new FormData(form);
+      submitBtn.disabled = true;
+      submitLoader.style.display = 'inline';
 
-      const res = await fetch(`${WORKER_URL}/api/feedback`, {
-        method: 'POST',
-        body: formData
-      });
+      const formData = new FormData(e.target);
+      const res = await fetch(`${WORKER_URL}/api/feedback`, { method: 'POST', body: formData });
       const data = await res.json();
-      const result = document.getElementById('result');
 
+      submitBtn.disabled = false;
+      submitLoader.style.display = 'none';
+
+      const result = document.getElementById('result');
       if (!res.ok) {
         result.innerHTML = `<p style="color:red;">Error ${res.status}: ${data.error?.message || JSON.stringify(data)}</p>`;
         return;
@@ -61,69 +66,36 @@
 
       const { feedback, modelAnswer } = data;
       result.innerHTML = `
-        <h2>Feedback</h2>
-        <p>${feedback.replace(/\n/g, '<br>')}</p>
-        <h2>Model Answer</h2>
-        <div id="model-wrapper">
-          <h3>${document.getElementById('topic').value || 'Model Answer'}</h3>
-          <p id="model-answer">${modelAnswer.replace(/\n/g, '<br>')}</p>
-          <button id="print-model">Print Model Answer</button>
+        <div class="box">
+          <h2>Feedback</h2>
+          <p>${feedback.replace(/\n/g, '<br>')}</p>
+        </div>
+        <div class="box" id="model-wrapper">
+          <h3 style="text-align:center; text-transform: capitalize; font-size:1.5rem; line-height:1.5;">${document.getElementById('topic').value || 'Model Answer'}</h3>
+          <p id="model-answer" style="font-size:1rem; line-height:1.5;">${modelAnswer.replace(/\n/g, '<br>')}</p>
+          <button id="print-model" class="no-print">Print Model Answer</button>
         </div>
       `;
 
-      // TTS button
-      const ttsBtn = document.createElement('button');
-      ttsBtn.textContent = 'Generate TTS';
-      ttsBtn.onclick = async () => {
-        const ttsRes = await fetch(`${WORKER_URL}/api/tts`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: modelAnswer })
-        });
-        const blob = await ttsRes.blob();
-        const url = URL.createObjectURL(blob);
-        const audioEl = document.createElement('audio');
-        audioEl.controls = true;
-        audioEl.src = url;
-        result.appendChild(audioEl);
-        const linkEl = document.createElement('a');
-        linkEl.href = url;
-        linkEl.download = 'model-answer.mp3';
-        linkEl.textContent = 'Download Audio';
-        linkEl.style.display = 'block';
-        result.appendChild(linkEl);
-      };
-      result.appendChild(ttsBtn);
-
-      // Improved print functionality
       const printBtn = document.getElementById('print-model');
+      const printLoader = document.createElement('img');
+      printLoader.src = 'spinner.gif';
+      printLoader.width = 24;
+      printLoader.className = 'loader';
+      printBtn.insertAdjacentElement('afterend', printLoader);
+
       printBtn.addEventListener('click', () => {
-        const contentHTML = document.getElementById('model-wrapper').outerHTML;
-        const printWindow = window.open('', '_blank', 'menubar=no,toolbar=no,location=no,status=no,width=800,height=600');
-        printWindow.document.write(
-          `<!DOCTYPE html>
-          <html lang="en">
-          <head>
-            <meta charset="UTF-8">
-            <title>Print Model Answer</title>
-            <style>
-              body { font-family: sans-serif; margin: 2rem; }
-              h3 { font-size: 1.5rem; margin-bottom: 1rem; }
-              p { white-space: pre-wrap; font-size: 1rem; margin-bottom: 1rem; }
-              @media print { 
-                body { margin: 0; }
-                button { display: none; }
-              }
-            </style>
-          </head>
-          <body>
-            ${contentHTML}
-          </body>
-          </html>`
-        );
-        printWindow.document.close();
-        printWindow.focus();
-        printWindow.print();
+        printBtn.disabled = true;
+        printLoader.style.display = 'inline';
+        const html = `<!DOCTYPE html><html><head><title>Print Answer</title><style>body{font-family:sans-serif;margin:2rem;}h3{text-align:center;font-size:2rem;line-height:1.5;}p{font-size:1.2rem;line-height:1.5;}@media print{button{display:none;}}</style></head><body>${document.getElementById('model-wrapper').innerHTML}</body></html>`;
+        const w = window.open('', '_blank');
+        w.document.write(html);
+        w.document.close();
+        w.focus();
+        w.print();
+        w.onafterprint = () => {
+          w.close(); printBtn.disabled = false; printLoader.style.display = 'none';
+        };
       });
     });
   </script>
