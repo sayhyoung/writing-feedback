@@ -37,13 +37,16 @@
   <div id="result"></div>
 
   <script>
+    const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
+
     document.getElementById("feedback-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const topic = document.getElementById("topic").value;
       const keywords = document.getElementById("keywords").value;
       const content = document.getElementById("content").value;
       const level = document.getElementById("level").value;
-      const res = await fetch('https://writing-feedback-app.sehyunglee2015.workers.dev/api/feedback', {  
+      
+      const res = await fetch(`${WORKER_URL}/api/feedback`, {  
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic, keywords, content, level })
       });
@@ -58,11 +61,11 @@
         <audio id="tts-audio" controls style="display:none;"></audio>
         <a id="download-link" style="display:none; margin-top:1rem; display:block;">Download Audio</a>
       `;
+
       document.getElementById("tts-btn").addEventListener("click", async () => {
-        const text = modelAnswer;
-        const ttsRes = await fetch('/api/tts', {
+        const ttsRes = await fetch(`${WORKER_URL}/api/tts`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text })
+          body: JSON.stringify({ text: modelAnswer })
         });
         const blob = await ttsRes.blob();
         const url = URL.createObjectURL(blob);
