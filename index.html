@@ -7,14 +7,16 @@
   <style>
     body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; padding: 1rem; }
     label { display: block; margin: 0.5rem 0; }
-    textarea, input, select { width: 100%; padding: 0.5rem; margin-top: 0.25rem; }
+    textarea, input[type="text"], select, input[type="file"] {
+      width: 100%; padding: 0.5rem; margin-top: 0.25rem;
+    }
     button { margin-top: 1rem; padding: 0.75rem 1.5rem; }
+    img { vertical-align: middle; }
     .box { border: 1px solid #ccc; padding: 1rem; margin-top: 1rem; }
     .model-box { text-align: center; font-size: 1.2em; line-height: 1.5; }
     #loading, #print-loading { display: none; }
-    /* 인쇄 시 버튼 숨기기 */
     @media print {
-      #print-btn, #submit-btn, #tts-btn { display: none !important; }
+      #submit-btn, #tts-btn, #print-btn { display: none !important; }
     }
   </style>
 </head>
@@ -22,16 +24,16 @@
   <h1>Writing Feedback</h1>
   <form id="feedback-form">
     <label>Topic/Title (optional)
-      <input type="text" id="topic" placeholder="Enter topic or leave blank">
+      <input type="text" id="topic" placeholder="Enter topic or leave blank" />
     </label>
     <label>Keywords (optional)
-      <input type="text" id="keywords" placeholder="Comma-separated keywords">
+      <input type="text" id="keywords" placeholder="Comma-separated keywords" />
     </label>
     <label>Text Content (optional)
       <textarea id="contentText" rows="4" placeholder="Paste your writing here"></textarea>
     </label>
     <label>Image Upload (optional)
-      <input type="file" id="contentFile" accept="image/*">
+      <input type="file" id="contentFile" accept="image/*" />
     </label>
     <label>Level
       <select id="level">
@@ -41,7 +43,7 @@
       </select>
     </label>
     <button type="submit" id="submit-btn">Submit</button>
-    <img id="loading" src="https://i.imgur.com/LLF5iyg.gif" alt="Loading..." width="24"/>
+    <img id="loading" src="https://i.imgur.com/LLF5iyg.gif" alt="Loading..." width="24" />
   </form>
 
   <div id="result"></div>
@@ -49,9 +51,9 @@
   <script>
     const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
 
-    document.getElementById("feedback-form").addEventListener("submit", async e => {
+    document.getElementById("feedback-form").addEventListener("submit", async (e) => {
       e.preventDefault();
-      // 로딩 표시
+      // show loading
       document.getElementById('loading').style.display = 'inline';
 
       const topic = document.getElementById("topic").value;
@@ -59,33 +61,41 @@
       const contentText = document.getElementById("contentText").value;
       const fileInput = document.getElementById("contentFile");
       let contentPayload = contentText;
-      
-      // 이미지 업로드가 있으면 Base64로 변환
+
+      // if an image was selected, convert to Base64
       if (fileInput.files.length) {
-        const file = fileInput.files[0];
         contentPayload = await new Promise(resolve => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(file);
+          reader.readAsDataURL(fileInput.files[0]);
         });
       }
 
       const res = await fetch(`${WORKER_URL}/api/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, keywords, contentText: contentPayload, level: document.getElementById("level").value })
+        body: JSON.stringify({
+          topic,
+          keywords,
+          contentText: contentPayload,
+          level: document.getElementById("level").value
+        })
       });
+
       const data = await res.json();
+      // hide loading
       document.getElementById('loading').style.display = 'none';
 
       if (!res.ok) {
-        document.getElementById("result").innerHTML = `<p style="color:red;">
-          Error ${res.status}: ${data.error?.message || JSON.stringify(data)}
-        </p>`;
+        document.getElementById("result").innerHTML = `
+          <p style="color:red;">
+            Error ${res.status}: ${data.error?.message || JSON.stringify(data)}
+          </p>`;
         return;
       }
 
       const { feedback, modelAnswer } = data;
+
       document.getElementById("result").innerHTML = `
         <div class="box">
           <h2>Feedback</h2>
@@ -96,12 +106,14 @@
         </div>
         <button id="tts-btn">Generate TTS</button>
         <audio id="tts-audio" controls style="display:none;"></audio>
-        <a id="download-link" style="display:none; margin-top:1rem; display:block;">Download Audio</a>
-        <button id="print-btn">Print Model Answer</button>
-        <img id="print-loading" src="https://i.imgur.com/LLF5iyg.gif" alt="Loading..." width="24"/>
+        <a id="download-link" style="display:none; margin-top:1rem; display:block;">
+          Download Audio
+        </a>
+        <button id="print-btn" type="button">Print Model Answer</button>
+        <img id="print-loading" src="https://i.imgur.com/LLF5iyg.gif" alt="Loading..." width="24" />
       `;
 
-      // TTS 버튼
+      // TTS 버튼 핸들러
       document.getElementById("tts-btn").addEventListener("click", async () => {
         const ttsBtn = document.getElementById('tts-btn');
         ttsBtn.disabled = true;
@@ -113,37 +125,53 @@
         const blob = await ttsRes.blob();
         const url = URL.createObjectURL(blob);
         const audioEl = document.getElementById('tts-audio');
-        audioEl.src = url; audioEl.style.display = 'block';
+        audioEl.src = url;
+        audioEl.style.display = 'block';
         const linkEl = document.getElementById('download-link');
-        linkEl.href = url; linkEl.download = 'model-answer.mp3'; linkEl.style.display = 'block';
+        linkEl.href = url;
+        linkEl.download = 'model-answer.mp3';
+        linkEl.style.display = 'block';
         ttsBtn.disabled = false;
       });
 
-      // Print 버튼
+      // Print 버튼 핸들러
       document.getElementById("print-btn").addEventListener("click", () => {
-        const printBtn = document.getElementById('print-btn');
-        const printLoading = document.getElementById('print-loading');
-        printBtn.style.display = 'none';
-        printLoading.style.display = 'inline';
+        const printBtn = document.getElementById("print-btn");
+        const printLoading = document.getElementById("print-loading");
+        printBtn.style.display = "none";
+        printLoading.style.display = "inline";
 
-        // 팝업 크기 (풀 사이즈)
-        const w = window.open("", "_blank", `width=${screen.availWidth},height=${screen.availHeight}`);
+        const w = window.open(
+          "",
+          "_blank",
+          `width=${screen.availWidth},height=${screen.availHeight}`
+        );
+
         w.document.write(`
-          <html><head>
-            <style>
-              body { font-family: sans-serif; padding: 2rem; }
-              .model-box { text-align:center; font-size:1.2em; line-height:1.5; border:none; }
-              @media print { button { display:none; } }
-            </style>
-          </head><body>
-            ${document.getElementById("model-answer-box").outerHTML}
-            <script>
-              window.onafterprint = () => window.close();
-              window.print();
-            </script>
-          </body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Print Model Answer</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    .model-box { text-align: center; font-size: 1.2em; line-height: 1.5; }
+    @media print { button { display: none; } }
+  </style>
+</head>
+<body>
+  ${document.getElementById("model-answer-box").outerHTML}
+  <script>
+    window.onafterprint = function() {
+      window.close();
+    };
+    window.print();
+  <\/script>
+</body>
+</html>
         `);
-        printLoading.style.display = 'none';
+        w.document.close();
+        printLoading.style.display = "none";
       });
 
     });
