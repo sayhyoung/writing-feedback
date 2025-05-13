@@ -15,10 +15,18 @@
       margin-top: 1rem;
       padding: 0.75rem 1.5rem;
     }
+    /* red CSS spinner */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
     .spinner {
       display: none;
+      border: 2px solid red;
+      border-top: 2px solid transparent;
+      border-radius: 50%;
       width: 16px;
       height: 16px;
+      animation: spin 1s linear infinite;
       vertical-align: middle;
       margin-left: 0.5rem;
     }
@@ -53,7 +61,7 @@
     </label>
     <button type="submit" id="submit-btn">
       Submit
-      <img id="submit-loading" class="spinner" src="https://i.imgur.com/LLF5iyg.gif" alt="Loading" />
+      <span id="submit-spinner" class="spinner"></span>
     </button>
   </form>
 
@@ -65,9 +73,9 @@
     document.getElementById("feedback-form").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      // submit spinner
+      // show submit spinner
       const submitBtn = document.getElementById("submit-btn");
-      const submitSpinner = document.getElementById("submit-loading");
+      const submitSpinner = document.getElementById("submit-spinner");
       submitBtn.disabled = true;
       submitSpinner.style.display = "inline-block";
 
@@ -77,7 +85,6 @@
       const contentText = document.getElementById("contentText").value;
       const fileInput = document.getElementById("contentFile");
       let contentPayload = contentText;
-
       if (fileInput.files.length) {
         contentPayload = await new Promise(resolve => {
           const reader = new FileReader();
@@ -99,7 +106,7 @@
       });
       const data = await res.json();
 
-      // hide spinner
+      // hide submit spinner
       submitSpinner.style.display = "none";
       submitBtn.disabled = false;
 
@@ -111,25 +118,8 @@
         return;
       }
 
-      const { feedback, modelAnswer } = data;
-
-      // render result
-      document.getElementById("result").innerHTML = `
-        <div class="box">
-          <h2>Feedback</h2>
-          <div>${feedback.replace(/\n/g,'<br>')}</div>
-        </div>
-        <div class="box model-box" id="model-answer-box">
-          ${modelAnswer.replace(/\n/g,'<br>')}
-        </div>
-        <button id="tts-btn">Generate TTS</button>
-        <audio id="tts-audio" controls style="display:none;"></audio>
-        <a id="download-link" style="display:none; margin-top:1rem; display:block;">
-          Download Audio
-        </a>
-        <button id="print-btn" type="button">
-          Print Model Answer
-          <img id="print-loading" class="spinner" src="https://i.imgur.com/LLF5iyg.gif" alt="Loading" />
+      const { feedback, modelAns쇄
+          <span id="print-spinner" class="spinner"></span>
         </button>
       `;
 
@@ -154,10 +144,10 @@
         ttsBtn.disabled = false;
       });
 
-      // Print handler
+      // Print handler with spinner
       document.getElementById("print-btn").addEventListener("click", () => {
         const printBtn = document.getElementById("print-btn");
-        const printSpinner = document.getElementById("print-loading");
+        const printSpinner = document.getElementById("print-spinner");
         printBtn.disabled = true;
         printSpinner.style.display = "inline-block";
 
@@ -166,13 +156,12 @@
           "_blank",
           `width=${screen.availWidth},height=${screen.availHeight}`
         );
-
         w.document.write(`
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Print Model Answer</title>
+  <title>샘플 예문 인쇄</title>
   <style>
     body { font-family: sans-serif; padding: 2rem; }
     .model-box { text-align: center; font-size: 1.2em; line-height: 1.5; }
@@ -182,9 +171,7 @@
 <body>
   ${document.getElementById("model-answer-box").outerHTML}
   <script>
-    window.onafterprint = function() {
-      window.close();
-    };
+    window.onafterprint = function() { window.close(); };
     window.print();
   <\/script>
 </body>
@@ -192,6 +179,7 @@
         `);
         w.document.close();
 
+        // hide print spinner and re-enable
         printSpinner.style.display = "none";
         printBtn.disabled = false;
       });
