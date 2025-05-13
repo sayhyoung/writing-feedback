@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Writing Feedback</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; padding: 1rem; }
+    label { display: block; margin: 0.5rem 0; }
+    textarea, input, select { width: 100%; padding: 0.5rem; margin-top: 0.25rem; }
+    button { margin-top: 1rem; padding: 0.75rem 1.5rem; }
+    #result { margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <h1>Writing Feedback</h1>
+  <form id="feedback-form">
+    <label>Topic/Title (optional)
+      <input type="text" id="topic" placeholder="Enter topic or leave blank">
+    </label>
+    <label>Keywords (optional)
+      <input type="text" id="keywords" placeholder="Comma-separated keywords">
+    </label>
+    <label>Content (text or image URL)
+      <textarea id="content" rows="6" placeholder="Paste your writing here or image URL"></textarea>
+    </label>
+    <label>Level
+      <select id="level">
+        <option value="초급">초급</option>
+        <option value="중급">중급</option>
+        <option value="고급">고급</option>
+      </select>
+    </label>
+    <button type="submit">Submit</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script>
+    document.getElementById("feedback-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const topic = document.getElementById("topic").value;
+      const keywords = document.getElementById("keywords").value;
+      const content = document.getElementById("content").value;
+      const level = document.getElementById("level").value;
+      const res = await fetch('https://writing-feedback-app.sehyunglee2015.workers.dev/api/feedback', {  
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, keywords, content, level })
+      });
+      const { feedback, modelAnswer } = await res.json();
+      const result = document.getElementById("result");
+      result.innerHTML = `
+        <h2>Feedback</h2>
+        <p>${feedback.replace(/\n/g, '<br>')}</p>
+        <h2>Model Answer</h2>
+        <p id="model-answer">${modelAnswer.replace(/\n/g, '<br>')}</p>
+        <button id="tts-btn">Generate TTS</button>
+        <audio id="tts-audio" controls style="display:none;"></audio>
+        <a id="download-link" style="display:none; margin-top:1rem; display:block;">Download Audio</a>
+      `;
+      document.getElementById("tts-btn").addEventListener("click", async () => {
+        const text = modelAnswer;
+        const ttsRes = await fetch('/api/tts', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        const blob = await ttsRes.blob();
+        const url = URL.createObjectURL(blob);
+        const audioEl = document.getElementById('tts-audio');
+        audioEl.src = url;
+        audioEl.style.display = 'block';
+        const linkEl = document.getElementById('download-link');
+        linkEl.href = url;
+        linkEl.download = 'model-answer.mp3';
+        linkEl.style.display = 'block';
+      });
+    });
+  </script>
+</body>
+</html>
