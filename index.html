@@ -33,8 +33,6 @@
       #submit-btn, #tts-btn, #print-btn { display: none !important; }
     }
   </style>
-  <!-- Tesseract.js for OCR -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2/dist/tesseract.min.js"></script>
 </head>
 <body>
   <h1>Writing Feedback</h1>
@@ -46,7 +44,7 @@
       <input type="text" id="keywords" placeholder="Comma-separated keywords" />
     </label>
     <label>Text Content (optional)
-      <textarea id="contentText" rows="4" placeholder="Paste your writing or wait for OCR result"></textarea>
+      <textarea id="contentText" rows="4" placeholder="Paste your writing or wait for OCR"></textarea>
     </label>
     <label>Image Upload (optional)
       <input type="file" id="contentFile" accept="image/*" />
@@ -69,66 +67,99 @@
 
   <script>
     const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
+    const PROXY_URL  = 'https://twilight-cell-92de.kyojun75.workers.dev/proxy';
 
-    // 1) OCR on image upload: 영어 알파벳과 공백만 남기기
+    // -------------------------------------------------------
+    // 1) OCR: 이미지 업로드 시 Cloudflare Worker proxy 호출
+    // -------------------------------------------------------
     document.getElementById('contentFile').addEventListener('change', async e => {
       const file = e.target.files[0];
       if (!file) return;
+
       const ocrSpinner = document.getElementById('ocr-spinner');
+      const ta = document.getElementById('contentText');
+      ta.value = '이미지에서 텍스트를 추출 중입니다...';
       ocrSpinner.style.display = 'inline-block';
 
       try {
-        const { data: { text: rawText } } = await Tesseract.recognize(
-          file,
-          'eng',
-          {
-            logger: m => console.log(m),
-            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '
-          }
-        );
-        // 영어 문자와 공백만 남기고 나머지 제거
-        const cleaned = rawText.replace(/[^A-Za-z\s]/g, '').trim();
-        const ta = document.getElementById('contentText');
-        ta.value = (ta.value ? ta.value + '\n' : '') + cleaned;
+        // 1-1) Base64 인코딩
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            // data:*/*;base64,XXXX
+            const parts = reader.result.split(',');
+            resolve(parts[1]);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        // 1-2) 프록시 워커에 POST (ChatGPT 이미지 입력)
+        const resp = await fetch(PROXY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  { type: 'text', text: 'Please extract the exact text from the image as it appears. Do not provide any additional commentary or corrections.' },
+                  { type: 'image_url', image_url: { url: `data:${file.type};base64,${base64}` } }
+                ]
+              }
+            ],
+            max_tokens: 500
+          })
+        });
+
+        if (!resp.ok) throw new Error(`OCR 요청 실패 (${resp.status})`);
+
+        const { choices } = await resp.json();
+        const extracted = choices?.[0]?.message?.content?.trim() || '';
+        ta.value = extracted;
       } catch (err) {
-        console.error('OCR error:', err);
+        console.error(err);
+        ta.value = 'OCR 중 오류가 발생했습니다: ' + err.message;
       } finally {
         ocrSpinner.style.display = 'none';
       }
     });
 
-    // 2) Submit handler
-    document.getElementById("feedback-form").addEventListener("submit", async e => {
+    // -------------------------------------------------------
+    // 2) Submit handler: 피드백 & 모범답안 요청
+    // -------------------------------------------------------
+    document.getElementById('feedback-form').addEventListener('submit', async e => {
       e.preventDefault();
-      const submitBtn = document.getElementById("submit-btn");
-      const submitSpinner = document.getElementById("submit-spinner");
+      const submitBtn     = document.getElementById('submit-btn');
+      const submitSpinner = document.getElementById('submit-spinner');
       submitBtn.disabled = true;
-      submitSpinner.style.display = "inline-block";
+      submitSpinner.style.display = 'inline-block';
 
-      const topic = document.getElementById("topic").value;
-      const keywords = document.getElementById("keywords").value;
-      const contentText = document.getElementById("contentText").value;
-      const level = document.getElementById("level").value;
+      const topic       = document.getElementById('topic').value;
+      const keywords    = document.getElementById('keywords').value;
+      const contentText = document.getElementById('contentText').value;
+      const level       = document.getElementById('level').value;
 
+      // 워커 API 호출
       const res = await fetch(`${WORKER_URL}/api/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic, keywords, contentText, level })
       });
       const data = await res.json();
-      submitSpinner.style.display = "none";
+
+      submitSpinner.style.display = 'none';
       submitBtn.disabled = false;
 
       if (!res.ok) {
-        document.getElementById("result").innerHTML = `
-          <p style="color:red;">
-            Error ${res.status}: ${data.error?.message || JSON.stringify(data)}
-          </p>`;
-        return;
+        return document.getElementById('result').innerHTML = `
+          <p style="color:red;">Error ${res.status}: ${data.error?.message || JSON.stringify(data)}</p>
+        `;
       }
 
       const { feedback, modelAnswer } = data;
-      document.getElementById("result").innerHTML = `
+      document.getElementById('result').innerHTML = `
         <div class="box">
           <h2>Feedback</h2>
           <div>${feedback.replace(/\n/g,'<br>')}</div>
@@ -150,8 +181,10 @@
         </button>
       `;
 
-      // TTS handler
-      document.getElementById("tts-btn").addEventListener("click", async () => {
+      // -------------------------------------------------------
+      // 3) TTS handler
+      // -------------------------------------------------------
+      document.getElementById('tts-btn').addEventListener('click', async () => {
         const ttsBtn = document.getElementById('tts-btn');
         ttsBtn.disabled = true;
         const ttsRes = await fetch(`${WORKER_URL}/api/tts`, {
@@ -160,7 +193,7 @@
           body: JSON.stringify({ text: modelAnswer })
         });
         const blob = await ttsRes.blob();
-        const url = URL.createObjectURL(blob);
+        const url  = URL.createObjectURL(blob);
         document.getElementById('tts-audio').src = url;
         document.getElementById('tts-audio').style.display = 'block';
         const linkEl = document.getElementById('download-link');
@@ -170,16 +203,18 @@
         ttsBtn.disabled = false;
       });
 
-      // Print handler
-      document.getElementById("print-btn").addEventListener("click", () => {
-        const printBtn = document.getElementById("print-btn");
-        const printSpinner = document.getElementById("print-spinner");
+      // -------------------------------------------------------
+      // 4) Print handler
+      // -------------------------------------------------------
+      document.getElementById('print-btn').addEventListener('click', () => {
+        const printBtn     = document.getElementById('print-btn');
+        const printSpinner = document.getElementById('print-spinner');
         printBtn.disabled = true;
-        printSpinner.style.display = "inline-block";
+        printSpinner.style.display = 'inline-block';
 
         const w = window.open(
-          "",
-          "_blank",
+          '',
+          '_blank',
           `width=${screen.availWidth},height=${screen.availHeight}`
         );
         w.document.write(`
@@ -195,7 +230,7 @@
   </style>
 </head>
 <body>
-  ${document.getElementById("model-answer-box").outerHTML}
+  ${document.getElementById('model-answer-box').outerHTML}
   <script>
     window.onafterprint = function() { window.close(); };
     window.print();
@@ -204,7 +239,7 @@
 </html>
         `);
         w.document.close();
-        printSpinner.style.display = "none";
+        printSpinner.style.display = 'none';
         printBtn.disabled = false;
       });
     });
