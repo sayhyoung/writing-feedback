@@ -70,16 +70,26 @@
   <script>
     const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
 
-    // OCR on image upload
+    // 1) OCR on image upload: 영어 알파벳과 공백만 남기기
     document.getElementById('contentFile').addEventListener('change', async e => {
       const file = e.target.files[0];
       if (!file) return;
       const ocrSpinner = document.getElementById('ocr-spinner');
       ocrSpinner.style.display = 'inline-block';
+
       try {
-        const { data: { text } } = await Tesseract.recognize(file, 'eng');
+        const { data: { text: rawText } } = await Tesseract.recognize(
+          file,
+          'eng',
+          {
+            logger: m => console.log(m),
+            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '
+          }
+        );
+        // 영어 문자와 공백만 남기고 나머지 제거
+        const cleaned = rawText.replace(/[^A-Za-z\s]/g, '').trim();
         const ta = document.getElementById('contentText');
-        ta.value = (ta.value ? ta.value + '\n' : '') + text.trim();
+        ta.value = (ta.value ? ta.value + '\n' : '') + cleaned;
       } catch (err) {
         console.error('OCR error:', err);
       } finally {
@@ -87,7 +97,7 @@
       }
     });
 
-    // Submit handler
+    // 2) Submit handler
     document.getElementById("feedback-form").addEventListener("submit", async e => {
       e.preventDefault();
       const submitBtn = document.getElementById("submit-btn");
@@ -106,7 +116,6 @@
         body: JSON.stringify({ topic, keywords, contentText, level })
       });
       const data = await res.json();
-
       submitSpinner.style.display = "none";
       submitBtn.disabled = false;
 
@@ -119,7 +128,6 @@
       }
 
       const { feedback, modelAnswer } = data;
-
       document.getElementById("result").innerHTML = `
         <div class="box">
           <h2>Feedback</h2>
@@ -153,10 +161,12 @@
         });
         const blob = await ttsRes.blob();
         const url = URL.createObjectURL(blob);
-        const audioEl = document.getElementById('tts-audio');
-        audioEl.src = url; audioEl.style.display = 'block';
+        document.getElementById('tts-audio').src = url;
+        document.getElementById('tts-audio').style.display = 'block';
         const linkEl = document.getElementById('download-link');
-        linkEl.href = url; linkEl.download = 'model-answer.mp3'; linkEl.style.display = 'block';
+        linkEl.href = url;
+        linkEl.download = 'model-answer.mp3';
+        linkEl.style.display = 'block';
         ttsBtn.disabled = false;
       });
 
