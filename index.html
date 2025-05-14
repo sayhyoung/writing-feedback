@@ -64,42 +64,37 @@
     const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
     const PROXY_URL  = `${WORKER_URL}/proxy`;
 
-    // Reset 버튼: 폼 초기화 및 결과 클리어
+    // Reset
     document.getElementById('reset-btn').addEventListener('click', () => {
       document.getElementById('feedback-form').reset();
       document.getElementById('result').innerHTML = '';
-      // 파일 input 강제 초기화
-      const fileInput = document.getElementById('contentFile');
-      fileInput.value = '';
+      document.getElementById('contentFile').value = '';
     });
 
-    // OCR: same-origin proxy 호출
+    // OCR
     document.getElementById('contentFile').addEventListener('change', async e => {
       const file = e.target.files[0];
       if (!file) return;
-      const ta      = document.getElementById('contentText');
+      const ta = document.getElementById('contentText');
       const spinner = document.getElementById('ocr-spinner');
       ta.value = '이미지에서 텍스트 추출 중...';
       spinner.style.display = 'inline-block';
-
-      // Base64 인코딩
       const b64 = await new Promise((res, rej) => {
-        const reader = new FileReader();
-        reader.onload = () => res(reader.result.split(',')[1]);
-        reader.onerror = rej;
-        reader.readAsDataURL(file);
+        const r = new FileReader();
+        r.onload = () => res(r.result.split(',')[1]);
+        r.onerror = rej;
+        r.readAsDataURL(file);
       });
-
       try {
         const resp = await fetch(PROXY_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {'Content-Type':'application/json'},
           body: JSON.stringify({
             model: 'gpt-4o-mini',
             messages: [
-              { role: 'user', content: [
-                  { type: 'text', text: 'Please extract the exact text from the image as it appears. Do not provide any additional commentary or corrections.' },
-                  { type: 'image_url', image_url: { url: `data:${file.type};base64,${b64}` } }
+              { role:'user', content:[
+                  { type:'text', text:'Please extract the exact text from the image as it appears. Do not provide any additional commentary or corrections.' },
+                  { type:'image_url', image_url:{ url:`data:${file.type};base64,${b64}` } }
                 ]
               }
             ],
@@ -110,13 +105,13 @@
         const { choices } = await resp.json();
         ta.value = choices?.[0]?.message?.content?.trim() || '';
       } catch(err) {
-        ta.value = 'OCR 에러: '+ err.message;
+        ta.value = 'OCR 에러: ' + err.message;
       } finally {
         spinner.style.display = 'none';
       }
     });
 
-    // Submit → feedback & modelAnswer
+    // Submit
     document.getElementById('feedback-form').addEventListener('submit', async e => {
       e.preventDefault();
       const btn = document.getElementById('submit-btn');
@@ -129,10 +124,10 @@
         contentText: document.getElementById('contentText').value,
         level: document.getElementById('level').value
       };
-      const res  = await fetch(`${WORKER_URL}/api/feedback`, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
+      const res = await fetch(`${WORKER_URL}/api/feedback`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
       });
       const data = await res.json();
       btn.disabled = false; sp.style.display = 'none';
@@ -157,42 +152,39 @@
         <button id="print-btn" type="button">Print Model Answer<span id="print-spinner" class="spinner"></span></button>
       `;
 
-      // Edit 핸들러
-      document.getElementById('edit-btn').addEventListener('click', () => {
-        const box = document.querySelector('.model-box');
-        const current = box.innerText;
-        // textarea로 교체
-        const ta = document.createElement('textarea');
-        ta.id = 'model-answer-edit';
-        ta.style.width = '100%';
-        ta.style.height = '200px';
-        ta.value = current;
-        box.replaceWith(ta);
-        // Edit → Save 버튼으로 교체
-        const editBtn = document.getElementById('edit-btn');
-        editBtn.textContent = 'Save';
-        editBtn.addEventListener('click', () => {
-          const newText = ta.value;
-          // textarea → div로 복원
+      // Edit/Save toggle
+      const editBtn = document.getElementById('edit-btn');
+      editBtn.addEventListener('click', () => {
+        const isSave = editBtn.textContent === 'Save';
+        if (!isSave) {
+          const div = document.getElementById('model-answer-box');
+          const ta = document.createElement('textarea');
+          ta.id = 'model-answer-edit';
+          ta.style.width = '100%';
+          ta.style.height = '200px';
+          ta.value = div.innerText;
+          div.replaceWith(ta);
+          editBtn.textContent = 'Save';
+        } else {
+          const ta = document.getElementById('model-answer-edit');
           const newDiv = document.createElement('div');
           newDiv.className = 'model-box';
           newDiv.id = 'model-answer-box';
-          newDiv.innerHTML = newText.replace(/\n/g,'<br>');
+          newDiv.innerHTML = ta.value.replace(/\n/g,'<br>');
           ta.replaceWith(newDiv);
-          editBtn.remove(); // Save 버튼 제거
-        }, { once: true });
+          editBtn.textContent = 'Edit';
+        }
       });
 
-      // TTS 핸들러
+      // TTS
       document.getElementById('tts-btn').addEventListener('click', async () => {
         const ttsBtn = document.getElementById('tts-btn');
         ttsBtn.disabled = true;
-        // 수정된 모델답안 텍스트 가져오기
-        let text = document.getElementById('model-answer-box').innerText;
+        const text = document.getElementById('model-answer-box').innerText;
         const r = await fetch(`${WORKER_URL}/api/tts`, {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ text })
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ text })
         });
         const blob = await r.blob(), url = URL.createObjectURL(blob);
         const audio = document.getElementById('tts-audio');
@@ -202,11 +194,11 @@
         ttsBtn.disabled = false;
       });
 
-      // Print 핸들러
+      // Print
       document.getElementById('print-btn').addEventListener('click', () => {
         const b = document.getElementById('print-btn'), s = document.getElementById('print-spinner');
         b.disabled = true; s.style.display = 'inline-block';
-        const w = window.open('','_blank',`width=${screen.availWidth},height=${screen.availHeight}`);
+        const w = window.open('', '_blank', `width=${screen.availWidth},height=${screen.availHeight}`);
         w.document.write(`
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><title>Print</title>
 <style>body{font-family:sans-serif;padding:2rem;} .model-box{text-align:center;font-size:1.2em;line-height:1.5;} @media print{button{display:none}}</style>
