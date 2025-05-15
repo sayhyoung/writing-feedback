@@ -14,6 +14,7 @@
       padding: 2rem;
       display: flex;
       justify-content: center;
+      line-height: 1.6;  
     }
     #container {
       width: 100%;
@@ -111,12 +112,25 @@
     }
     /* Reset container positioning */
     #container { position: relative; }
+
+#result button,
+#result a#download-link {
+  margin-top: 1.5rem;   /* 위 간격 */
+  display: block;       /* 각 요소를 블록으로 만들어 세로로 배치 */
+}
+
+/* 필요하다면 버튼들끼리도 더 벌리고 싶을 때 */
+#result button + button {
+  margin-top: 1rem;
+}
+    
   </style>
 </head>
 <body>
   <div id="container">
-    <button id="reset-btn">Reset</button>
+  
     <h1>🤖 Writing Assistant</h1>
+      <button id="reset-btn">Reset</button>
     <form id="feedback-form">
       <label>❇️ Topic/Title
         <input type="text" id="topic" placeholder="원하는 주제나 제목을 입력하세요."/>
