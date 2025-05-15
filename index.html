@@ -14,23 +14,39 @@
       padding: 2rem;
       display: flex;
       justify-content: center;
-      line-height: 1.6;  
+      line-height: 1.6;
     }
     #container {
       width: 100%;
       max-width: 700px;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 2rem;
+      position: relative;
     }
     h1 {
       color: #004a99;
       text-align: center;
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
     }
-    label {
+
+    /* Reset button under heading */
+    #reset-btn {
+      background-color: #ffffff;
+      color: #0066cc;
+      border: 1px solid #0066cc;
+      border-radius: 4px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
       display: block;
-      margin: 0.75rem 0 0.25rem;
-      font-weight: 600;
-      color: #004a99;
+      margin: 0 auto 1rem;
+      transition: background-color 0.2s ease;
     }
+    #reset-btn:hover {
+      background-color: #e9f5ff;
+    }
+
     /* Form */
     form {
       background: #ffffff;
@@ -38,6 +54,12 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       padding: 1.5rem;
       margin-bottom: 1.5rem;
+    }
+    label {
+      display: block;
+      margin: 0.75rem 0 0.25rem;
+      font-weight: 600;
+      color: #004a99;
     }
     input[type="text"],
     select,
@@ -52,6 +74,7 @@
       box-sizing: border-box;
     }
     textarea { resize: vertical; }
+
     /* Buttons */
     button {
       background-color: #0066cc;
@@ -66,17 +89,6 @@
     button:hover {
       background-color: #0052a3;
     }
-    #reset-btn {
-      background-color: #ffffff;
-      color: #0066cc;
-      border: 1px solid #0066cc;
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-    }
-    #reset-btn:hover {
-      background-color: #e9f5ff;
-    }
     .spinner {
       display: none;
       width: 16px; height: 16px;
@@ -88,6 +100,7 @@
       margin-left: 0.5rem;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
     /* Result Boxes */
     .box {
       background: #e9f5ff;
@@ -105,37 +118,40 @@
       font-size: 1.1rem;
       line-height: 1.5;
     }
+
+    /* Action controls spacing */
+    #result button,
+    #result a#download-link {
+      display: block;
+      margin-top: 1.5rem;
+    }
+    #result button + button,
+    #result button + a#download-link {
+      margin-top: 1rem;
+    }
+
+    /* Hide download link by default */
+    #download-link {
+      display: none;
+    }
+
     /* Print & Media */
     @media print {
       #submit-btn, #tts-btn, #print-btn, #edit-btn, #reset-btn { display: none !important; }
       body { background: #ffffff; margin: 0; }
     }
-    /* Reset container positioning */
-    #container { position: relative; }
-
-#result button,
-#result a#download-link {
-  margin-top: 1.5rem;   /* 위 간격 */
-  display: block;       /* 각 요소를 블록으로 만들어 세로로 배치 */
-}
-
-/* 필요하다면 버튼들끼리도 더 벌리고 싶을 때 */
-#result button + button {
-  margin-top: 1rem;
-}
-    
   </style>
 </head>
 <body>
   <div id="container">
-  
     <h1>🤖 Writing Assistant</h1>
-      <button id="reset-btn">Reset</button>
+    <button id="reset-btn">Reset</button>
+
     <form id="feedback-form">
       <label>❇️ Topic/Title
         <input type="text" id="topic" placeholder="원하는 주제나 제목을 입력하세요."/>
       </label>
-      <label>❇️ Keywords 
+      <label>❇️ Keywords
         <input type="text" id="keywords" placeholder="단어를 콤마(,)로 구분하여 입력하세요."/>
       </label>
       <label>❇️ Text Content
@@ -148,7 +164,7 @@
       <label>❇️ Level
         <select id="level">
           <option value="초급">초급(미취학 ~ 초등 3학년)</option>
-          <option value="중급">중급(초등 4 ~ 6 학년)</option>
+          <option value="중급">중급(초등 4 ~ 6학년)</option>
           <option value="고급">고급(중등 이상)</option>
         </select>
       </label>
@@ -190,14 +206,14 @@
           method: 'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({
-            model:'gpt-4o-mini',
-            messages:[{
+            model: 'gpt-4o-mini',
+            messages: [{
               role:'user', content:[
                 { type:'text', text:'Please extract the exact text from the image as it appears. Do not provide any additional commentary or corrections.' },
                 { type:'image_url', image_url:{ url:`data:${file.type};base64,${b64}` } }
               ]
             }],
-            max_tokens:500
+            max_tokens: 500
           })
         });
         if (!resp.ok) throw new Error(resp.statusText);
@@ -247,7 +263,7 @@
         </div>
         <button id="tts-btn">Generate TTS</button>
         <audio id="tts-audio" controls style="display:none;"></audio>
-        <a id="download-link" style="display:none; margin-top:1rem; display:block;">Download Audio</a>
+        <a id="download-link">Download Audio</a>
         <button id="print-btn" type="button">Print Model Answer<span id="print-spinner" class="spinner"></span></button>
       `;
 
@@ -257,7 +273,7 @@
         const isSave = editBtn.textContent === 'Save';
         if (!isSave) {
           const div = document.getElementById('model-answer-box');
-          const ta = document.createElement('textarea');
+          const ta  = document.createElement('textarea');
           ta.id = 'model-answer-edit';
           ta.style.width = '100%';
           ta.style.height = '200px';
@@ -280,22 +296,25 @@
         const ttsBtn = document.getElementById('tts-btn');
         ttsBtn.disabled = true;
         const text = document.getElementById('model-answer-box').innerText;
-        const r = await fetch(`${WORKER_URL}/api/tts`, {
+        const r    = await fetch(`${WORKER_URL}/api/tts`, {
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({ text })
         });
-        const blob = await r.blob(), url = URL.createObjectURL(blob);
+        const blob = await r.blob();
+        const url  = URL.createObjectURL(blob);
         const audio = document.getElementById('tts-audio');
         audio.src = url; audio.style.display = 'block';
         const link = document.getElementById('download-link');
-        link.href = url; link.download = 'model-answer.mp3'; link.style.display = 'block';
+        link.href = url; link.download = 'model-answer.mp3';
+        link.style.display = 'block';
         ttsBtn.disabled = false;
       });
 
       // Print
       document.getElementById('print-btn').addEventListener('click', () => {
-        const b = document.getElementById('print-btn'), s = document.getElementById('print-spinner');
+        const b = document.getElementById('print-btn');
+        const s = document.getElementById('print-spinner');
         b.disabled = true; s.style.display = 'inline-block';
         const w = window.open('', '_blank', `width=${screen.availWidth},height=${screen.availHeight}`);
         w.document.write(`
