@@ -39,8 +39,9 @@
       border-radius: 4px;
       padding: 0.5rem 1rem;
       cursor: pointer;
+      
       display: block;
-      margin: 0 auto 1rem;
+      margin: 0 auto; display:block;
       transition: background-color 0.2s ease;
     }
     #reset-btn:hover {
@@ -155,7 +156,7 @@
         <input type="text" id="keywords" placeholder="단어를 콤마(,)로 구분하여 입력하세요."/>
       </label>
       <label>❇️ Text Content
-        <textarea id="contentText" rows="4" placeholder="작성한 글을 여기 옮겨 쓰거나 캡처해서 올려주세요."></textarea>
+        <textarea id="contentText" rows="8" placeholder="작성한 글을 여기 옮겨 쓰거나 캡처해서 올려주세요."></textarea>
       </label>
       <label>❇️ Image Upload (optional)
         <input type="file" id="contentFile" accept="image/*"/>
