@@ -3,62 +3,148 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Writing Feedback</title>
+  <title>Writing Assistant</title>
   <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; padding: 1rem; position: relative; }
-    #reset-btn {
-      position: absolute; top: 1rem; right: 1rem;
-      padding: 0.5rem 1rem; background: #eee; border: 1px solid #ccc; cursor: pointer;
+    /* Base & Layout */
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background-color: #f0f4f8;
+      color: #1a1a1a;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
     }
-    label { display: block; margin: 0.5rem 0; }
-    textarea, input[type="text"], select, input[type="file"] {
-      width: 100%; padding: 0.5rem; margin-top: 0.25rem;
+    #container {
+      width: 100%;
+      max-width: 700px;
     }
+    h1 {
+      color: #004a99;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin: 0.75rem 0 0.25rem;
+      font-weight: 600;
+      color: #004a99;
+    }
+    /* Form */
+    form {
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    input[type="text"],
+    select,
+    textarea,
+    input[type="file"] {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #cbd7e0;
+      border-radius: 4px;
+      background: #f9fcff;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    textarea { resize: vertical; }
+    /* Buttons */
     button {
-      position: relative; margin-top: 1rem; padding: 0.75rem 1.5rem;
+      background-color: #0066cc;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    button:hover {
+      background-color: #0052a3;
+    }
+    #reset-btn {
+      background-color: #ffffff;
+      color: #0066cc;
+      border: 1px solid #0066cc;
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+    }
+    #reset-btn:hover {
+      background-color: #e9f5ff;
+    }
+    .spinner {
+      display: none;
+      width: 16px; height: 16px;
+      border: 2px solid #0066cc;
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      vertical-align: middle;
+      margin-left: 0.5rem;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .spinner {
-      display: none; border: 2px solid red; border-top: 2px solid transparent;
-      border-radius: 50%; width: 16px; height: 16px;
-      animation: spin 1s linear infinite; vertical-align: middle; margin-left: 0.5rem;
+    /* Result Boxes */
+    .box {
+      background: #e9f5ff;
+      border-left: 4px solid #0066cc;
+      border-radius: 4px;
+      padding: 1rem;
+      margin-top: 1rem;
     }
-    .box { border: 1px solid #ccc; padding: 1rem; margin-top: 1rem; }
-    .model-box { text-align: center; font-size: 1.2em; line-height: 1.5; }
-    @media print { #submit-btn,#tts-btn,#print-btn,#edit-btn,#reset-btn { display:none!important } }
+    .model-box {
+      background: #ffffff;
+      border-left: 4px solid #004a99;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-top: 0.5rem;
+      font-size: 1.1rem;
+      line-height: 1.5;
+    }
+    /* Print & Media */
+    @media print {
+      #submit-btn, #tts-btn, #print-btn, #edit-btn, #reset-btn { display: none !important; }
+      body { background: #ffffff; margin: 0; }
+    }
+    /* Reset container positioning */
+    #container { position: relative; }
   </style>
 </head>
 <body>
+  <div id="container">
+    <button id="reset-btn">Reset</button>
+    <h1>🤖 Writing Assistant</h1>
+    <form id="feedback-form">
+      <label>❇️ Topic/Title
+        <input type="text" id="topic" placeholder="원하는 주제나 제목을 입력하세요."/>
+      </label>
+      <label>❇️ Keywords 
+        <input type="text" id="keywords" placeholder="단어를 콤마(,)로 구분하여 입력하세요."/>
+      </label>
+      <label>❇️ Text Content
+        <textarea id="contentText" rows="4" placeholder="작성한 글을 여기 옮겨 쓰거나 캡처해서 올려주세요."></textarea>
+      </label>
+      <label>❇️ Image Upload (optional)
+        <input type="file" id="contentFile" accept="image/*"/>
+        <span id="ocr-spinner" class="spinner"></span>
+      </label>
+      <label>❇️ Level
+        <select id="level">
+          <option value="초급">초급(미취학 ~ 초등 3학년)</option>
+          <option value="중급">중급(초등 4 ~ 6 학년)</option>
+          <option value="고급">고급(중등 이상)</option>
+        </select>
+      </label>
+      <button type="submit" id="submit-btn">
+        Submit<span id="submit-spinner" class="spinner"></span>
+      </button>
+    </form>
 
-  <button id="reset-btn">Reset</button>
-  <h1>Writing Feedback</h1>
-  <form id="feedback-form">
-    <label>Topic/Title (optional)
-      <input type="text" id="topic" placeholder="Enter topic or leave blank"/>
-    </label>
-    <label>Keywords (optional)
-      <input type="text" id="keywords" placeholder="Comma-separated keywords"/>
-    </label>
-    <label>Text Content (optional)
-      <textarea id="contentText" rows="4" placeholder="Paste your writing or wait for OCR"></textarea>
-    </label>
-    <label>Image Upload (optional)
-      <input type="file" id="contentFile" accept="image/*"/>
-      <span id="ocr-spinner" class="spinner"></span>
-    </label>
-    <label>Level
-      <select id="level">
-        <option value="초급">초급</option>
-        <option value="중급">중급</option>
-        <option value="고급">고급</option>
-      </select>
-    </label>
-    <button type="submit" id="submit-btn">
-      Submit<span id="submit-spinner" class="spinner"></span>
-    </button>
-  </form>
-
-  <div id="result"></div>
+    <div id="result"></div>
+  </div>
 
   <script>
     const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
@@ -80,25 +166,24 @@
       ta.value = '이미지에서 텍스트 추출 중...';
       spinner.style.display = 'inline-block';
       const b64 = await new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(r.result.split(',')[1]);
-        r.onerror = rej;
-        r.readAsDataURL(file);
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result.split(',')[1]);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
       });
       try {
         const resp = await fetch(PROXY_URL, {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              { role:'user', content:[
-                  { type:'text', text:'Please extract the exact text from the image as it appears. Do not provide any additional commentary or corrections.' },
-                  { type:'image_url', image_url:{ url:`data:${file.type};base64,${b64}` } }
-                ]
-              }
-            ],
-            max_tokens: 500
+            model:'gpt-4o-mini',
+            messages:[{
+              role:'user', content:[
+                { type:'text', text:'Please extract the exact text from the image as it appears. Do not provide any additional commentary or corrections.' },
+                { type:'image_url', image_url:{ url:`data:${file.type};base64,${b64}` } }
+              ]
+            }],
+            max_tokens:500
           })
         });
         if (!resp.ok) throw new Error(resp.statusText);
@@ -124,7 +209,7 @@
         contentText: document.getElementById('contentText').value,
         level: document.getElementById('level').value
       };
-      const res = await fetch(`${WORKER_URL}/api/feedback`, {
+      const res  = await fetch(`${WORKER_URL}/api/feedback`, {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify(payload)
@@ -134,7 +219,7 @@
 
       if (!res.ok) {
         document.getElementById('result').innerHTML =
-          `<p style="color:red;">Error ${res.status}: ${data.error?.message||data.error}</p>`;
+          `<p style="color:#cc0000;">Error ${res.status}: ${data.error?.message||data.error}</p>`;
         return;
       }
 
@@ -148,7 +233,7 @@
         </div>
         <button id="tts-btn">Generate TTS</button>
         <audio id="tts-audio" controls style="display:none;"></audio>
-        <a id="download-link" style="display:none;margin-top:1rem;display:block;">Download Audio</a>
+        <a id="download-link" style="display:none; margin-top:1rem; display:block;">Download Audio</a>
         <button id="print-btn" type="button">Print Model Answer<span id="print-spinner" class="spinner"></span></button>
       `;
 
