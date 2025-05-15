@@ -93,13 +93,15 @@
       display: none;
       width: 16px;
       height: 16px;
-      border: 2px solid #0066cc;
+      border: 2px solid #FF5722;
       border-top: 2px solid transparent;
       border-radius: 50%;
       animation: spin 1s linear infinite;
       vertical-align: middle;
       margin-left: 0.5rem;
     }
+
+    
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Result Boxes */
@@ -133,7 +135,7 @@
 
     /* Hide download link until TTS completes */
     #download-link {
-      display: none;
+      display: none !important;
       color: #0066cc;
       text-decoration: none;
       font-weight: 600;
@@ -367,12 +369,11 @@
 </head>
 <body>
   <header>
-    <img src="worksheet.jpg" alt="School Logo"/>
+    <img src="logo.png" alt="School Logo"/>
     <h2>Speech Contest</h2>
     <p>Student Name: _____________________  Date: ________________</p>
   </header>
   <section class="answer">
-    <h3>Model Answer</h3>
     <div id="print-content">
       ${document.getElementById('model-answer-box').innerHTML}
     </div>
