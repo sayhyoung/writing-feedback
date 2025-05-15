@@ -32,17 +32,22 @@
     }
 
     /* Reset button under heading */
-    #reset-btn {
-      background-color: #ffffff;
-      color: #0066cc;
-      border: 1px solid #0066cc;
-      border-radius: 4px;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
+#reset-btn {
+  background-color: #ffffff;
+  color: #0066cc;
+  border: 1px solid #0066cc;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+
+  /* 이 두 줄로 중앙 정렬 */
+  display: block;
+  margin: 0 auto 1rem;
+
+  transition: background-color 0.2s ease;
+}
+
       
-      display: block;
-      margin: 0 auto 1rem;
-      transition: background-color 0.2s ease;
     }
     #reset-btn:hover {
       background-color: #e9f5ff;
