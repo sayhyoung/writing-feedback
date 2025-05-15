@@ -161,7 +161,7 @@
         <input type="text" id="keywords" placeholder="단어를 콤마(,)로 구분하여 입력하세요."/>
       </label>
       <label>❇️ Text Content
-        <textarea id="contentText" rows="4" placeholder="작성한 글을 여기 옮겨 쓰거나 캡처해서 올려주세요."></textarea>
+        <textarea id="contentText" rows="8" placeholder="작성한 글을 여기 옮겨 쓰거나 캡처해서 올려주세요."></textarea>
       </label>
       <label>❇️ Image Upload (optional)
         <input type="file" id="contentFile" accept="image/*"/>
@@ -267,7 +267,7 @@
           <div class="model-box" id="model-answer-box">${modelAnswer.replace(/\n/g,'<br>')}</div>
           <button id="edit-btn" type="button">Edit</button>
         </div>
-        <button id="tts-btn">Generate TTS<span id="tts-spinner" class="spinner"></span></button>
+        <button id="tts-btn">원어민 음성 듣기<span id="tts-spinner" class="spinner"></span></button>
         <audio id="tts-audio" controls style="display:none;"></audio>
         <a id="download-link">Download Audio</a>
         <button id="print-btn" type="button">Print Model Answer<span id="print-spinner" class="spinner"></span></button>
