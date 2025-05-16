@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,7 +31,7 @@
       margin-bottom: 0.5rem;
     }
 
-    /* Reset button under heading, right-aligned */
+    /* Reset button */
     #reset-btn {
       background-color: #ffffff;
       color: #0066cc;
@@ -42,11 +41,9 @@
       cursor: pointer;
       display: block;
       margin: 0 0 1rem auto;
-      transition: background-color 0.2s ease;
+      transition: background-color 0.2s;
     }
-    #reset-btn:hover {
-      background-color: #e9f5ff;
-    }
+    #reset-btn:hover { background-color: #e9f5ff; }
 
     /* Form */
     form {
@@ -62,8 +59,7 @@
       font-weight: 600;
       color: #004a99;
     }
-    textarea,
-    input[type="file"] {
+    textarea, input[type="file"] {
       width: 100%;
       padding: 0.5rem;
       border: 1px solid #cbd7e0;
@@ -77,21 +73,20 @@
     /* Buttons */
     button {
       background-color: #0066cc;
-      color: #ffffff;
+      color: #fff;
       border: none;
       border-radius: 4px;
       padding: 0.75rem 1.5rem;
       font-size: 1rem;
       cursor: pointer;
-      transition: background-color 0.2s ease;
+      transition: background-color 0.2s;
     }
-    button:hover {
-      background-color: #0052a3;
-    }
+    button:hover { background-color: #0052a3; }
+
+    /* Spinners */
     .spinner {
       display: none;
-      width: 16px;
-      height: 16px;
+      width: 16px; height: 16px;
       border: 2px solid #0066cc;
       border-top: 2px solid transparent;
       border-radius: 50%;
@@ -100,7 +95,7 @@
       margin-left: 0.5rem;
     }
     #tts-spinner {
-      border: 2px solid red;
+      border: 2px solid red;  /* TTS spinner in red */
       border-top: 2px solid transparent;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -114,7 +109,7 @@
       margin-top: 1rem;
     }
     .model-box {
-      background: #ffffff;
+      background: #fff;
       border-left: 4px solid #004a99;
       padding: 1rem;
       border-radius: 4px;
@@ -134,7 +129,7 @@
       margin-top: 1rem;
     }
 
-    /* Hide download link until TTS completes */
+    /* Hide download link until after TTS */
     #download-link {
       display: none;
       color: #0066cc;
@@ -142,10 +137,9 @@
       font-weight: 600;
     }
 
-    /* Print & Media */
     @media print {
-      #submit-btn, #tts-btn, #print-btn, #edit-btn, #reset-btn { display: none !important; }
-      body { background: #ffffff; margin: 0; }
+      #submit-btn,#tts-btn,#print-btn,#edit-btn,#reset-btn { display: none !important; }
+      body { background: #fff; margin: 0; }
     }
   </style>
 </head>
