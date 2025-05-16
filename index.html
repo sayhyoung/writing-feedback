@@ -31,7 +31,7 @@
       margin-bottom: 0.5rem;
     }
 
-    /* Reset button */
+    /* Reset button under heading, right-aligned */
     #reset-btn {
       background-color: #ffffff;
       color: #0066cc;
@@ -41,9 +41,11 @@
       cursor: pointer;
       display: block;
       margin: 0 0 1rem auto;
-      transition: background-color 0.2s;
+      transition: background-color 0.2s ease;
     }
-    #reset-btn:hover { background-color: #e9f5ff; }
+    #reset-btn:hover {
+      background-color: #e9f5ff;
+    }
 
     /* Form */
     form {
@@ -59,7 +61,10 @@
       font-weight: 600;
       color: #004a99;
     }
-    textarea, input[type="file"] {
+    input[type="text"],
+    select,
+    textarea,
+    input[type="file"] {
       width: 100%;
       padding: 0.5rem;
       border: 1px solid #cbd7e0;
@@ -73,31 +78,30 @@
     /* Buttons */
     button {
       background-color: #0066cc;
-      color: #fff;
+      color: #ffffff;
       border: none;
       border-radius: 4px;
       padding: 0.75rem 1.5rem;
       font-size: 1rem;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: background-color 0.2s ease;
     }
-    button:hover { background-color: #0052a3; }
-
-    /* Spinners */
+    button:hover {
+      background-color: #0052a3;
+    }
     .spinner {
       display: none;
-      width: 16px; height: 16px;
-      border: 2px solid #0066cc;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #FF5722;
       border-top: 2px solid transparent;
       border-radius: 50%;
       animation: spin 1s linear infinite;
       vertical-align: middle;
       margin-left: 0.5rem;
     }
-    #tts-spinner {
-      border: 2px solid red;  /* TTS spinner in red */
-      border-top: 2px solid transparent;
-    }
+
+    
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Result Boxes */
@@ -109,7 +113,7 @@
       margin-top: 1rem;
     }
     .model-box {
-      background: #fff;
+      background: #ffffff;
       border-left: 4px solid #004a99;
       padding: 1rem;
       border-radius: 4px;
@@ -129,7 +133,7 @@
       margin-top: 1rem;
     }
 
-    /* Hide download link until after TTS */
+    /* Hide download link until TTS completes */
     #download-link {
       display: none;
       color: #0066cc;
@@ -137,9 +141,10 @@
       font-weight: 600;
     }
 
+    /* Print & Media */
     @media print {
-      #submit-btn,#tts-btn,#print-btn,#edit-btn,#reset-btn { display: none !important; }
-      body { background: #fff; margin: 0; }
+      #submit-btn, #tts-btn, #print-btn, #edit-btn, #reset-btn { display: none !important; }
+      body { background: #ffffff; margin: 0; }
     }
   </style>
 </head>
@@ -149,12 +154,25 @@
     <button id="reset-btn">Reset</button>
 
     <form id="feedback-form">
+      <label>❇️ Topic/Title
+        <input type="text" id="topic" placeholder="원하는 주제나 제목을 입력하세요."/>
+      </label>
+      <label>❇️ Keywords
+        <input type="text" id="keywords" placeholder="단어를 콤마(,)로 구분하여 입력하세요."/>
+      </label>
       <label>❇️ Text Content
-        <textarea id="contentText" rows="6" placeholder="작성한 글을 여기 입력하세요."></textarea>
+        <textarea id="contentText" rows="8" placeholder="작성한 글을 여기 옮겨 쓰거나 캡처해서 올려주세요."></textarea>
       </label>
       <label>❇️ Image Upload (optional)
         <input type="file" id="contentFile" accept="image/*"/>
         <span id="ocr-spinner" class="spinner"></span>
+      </label>
+      <label>❇️ Level
+        <select id="level">
+          <option value="초급">초급(미취학 ~ 초등 3학년)</option>
+          <option value="중급">중급(초등 4 ~ 6학년)</option>
+          <option value="고급">고급(중등 이상)</option>
+        </select>
       </label>
       <button type="submit" id="submit-btn">
         Submit<span id="submit-spinner" class="spinner"></span>
@@ -164,6 +182,216 @@
     <div id="result"></div>
   </div>
 
-  <script src="index.js"></script>
+  <script>
+    const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
+    const PROXY_URL  = `${WORKER_URL}/proxy`;
+
+    // Reset
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      document.getElementById('feedback-form').reset();
+      document.getElementById('result').innerHTML = '';
+      document.getElementById('contentFile').value = '';
+    });
+
+    // OCR
+    document.getElementById('contentFile').addEventListener('change', async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const ta = document.getElementById('contentText');
+      const spinner = document.getElementById('ocr-spinner');
+      ta.value = '이미지에서 텍스트 추출 중...';
+      spinner.style.display = 'inline-block';
+      const b64 = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result.split(',')[1]);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+      try {
+        const resp = await fetch(PROXY_URL, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [{
+              role: 'user', content: [
+                { type:'text', text:'Please extract the exact text from the image as it appears. Do not provide any additional commentary or corrections.' },
+                { type:'image_url', image_url:{ url:`data:${file.type};base64,${b64}` } }
+              ]
+            }],
+            max_tokens: 500
+          })
+        });
+        if (!resp.ok) throw new Error(resp.statusText);
+        const { choices } = await resp.json();
+        ta.value = choices?.[0]?.message?.content?.trim() || '';
+      } catch(err) {
+        ta.value = 'OCR 에러: ' + err.message;
+      } finally {
+        spinner.style.display = 'none';
+      }
+    });
+
+    // Submit
+    document.getElementById('feedback-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const sp  = document.getElementById('submit-spinner');
+      btn.disabled = true; sp.style.display = 'inline-block';
+
+      const payload = {
+        topic: document.getElementById('topic').value,
+        keywords: document.getElementById('keywords').value,
+        contentText: document.getElementById('contentText').value,
+        level: document.getElementById('level').value
+      };
+      const res  = await fetch(`${WORKER_URL}/api/feedback`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      btn.disabled = false; sp.style.display = 'none';
+
+      if (!res.ok) {
+        document.getElementById('result').innerHTML =
+          `<p style="color:#cc0000;">Error ${res.status}: ${data.error?.message||data.error}</p>`;
+        return;
+      }
+
+      const { feedback, modelAnswer } = data;
+      document.getElementById('result').innerHTML = `
+        <div class="box"><h2>Feedback</h2><div>${feedback.replace(/\n/g,'<br>')}</div></div>
+        <div class="box">
+          <h2>Model Answer</h2>
+          <div class="model-box" id="model-answer-box">${modelAnswer.replace(/\n/g,'<br>')}</div>
+          <button id="edit-btn" type="button">Edit</button>
+        </div>
+        <button id="tts-btn">원어민 음성 듣기<span id="tts-spinner" class="spinner"></span></button>
+        <audio id="tts-audio" controls style="display:none;"></audio>
+        <a id="download-link">Download Audio</a>
+        <button id="print-btn" type="button">Print Model Answer<span id="print-spinner" class="spinner"></span></button>
+      `;
+
+      // Edit/Save toggle
+      document.getElementById('edit-btn').addEventListener('click', () => {
+        const editBtn = document.getElementById('edit-btn');
+        const isSave = editBtn.textContent === 'Save';
+        if (!isSave) {
+          const div = document.getElementById('model-answer-box');
+          const ta  = document.createElement('textarea');
+          ta.id = 'model-answer-edit';
+          ta.style.width = '100%';
+          ta.style.height = '200px';
+          ta.value = div.innerText;
+          div.replaceWith(ta);
+          editBtn.textContent = 'Save';
+        } else {
+          const ta = document.getElementById('model-answer-edit');
+          const newDiv = document.createElement('div');
+          newDiv.className = 'model-box';
+          newDiv.id = 'model-answer-box';
+          newDiv.innerHTML = ta.value.replace(/\n/g,'<br>');
+          ta.replaceWith(newDiv);
+          editBtn.textContent = 'Edit';
+        }
+      });
+
+      // TTS
+      document.getElementById('tts-btn').addEventListener('click', async () => {
+        const ttsBtn     = document.getElementById('tts-btn');
+        const ttsSpinner = document.getElementById('tts-spinner');
+        const download   = document.getElementById('download-link');
+        const audioEl    = document.getElementById('tts-audio');
+
+        ttsBtn.disabled = true;
+        ttsSpinner.style.display = 'inline-block';
+        download.style.display = 'none';
+
+        const text = document.getElementById('model-answer-box').innerText;
+        const res  = await fetch(`${WORKER_URL}/api/tts`, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ text })
+        });
+
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+
+        audioEl.src           = url;
+        audioEl.style.display = 'block';
+
+        const topicValue   = document.getElementById('topic').value.trim() || 'model-answer';
+        const safeFilename = topicValue.replace(/[\\\/:*?"<>|]/g, '_');
+        download.href        = url;
+        download.download    = `${safeFilename}.mp3`;
+        download.style.display = 'block';
+
+        ttsSpinner.style.display = 'none';
+        ttsBtn.disabled          = false;
+      });
+
+      // Print with template
+      document.getElementById('print-btn').addEventListener('click', () => {
+        const printBtn = document.getElementById('print-btn');
+        const spinner  = document.getElementById('print-spinner');
+        printBtn.disabled = true;
+        spinner.style.display = 'inline-block';
+
+        const w = window.open('', '_blank',
+          `width=${screen.availWidth},height=${screen.availHeight}`);
+        w.document.write(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Speech Contest</title>
+  <style>
+    body { font-family: sans-serif; margin: 2cm; }
+    header { text-align: center; margin-bottom: 1.5cm; }
+    header img { max-height: 80px; margin-bottom: 0.5rem; }
+    header h2 { margin: 0; font-size: 1.4rem; color: #004a99; }
+    header p { margin-top: 0.5rem; }
+    section.answer {
+      margin-top: 1cm;
+      padding: 1cm;
+      border: 2px dashed #0066cc;
+      min-height: 10cm;
+    }
+    section.answer h3 {
+      margin-top: 0; color: #0066cc;
+    }
+    @media print {
+      header, section { page-break-inside: avoid; }
+      button { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="logo.png" alt="School Logo"/>
+    <h2>Speech Contest</h2>
+    <p>Student Name: _____________________  Date: ________________</p>
+  </header>
+  <section class="answer">
+    <div id="print-content">
+      ${document.getElementById('model-answer-box').innerHTML}
+    </div>
+  </section>
+  <script>
+    window.onload = () => {
+      window.print();
+      window.onafterprint = () => window.close();
+    };
+  <\/script>
+</body>
+</html>
+        `);
+        w.document.close();
+        spinner.style.display = 'none';
+        printBtn.disabled = false;
+      });
+    });
+  </script>
 </body>
 </html>
