@@ -227,11 +227,8 @@
       btn.disabled = true; sp.style.display = 'inline-block';
 
       const payload = {
-        topic: document.getElementById('topic').value,
-        keywords: document.getElementById('keywords').value,
         contentText: document.getElementById('contentText').value,
-        level: document.getElementById('level').value
-      };
+              };
       const res  = await fetch(`${WORKER_URL}/api/feedback`, {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
