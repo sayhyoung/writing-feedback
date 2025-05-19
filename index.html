@@ -166,14 +166,18 @@
 
     /* Print & Media - Original Template */
     @media print {
-      #submit-btn, #tts-btn, #print-btn, #reset-btn, .print-options { display: none !important; }
-      body { background: #ffffff; margin: 0; }
+   #submit-btn, #tts-btn, #print-btn, #reset-btn, .print-options { display: none !important; }
+  body { background: #ffffff; margin: 0; }
 
-      /* Styles from original print template */
-      .print-header {
-        text-align: center;
-        margin-bottom: 1.5cm;
-      }
+  /* section에서 page-break-inside: avoid 속성을 제거 */
+  header { page-break-inside: avoid; }
+
+  /* Styles from original print template */
+  .print-header {
+    text-align: center;
+    margin-bottom: 1.5cm;
+    margin-top: 0; /* 혹은 조정된 값 */
+  }
       .print-header img {
         max-height: 80px;
         margin-bottom: 0.5rem;
@@ -411,7 +415,7 @@
   <title>Writing Assistant Print</title>
   <style>
     body { font-family: sans-serif; margin: 2cm; }
-    .print-header { text-align: center; margin-bottom: 1.5cm; margin-top: -1; }
+    .print-header { text-align: center; margin-bottom: 1.5cm; }
     .print-header img { max-height: 80px; margin-bottom: 0.5rem; }
     .print-header h2 { margin: 0; font-size: 1.4rem; color: #004a99; }
     .print-header p { margin-top: 0.5rem; }
