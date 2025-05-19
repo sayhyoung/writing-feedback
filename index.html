@@ -85,7 +85,12 @@
       font-size: 1rem;
       cursor: pointer;
       transition: background-color 0.2s ease;
+      margin-top: 1rem; /* Added margin-top for button spacing */
     }
+     button + button { /* Added margin between buttons */
+       margin-left: 0.5rem;
+       margin-top: 1rem;
+     }
     button:hover {
       background-color: #0052a3;
     }
@@ -107,14 +112,12 @@
     /* Result Boxes */
     .box {
       background: #e9f5ff;
-      /* border-left: 4px solid #0066cc; */ /* Removed left border */
       border-radius: 4px;
       padding: 1rem;
       margin-top: 1rem;
     }
     .model-box {
       background: #ffffff;
-      /* border-left: 4px solid #004a99; */ /* Removed left border */
       padding: 1rem;
       border-radius: 4px;
       margin-top: 0.5rem;
@@ -125,13 +128,18 @@
     /* Action controls spacing */
     #result button,
     #result a#download-link {
-      display: block;
+      display: inline-block; /* Changed to inline-block for horizontal layout */
       margin-top: 1.5rem;
+      margin-right: 1rem; /* Added margin-right for spacing between action items */
     }
-    #result button + button,
-    #result button + a#download-link {
-      margin-top: 1rem;
+     #result a#download-link { /* Ensure download link is not block */
+         display: none;
+     }
+    #result button:last-child,
+    #result a#download-link:last-child {
+        margin-right: 0;
     }
+
 
     /* Hide download link until TTS completes */
     #download-link {
@@ -141,10 +149,71 @@
       font-weight: 600;
     }
 
-    /* Print & Media */
+     /* Print Options Modal */
+    .print-options {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        border: 1px solid #cbd7e0;
+        border-radius: 4px;
+        background: #f9fcff;
+        display: none; /* Hidden by default */
+    }
+    .print-options label {
+        display: inline-block;
+        margin-right: 1rem;
+        font-weight: normal;
+    }
+
+    /* Print & Media - Original Template */
     @media print {
-      #submit-btn, #tts-btn, #print-btn, #reset-btn { display: none !important; } /* Removed #edit-btn from here */
+      #submit-btn, #tts-btn, #print-btn, #reset-btn, .print-options { display: none !important; }
       body { background: #ffffff; margin: 0; }
+
+      /* Styles from original print template */
+      .print-header {
+        text-align: center;
+        margin-bottom: 1.5cm;
+      }
+      .print-header img {
+        max-height: 80px;
+        margin-bottom: 0.5rem;
+      }
+      .print-header h2 {
+        margin: 0;
+        font-size: 1.4rem;
+        color: #004a99;
+      }
+      .print-header p {
+        margin-top: 0.5rem;
+      }
+      .print-section {
+        margin-top: 1cm;
+        padding: 1cm;
+        border: 2px dashed #0066cc;
+        min-height: 10cm;
+      }
+       .print-section.no-border { /* Added class for sections without border */
+           border: none;
+           padding: 0;
+           margin-top: 0;
+       }
+      .print-section h3 {
+        margin-top: 0;
+        color: #0066cc;
+      }
+       .print-content-item { /* Style for individual printed items (Feedback/수정글) */
+            margin-bottom: 1cm;
+            padding-bottom: 1cm;
+            border-bottom: 1px dashed #ccc;
+       }
+       .print-content-item:last-child {
+           margin-bottom: 0;
+           padding-bottom: 0;
+           border-bottom: none;
+       }
+        .print-content-item h3 {
+            color: #004a99; /* Different color for item titles */
+        }
     }
   </style>
 </head>
@@ -247,14 +316,18 @@
       document.getElementById('result').innerHTML = `
         <div class="box" id="feedback-box"><h2>Feedback</h2><div id="feedback-content">${feedback.replace(/\n/g,'<br>')}</div></div>
         <div class="box" id="model-answer-container">
-          <h2>Model Answer</h2>
+          <h2>수정글</h2>
           <div class="model-box" id="model-answer-box">${modelAnswer.replace(/\n/g,'<br>')}</div>
         </div>
         <button id="tts-btn">원어민 음성 듣기<span id="tts-spinner" class="spinner"></span></button>
         <audio id="tts-audio" controls style="display:none;"></audio>
         <a id="download-link">Download Audio</a>
-        <button id="print-feedback-btn" type="button">Print Feedback</button>
-        <button id="print-model-answer-btn" type="button">Print Model Answer</button>
+        <button id="print-btn" type="button">Print</button>
+        <div class="print-options" id="print-options">
+            <label><input type="checkbox" id="print-feedback" checked> Feedback</label>
+            <label><input type="checkbox" id="print-model-answer" checked> 수정글</label>
+            <button id="confirm-print-btn">Confirm Print</button>
+        </div>
       `;
 
       // TTS
@@ -267,6 +340,7 @@
         ttsBtn.disabled = true;
         ttsSpinner.style.display = 'inline-block';
         download.style.display = 'none'; // Ensure download link is hidden before TTS
+        audioEl.style.display = 'none'; // Ensure audio player is hidden before TTS
 
         const text = document.getElementById('model-answer-box').innerText;
         const res  = await fetch(`${WORKER_URL}/api/tts`, {
@@ -279,52 +353,109 @@
         const url  = URL.createObjectURL(blob);
 
         audioEl.src           = url;
-        audioEl.style.display = 'block';
-
-        // Hide spinner and show download link after audio is ready
-        ttsSpinner.style.display = 'none';
+        audioEl.style.display = 'block'; // Show audio player
+        ttsSpinner.style.display = 'none'; // Hide spinner
         ttsBtn.disabled          = false;
 
-        const safeFilename = 'model-answer'.replace(/[\\\/:*?"<>|]/g, '_'); // Use a fixed filename or derive from content if needed
+        const safeFilename = 'model-answer'.replace(/[\\\/:*?"<>|]/g, '_');
         download.href        = url;
         download.download    = `${safeFilename}.mp3`;
-        download.style.display = 'block';
+        download.style.display = 'block'; // Show download link
       });
 
-      // Print Feedback
-      document.getElementById('print-feedback-btn').addEventListener('click', () => {
-        const contentToPrint = document.getElementById('feedback-content').innerHTML;
-        printContent(contentToPrint, 'Feedback');
+      // Print Button - Show Options
+      document.getElementById('print-btn').addEventListener('click', () => {
+          const printOptionsDiv = document.getElementById('print-options');
+          printOptionsDiv.style.display = 'block';
       });
 
-      // Print Model Answer
-      document.getElementById('print-model-answer-btn').addEventListener('click', () => {
-        const contentToPrint = document.getElementById('model-answer-box').innerHTML;
-        printContent(contentToPrint, 'Model Answer');
-      });
+      // Confirm Print Button - Handle Print Logic
+      document.getElementById('confirm-print-btn').addEventListener('click', () => {
+          const printFeedback = document.getElementById('print-feedback').checked;
+          const printModelAnswer = document.getElementById('print-model-answer').checked;
+          const feedbackContent = document.getElementById('feedback-content').innerHTML;
+          const modelAnswerContent = document.getElementById('model-answer-box').innerHTML;
 
-      function printContent(content, title) {
-        const w = window.open('', '_blank',
-          `width=${screen.availWidth},height=${screen.availHeight}`);
-        w.document.write(`
+          let contentToPrint = '';
+
+          if (printFeedback) {
+              contentToPrint += `
+                  <div class="print-content-item">
+                      <h3>Feedback</h3>
+                      <div>${feedbackContent}</div>
+                  </div>
+              `;
+          }
+
+          if (printModelAnswer) {
+               contentToPrint += `
+                  <div class="print-content-item">
+                      <h3>수정글</h3>
+                      <div>${modelAnswerContent}</div>
+                  </div>
+              `;
+          }
+
+           if (contentToPrint === '') {
+                alert("Please select at least one item to print.");
+                return;
+            }
+
+
+          // Use the original print template structure
+          const printWindowHtml = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <title>${title}</title>
+  <title>Writing Assistant Print</title>
   <style>
     body { font-family: sans-serif; margin: 2cm; }
-    h2 { color: #004a99; }
-    .content { margin-top: 1cm; }
+    .print-header { text-align: center; margin-bottom: 1.5cm; }
+    .print-header img { max-height: 80px; margin-bottom: 0.5rem; }
+    .print-header h2 { margin: 0; font-size: 1.4rem; color: #004a99; }
+    .print-header p { margin-top: 0.5rem; }
+    .print-section {
+      margin-top: 1cm;
+      padding: 1cm;
+      border: 2px dashed #0066cc;
+      min-height: 10cm;
+    }
+     .print-section.no-border {
+         border: none;
+         padding: 0;
+         margin-top: 0;
+     }
+    .print-section h3 {
+      margin-top: 0; color: #0066cc;
+    }
+    .print-content-item {
+            margin-bottom: 1cm;
+            padding-bottom: 1cm;
+            border-bottom: 1px dashed #ccc;
+       }
+       .print-content-item:last-child {
+           margin-bottom: 0;
+           padding-bottom: 0;
+           border-bottom: none;
+       }
+        .print-content-item h3 {
+            color: #004a99;
+        }
     @media print {
+      header, section { page-break-inside: avoid; }
       button { display: none; }
+      .print-options { display: none !important; } /* Hide print options in print view */
     }
   </style>
 </head>
 <body>
-  <h2>${title}</h2>
-  <section class="content">
-    ${content}
+  <header class="print-header">
+    <img src="logo.png" alt="School Logo"/> <h2>Writing Assistant Printout</h2> <p>Student Name: _____________________  Date: ________________</p>
+  </header>
+  <section class="print-section no-border"> <div id="print-content">
+      ${contentToPrint}
+    </div>
   </section>
   <script>
     window.onload = () => {
@@ -334,9 +465,16 @@
   <\/script>
 </body>
 </html>
-        `);
+          `;
+
+        const w = window.open('', '_blank',
+          `width=${screen.availWidth},height=${screen.availHeight}`);
+        w.document.write(printWindowHtml);
         w.document.close();
-      }
+
+         // Hide print options after confirming
+        document.getElementById('print-options').style.display = 'none';
+      });
     });
   </script>
 </body>
