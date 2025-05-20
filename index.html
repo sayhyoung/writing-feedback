@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -225,4 +224,304 @@
            padding-bottom: 0;
            border-bottom: none;
        }
-        .print-content-item
+        .print-content-item h3 {
+            color: #004a99;
+        }
+
+      button { display: none; } /* Ensure buttons are hidden in print */
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h1>🤖 Writing Assistant</h1>
+    <button id="reset-btn">Reset</button>
+
+    <form id="feedback-form">
+          <label>❇️ Text Content
+        <textarea id="contentText" rows="8" placeholder="작성한 글을 여기 옮겨 쓰거나 캡처해서 올려주세요."></textarea>
+      </label>
+      <label>❇️ Image Upload (optional)
+        <input type="file" id="contentFile" accept="image/*"/>
+        <span id="ocr-spinner" class="spinner"></span>
+      </label>
+      <button type="submit" id="submit-btn">
+        Submit<span id="submit-spinner" class="spinner"></span>
+      </button>
+    </form>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
+    const PROXY_URL  = `${WORKER_URL}/proxy`;
+
+    // Reset
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      document.getElementById('feedback-form').reset();
+      document.getElementById('result').innerHTML = '';
+      document.getElementById('contentFile').value = '';
+    });
+
+    // OCR
+    document.getElementById('contentFile').addEventListener('change', async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const ta = document.getElementById('contentText');
+      const spinner = document.getElementById('ocr-spinner');
+      ta.value = '이미지에서 텍스트 추출 중...';
+      spinner.style.display = 'inline-block';
+      const b64 = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result.split(',')[1]);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+      try {
+        const resp = await fetch(PROXY_URL, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [{
+              role: 'user', content: [
+                { type:'text', text:'Please extract the exact text from the image as it appears. Do not provide any additional commentary or corrections.' },
+                { type:'image_url', image_url:{ url:`data:${file.type};base64,${b64}` } }
+              ]
+            }],
+            max_tokens: 500
+          })
+        });
+        if (!resp.ok) throw new Error(resp.statusText);
+        const { choices } = await resp.json();
+        ta.value = choices?.[0]?.message?.content?.trim() || '';
+      } catch(err) {
+        ta.value = 'OCR 에러: ' + err.message;
+      } finally {
+        spinner.style.display = 'none';
+      }
+    });
+
+    // Submit
+    document.getElementById('feedback-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const sp  = document.getElementById('submit-spinner');
+      btn.disabled = true; sp.style.display = 'inline-block';
+
+      const payload = {
+        contentText: document.getElementById('contentText').value,
+              };
+      const res  = await fetch(`${WORKER_URL}/api/feedback`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      btn.disabled = false; sp.style.display = 'none';
+
+      if (!res.ok) {
+        document.getElementById('result').innerHTML =
+          `<p style="color:#cc0000;">Error ${res.status}: ${data.error?.message||data.error}</p>`;
+        return;
+      }
+
+      const { feedback, modelAnswer } = data;
+      document.getElementById('result').innerHTML = `
+        <div class="box" id="feedback-box"><h2>Feedback</h2><div id="feedback-content">${feedback.replace(/\n/g,'<br>')}</div></div>
+        <div class="box" id="model-answer-container">
+          <h2>수정글</h2>
+          <div class="model-box" id="model-answer-box">${modelAnswer.replace(/\n/g,'<br>')}</div>
+        </div>
+        <button id="tts-btn">원어민 음성 듣기<span id="tts-spinner" class="spinner"></span></button>
+        <audio id="tts-audio" controls style="display:none;"></audio>
+        <a id="download-link">Download Audio</a>
+        <button id="print-btn" type="button">Print</button>
+        <div class="print-options" id="print-options">
+            <label><input type="checkbox" id="print-feedback" checked> Feedback</label>
+            <label><input type="checkbox" id="print-model-answer" checked> 수정글</label>
+            <button id="confirm-print-btn">Confirm Print</button>
+        </div>
+      `;
+
+      // TTS
+      document.getElementById('tts-btn').addEventListener('click', async () => {
+        const ttsBtn     = document.getElementById('tts-btn');
+        const ttsSpinner = document.getElementById('tts-spinner');
+        const download   = document.getElementById('download-link');
+        const audioEl    = document.getElementById('tts-audio');
+
+        ttsBtn.disabled = true;
+        ttsSpinner.style.display = 'inline-block';
+        download.style.display = 'none'; // Ensure download link is hidden before TTS
+        audioEl.style.display = 'none'; // Ensure audio player is hidden before TTS
+
+        const text = document.getElementById('model-answer-box').innerText;
+        const res  = await fetch(`${WORKER_URL}/api/tts`, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ text })
+        });
+
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+
+        audioEl.src           = url;
+        audioEl.style.display = 'block'; // Show audio player
+        ttsSpinner.style.display = 'none'; // Hide spinner
+        ttsBtn.disabled          = false;
+
+        const safeFilename = 'model-answer'.replace(/[\\\/:*?"<>|]/g, '_');
+        download.href        = url;
+        download.download    = `${safeFilename}.mp3`;
+        download.style.display = 'block'; // Show download link
+      });
+
+      // Print Button - Show Options
+      document.getElementById('print-btn').addEventListener('click', () => {
+          const printOptionsDiv = document.getElementById('print-options');
+          // Toggle visibility
+          if (printOptionsDiv.style.display === 'block') {
+              printOptionsDiv.style.display = 'none';
+          } else {
+              printOptionsDiv.style.display = 'block';
+          }
+      });
+
+      // Confirm Print Button - Handle Print Logic
+      document.getElementById('confirm-print-btn').addEventListener('click', () => {
+          const printFeedback = document.getElementById('print-feedback').checked;
+          const printModelAnswer = document.getElementById('print-model-answer').checked;
+          const feedbackContent = document.getElementById('feedback-content').innerHTML;
+          const modelAnswerContent = document.getElementById('model-answer-box').innerHTML;
+
+          let contentToPrint = '';
+
+          if (printFeedback) {
+              contentToPrint += `
+                  <div class="print-content-item">
+                      <h3>Feedback</h3>
+                      <div>${feedbackContent}</div>
+                  </div>
+              `;
+          }
+
+          if (printModelAnswer) {
+               contentToPrint += `
+                  <div class="print-content-item">
+                      <h3>수정글</h3>
+                      <div>${modelAnswerContent}</div>
+                  </div>
+              `;
+          }
+
+           if (contentToPrint === '') {
+                alert("Please select at least one item to print.");
+                return;
+            }
+
+
+          // Use the original print template structure
+          const printWindowHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Writing Assistant Print</title>
+  <style>
+    body { font-family: sans-serif; margin: 2cm; }
+    .print-header { text-align: center; margin-bottom: 1.5cm; margin-top: 0; }
+    .print-header img { max-height: 80px; margin-bottom: 0.5rem; }
+    .print-header h2 { margin: 0; font-size: 1.4rem; color: #004a99; }
+    .print-header p { margin-top: 0.5rem; }
+    .print-section {
+      margin-top: 1cm;
+      padding: 1cm;
+      border: 2px dashed #0066cc;
+      min-height: 10cm;
+    }
+    .print-content-item {
+            margin-bottom: 1cm;
+            padding-bottom: 1cm;
+            border-bottom: 1px dashed #ccc;
+       }
+       .print-content-item:last-child {
+           margin-bottom: 0;
+           padding-bottom: 0;
+           border-bottom: none;
+       }
+        .print-content-item h3 {
+            color: #004a99;
+        }
+    @media print {
+      /* Header should not break */
+      header { page-break-inside: avoid; }
+      /* Section can break across pages */
+      section { page-break-inside: auto; }
+
+      button { display: none; }
+      .print-options { display: none !important; }
+
+       /* Ensure print styles for main elements are applied */
+        .print-header {
+            text-align: center;
+            margin-bottom: 1.5cm;
+            margin-top: 0; /* Apply 로고 위로 올리기 in print */
+        }
+        .print-header img { max-height: 80px; margin-bottom: 0.5rem; }
+        .print-header h2 { margin: 0; font-size: 1.4rem; color: #004a99; }
+        .print-header p { margin-top: 0.5rem; }
+        .print-section {
+            margin-top: 1cm;
+            padding: 1cm;
+            border: 2px dashed #0066cc;
+            min-height: 10cm;
+        }
+        .print-content-item { /* Re-apply item styles for clarity */
+            margin-bottom: 1cm;
+            padding-bottom: 1cm;
+            border-bottom: 1px dashed #ccc;
+       }
+       .print-content-item:last-child {
+           margin-bottom: 0;
+           padding-bottom: 0;
+           border-bottom: none;
+       }
+        .print-content-item h3 {
+            color: #004a99;
+        }
+    }
+  </style>
+</head>
+<body>
+  <header class="print-header">
+    <img src="logo.png" alt="School Logo"/> <h2>Writing Assistant Printout</h2>
+    <p>Student Name: _____________________  Date: ________________</p>
+  </header>
+  <section class="print-section"> <div id="print-content">
+      ${contentToPrint}
+    </div>
+  </section>
+  <script>
+    window.onload = () => {
+      window.print();
+      window.onafterprint = () => window.close();
+    };
+  <\/script>
+</body>
+</html>
+          `;
+
+        const w = window.open('', '_blank',
+          `width=${screen.availWidth},height=${screen.availHeight}`);
+        w.document.write(printWindowHtml);
+        w.document.close();
+
+         // Hide print options after confirming
+        document.getElementById('print-options').style.display = 'none';
+      });
+    });
+  </script>
+</body>
+</html>
