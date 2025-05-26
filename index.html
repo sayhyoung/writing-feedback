@@ -120,6 +120,16 @@
     const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
     const PROXY_URL  = WORKER_URL + '/proxy';
 
+    // Reset 버튼 기능 추가
+    document.getElementById('reset-btn').onclick = () => {
+      document.getElementById('contentText-feedback').value = '';
+      document.getElementById('contentText-final').value = '';
+      document.getElementById('feedback-result').innerHTML = '';
+      document.getElementById('final-result').innerHTML = '';
+      document.getElementById('contentFile-feedback').value = '';
+      document.getElementById('contentFile-final').value = '';
+    };
+
     // 탭 전환
     const tabFb = document.getElementById('tab-feedback');
     const tabFn = document.getElementById('tab-final');
@@ -223,13 +233,15 @@
         } else {
           // edit
           const d = document.getElementById('fb-content');
-          const textarea = document.createElement('textarea');
-          textarea.id = 'fb-edit';
-          textarea.style.width = '100%';
-          textarea.style.height = '150px';
-          textarea.value = d.innerText;
-          d.replaceWith(textarea);
-          this.textContent = 'Save';
+          if (d) {
+            const textarea = document.createElement('textarea');
+            textarea.id = 'fb-edit';
+            textarea.style.width = '100%';
+            textarea.style.height = '150px';
+            textarea.value = d.innerText;
+            d.replaceWith(textarea);
+            this.textContent = 'Save';
+          }
         }
       };
 
@@ -241,8 +253,13 @@
         let html = '<!doctype html><html><head><meta charset="utf-8"/><title>Print</title>'
                  + '<style>body{font-family:sans-serif;padding:2rem;}@media print{button{display:none}}</style></head><body>';
         if (o) html += `<h2>원본</h2><pre>${document.getElementById('contentText-feedback').value}</pre>`;
-        if (f) html += `<h2>Feedback</h2>${document.getElementById('fb-content').outerHTML}`;
-        if (c) html += `<h2>수정글</h2>${document.getElementById('fb-corrected').outerHTML}`;
+        
+        const fbContent = document.getElementById('fb-content');
+        if (f && fbContent) html += `<h2>Feedback</h2>${fbContent.outerHTML}`;
+        
+        const fbCorrected = document.getElementById('fb-corrected');
+        if (c && fbCorrected) html += `<h2>수정글</h2>${fbCorrected.outerHTML}`;
+        
         html += '<script>window.print();window.onafterprint=()=>window.close();<\/script></body></html>';
         const w = window.open(); w.document.write(html); w.document.close();
       };
@@ -297,13 +314,15 @@
         } else {
           // edit
           const d = document.getElementById('fn-corrected');
-          const textarea = document.createElement('textarea');
-          textarea.id = 'fn-edit';
-          textarea.style.width = '100%';
-          textarea.style.height = '150px';
-          textarea.value = d.innerText;
-          d.replaceWith(textarea);
-          this.textContent = 'Save';
+          if (d) {
+            const textarea = document.createElement('textarea');
+            textarea.id = 'fn-edit';
+            textarea.style.width = '100%';
+            textarea.style.height = '150px';
+            textarea.value = d.innerText;
+            d.replaceWith(textarea);
+            this.textContent = 'Save';
+          }
         }
       };
 
@@ -313,9 +332,20 @@
         const tsp  = document.getElementById('tts-spinner');
         const dl   = document.getElementById('download-link');
         const au   = document.getElementById('tts-audio');
-        tbtn.disabled = true; tsp.style.display='inline-block'; dl.style.display='none';
+        
+        if (!tbtn || !tsp) return;
+        
+        tbtn.disabled = true; 
+        tsp.style.display='inline-block'; 
+        if (dl) dl.style.display='none';
+        
         try {
-          const txt = document.getElementById('fn-corrected').innerText;
+          const correctedElement = document.getElementById('fn-corrected');
+          if (!correctedElement) {
+            throw new Error('수정글을 찾을 수 없습니다.');
+          }
+          
+          const txt = correctedElement.innerText;
           const rr  = await fetch(`${WORKER_URL}/api/tts`, {
             method:'POST',
             headers:{'Content-Type':'application/json'},
@@ -323,8 +353,16 @@
           });
           if (!rr.ok) throw new Error(rr.status);
           const blob = await rr.blob(), url = URL.createObjectURL(blob);
-          au.src = url; au.style.display = 'block';
-          dl.href = url; dl.download = 'model-answer.mp3'; dl.style.display = 'block';
+          
+          if (au) {
+            au.src = url; 
+            au.style.display = 'block';
+          }
+          if (dl) {
+            dl.href = url; 
+            dl.download = 'model-answer.mp3'; 
+            dl.style.display = 'block';
+          }
         } catch(err) {
           alert('TTS 에러: ' + err);
         } finally {
@@ -342,7 +380,10 @@
                  + '<style>body{font-family:sans-serif;padding:2rem;}@media print{button{display:none}}</style></head><body>';
         if (o) html += `<h2>원본</h2><pre>${document.getElementById('contentText-final').value}</pre>`;
         if (f) html += `<h2>Feedback</h2>${lastFeedback.replace(/\n/g,'<br>')}`;
-        if (c) html += `<h2>수정글</h2>${document.getElementById('fn-corrected').outerHTML}`;
+        
+        const fnCorrected = document.getElementById('fn-corrected');
+        if (c && fnCorrected) html += `<h2>수정글</h2>${fnCorrected.outerHTML}`;
+        
         html += '<script>window.print();window.onafterprint=()=>window.close();<\/script></body></html>';
         const w = window.open(); w.document.write(html); w.document.close();
       };
