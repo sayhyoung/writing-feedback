@@ -221,27 +221,31 @@
 
       // 피드백 편집
       document.getElementById('edit-feedback-btn').onclick = function() {
-        const div = document.getElementById('fb-content');
-        const ta  = document.getElementById('fb-edit');
-        if (ta) {
-          // save
-          const newDiv = document.createElement('div');
-          newDiv.id = 'fb-content';
-          newDiv.innerHTML = ta.value.replace(/\n/g,'<br>');
-          ta.replaceWith(newDiv);
-          this.textContent = 'Edit Feedback';
-        } else {
-          // edit
-          const d = document.getElementById('fb-content');
-          if (d) {
-            const textarea = document.createElement('textarea');
-            textarea.id = 'fb-edit';
-            textarea.style.width = '100%';
-            textarea.style.height = '150px';
-            textarea.value = d.innerText;
-            d.replaceWith(textarea);
-            this.textContent = 'Save';
+        try {
+          const ta = document.getElementById('fb-edit');
+          if (ta && ta.tagName) {
+            // save mode - textarea exists
+            const newDiv = document.createElement('div');
+            newDiv.id = 'fb-content';
+            newDiv.innerHTML = ta.value.replace(/\n/g,'<br>');
+            ta.replaceWith(newDiv);
+            this.textContent = 'Edit Feedback';
+          } else {
+            // edit mode - convert div to textarea
+            const d = document.getElementById('fb-content');
+            if (d && d.tagName) {
+              const textarea = document.createElement('textarea');
+              textarea.id = 'fb-edit';
+              textarea.style.width = '100%';
+              textarea.style.height = '150px';
+              textarea.style.boxSizing = 'border-box';
+              textarea.value = d.innerText || d.textContent || '';
+              d.replaceWith(textarea);
+              this.textContent = 'Save';
+            }
           }
+        } catch(err) {
+          console.error('Edit feedback error:', err);
         }
       };
 
@@ -302,27 +306,32 @@
 
       // 수정글 편집
       document.getElementById('edit-final-btn').onclick = function() {
-        const ta = document.getElementById('fn-edit');
-        if (ta) {
-          // save
-          const newDiv = document.createElement('div');
-          newDiv.className = 'model-box';
-          newDiv.id = 'fn-corrected';
-          newDiv.innerHTML = ta.value.replace(/\n/g,'<br>');
-          ta.replaceWith(newDiv);
-          this.textContent = 'Edit Final';
-        } else {
-          // edit
-          const d = document.getElementById('fn-corrected');
-          if (d) {
-            const textarea = document.createElement('textarea');
-            textarea.id = 'fn-edit';
-            textarea.style.width = '100%';
-            textarea.style.height = '150px';
-            textarea.value = d.innerText;
-            d.replaceWith(textarea);
-            this.textContent = 'Save';
+        try {
+          const ta = document.getElementById('fn-edit');
+          if (ta && ta.tagName) {
+            // save mode - textarea exists
+            const newDiv = document.createElement('div');
+            newDiv.className = 'model-box';
+            newDiv.id = 'fn-corrected';
+            newDiv.innerHTML = ta.value.replace(/\n/g,'<br>');
+            ta.replaceWith(newDiv);
+            this.textContent = 'Edit Final';
+          } else {
+            // edit mode - convert div to textarea
+            const d = document.getElementById('fn-corrected');
+            if (d && d.tagName) {
+              const textarea = document.createElement('textarea');
+              textarea.id = 'fn-edit';
+              textarea.style.width = '100%';
+              textarea.style.height = '150px';
+              textarea.style.boxSizing = 'border-box';
+              textarea.value = d.innerText || d.textContent || '';
+              d.replaceWith(textarea);
+              this.textContent = 'Save';
+            }
           }
+        } catch(err) {
+          console.error('Edit final error:', err);
         }
       };
 
@@ -333,7 +342,10 @@
         const dl   = document.getElementById('download-link');
         const au   = document.getElementById('tts-audio');
         
-        if (!tbtn || !tsp) return;
+        if (!tbtn || !tsp) {
+          console.error('TTS buttons not found');
+          return;
+        }
         
         tbtn.disabled = true; 
         tsp.style.display='inline-block'; 
@@ -341,18 +353,27 @@
         
         try {
           const correctedElement = document.getElementById('fn-corrected');
-          if (!correctedElement) {
+          if (!correctedElement || !correctedElement.tagName) {
             throw new Error('수정글을 찾을 수 없습니다.');
           }
           
-          const txt = correctedElement.innerText;
-          const rr  = await fetch(`${WORKER_URL}/api/tts`, {
+          const txt = correctedElement.innerText || correctedElement.textContent || '';
+          if (!txt.trim()) {
+            throw new Error('수정글 내용이 비어있습니다.');
+          }
+          
+          const rr = await fetch(`${WORKER_URL}/api/tts`, {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify({ text: txt })
           });
-          if (!rr.ok) throw new Error(rr.status);
-          const blob = await rr.blob(), url = URL.createObjectURL(blob);
+          
+          if (!rr.ok) {
+            throw new Error(`TTS API 오류: ${rr.status}`);
+          }
+          
+          const blob = await rr.blob();
+          const url = URL.createObjectURL(blob);
           
           if (au) {
             au.src = url; 
@@ -364,10 +385,11 @@
             dl.style.display = 'block';
           }
         } catch(err) {
-          alert('TTS 에러: ' + err);
+          console.error('TTS error:', err);
+          alert('TTS 에러: ' + err.message);
         } finally {
-          tsp.style.display = 'none';
-          tbtn.disabled = false;
+          if (tsp) tsp.style.display = 'none';
+          if (tbtn) tbtn.disabled = false;
         }
       };
 
