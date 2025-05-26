@@ -1,335 +1,113 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Writing Assistant</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: #f0f4f8;
-      margin: 0; padding: 2rem;
-      display: flex; justify-content: center;
-      line-height: 1.6;
-    }
-    #container {
-      width: 100%; max-width: 700px;
-      background: #fff; border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      padding: 2rem; position: relative;
-    }
-    h1 { text-align: center; color: #004a99; margin-bottom: 1rem; }
-    nav { text-align: center; margin-bottom: 1rem; }
-    .tab {
-      background: #e9f5ff; color: #004a99;
-      border: none; padding: .5rem 1rem;
-      margin: 0 .5rem; border-radius: 4px;
-      cursor: pointer; font-weight: bold;
-    }
-    .tab.active { background: #0066cc; color: #fff; }
-    .section { display: none; }
-    .section.active { display: block; }
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
 
-    form { margin-bottom: 1.5rem; }
-    label { display: block; margin: .75rem 0 .25rem; color: #004a99; font-weight: 600; }
-    textarea, input[type="file"] {
-      width: 100%; padding: .5rem;
-      border: 1px solid #cbd7e0; border-radius: 4px;
-      background: #f9fcff; box-sizing: border-box;
-    }
-    textarea { resize: vertical; }
-
-    button {
-      background: #0066cc; color: #fff;
-      border: none; border-radius: 4px;
-      padding: .75rem 1.5rem; cursor: pointer;
-      transition: background .2s; margin-top: 1rem;
-    }
-    button:hover { background: #0052a3; }
-
-    .spinner {
-      display: none; width:16px; height:16px;
-      border:2px solid #0066cc; border-top:2px solid transparent;
-      border-radius:50%; animation:spin 1s linear infinite;
-      vertical-align:middle; margin-left:.5rem;
-    }
-    #tts-spinner { border-color:red; border-top-color:transparent; }
-    @keyframes spin { to{transform:rotate(360deg);} }
-
-    .box, .model-box {
-      background: #fff; border-radius:4px;
-      padding:1rem; margin-top:1rem;
-    }
-    .box h2, .model-box h2 { margin:0 0 .5rem; color:#004a99; }
-    .model-box { font-size:1.1rem; line-height:1.5; }
-
-    .print-options { margin-top:1rem; }
-    .print-options label { margin-right:1rem; font-weight:normal; }
-
-    #download-link { display:none !important; margin-top:1rem;
-      color:#0066cc; text-decoration:none; font-weight:600;
-    }
-
-    @media print {
-      nav, button, #reset-btn { display:none !important; }
-      body { background:#fff; margin:0; }
-    }
-  </style>
-</head>
-<body>
-  <div id="container">
-    <h1>🤖 Writing Assistant</h1>
-    <button id="reset-btn">Reset</button>
-    <nav>
-      <button id="tab-feedback" class="tab active">피드백 코너</button>
-      <button id="tab-final" class="tab">최종 산출물 코너</button>
-    </nav>
-
-    <!-- 피드백 코너 -->
-    <section id="feedback-section" class="section active">
-      <form id="feedback-form">
-        <label>텍스트 입력 또는 이미지 업로드
-          <textarea id="contentText-feedback" rows="4" placeholder="여기에 텍스트 입력"></textarea>
-          <input type="file" id="contentFile-feedback" accept="image/*"/>
-          <span id="ocr-spinner-feedback" class="spinner"></span>
-        </label>
-        <button type="submit" id="submit-feedback-btn">
-          Get Feedback<span id="submit-spinner-feedback" class="spinner"></span>
-        </button>
-      </form>
-      <div id="feedback-result"></div>
-    </section>
-
-    <!-- 최종 산출물 코너 -->
-    <section id="final-section" class="section">
-      <form id="final-form">
-        <label>텍스트 입력 또는 이미지 업로드
-          <textarea id="contentText-final" rows="4" placeholder="여기에 텍스트 입력"></textarea>
-          <input type="file" id="contentFile-final" accept="image/*"/>
-          <span id="ocr-spinner-final" class="spinner"></span>
-        </label>
-        <button type="submit" id="submit-final-btn">
-          Generate Final<span id="submit-spinner-final" class="spinner"></span>
-        </button>
-      </form>
-      <div id="final-result"></div>
-    </section>
-  </div>
-
-  <script>
-    const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
-    const PROXY_URL  = WORKER_URL + '/proxy';
-
-    // 탭 전환
-    const tabFb = document.getElementById('tab-feedback');
-    const tabFn = document.getElementById('tab-final');
-    const secFb = document.getElementById('feedback-section');
-    const secFn = document.getElementById('final-section');
-    tabFb.onclick = () => {
-      tabFb.classList.add('active'); tabFn.classList.remove('active');
-      secFb.classList.add('active'); secFn.classList.remove('active');
-    };
-    tabFn.onclick = () => {
-      tabFn.classList.add('active'); tabFb.classList.remove('active');
-      secFn.classList.add('active'); secFb.classList.remove('active');
-    };
-
-    // OCR helper
-    async function handleOCR(fileId, textId, spinId) {
-      const file = document.getElementById(fileId).files[0];
-      if (!file) return;
-      const ta = document.getElementById(textId);
-      const sp = document.getElementById(spinId);
-      ta.value = '이미지에서 텍스트 추출 중…';
-      sp.style.display = 'inline-block';
-      const b64 = await new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(r.result.split(',')[1]);
-        r.onerror = rej;
-        r.readAsDataURL(file);
+    // CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        },
       });
+    }
+
+    // 1) Feedback endpoint
+    if (url.pathname === '/api/feedback' && request.method === 'POST') {
+      const { contentText } = await request.json();
+      const systemPrompt = `
+친절한 영어 교사입니다. 학생이 제출한 글을 아래 두 부분으로 평가하세요.
+
+1) 피드백 (한국어)
+  - 먼저 “총평”을 제시하세요.
+  - 그 아래 개별 문장 단위로 피드백을 아래 예시와 같이 작성하세요.
+  예시 1)
+  I go to hospital yesterday.
+  - 과거에 일어난 일이므로 “go” 대신 과거형 “went” 사용해야 하며, “hospital” 앞에 관사 “the”를 붙여야 합니다.
+
+  예시 2)
+  I want play with him.
+  - 동사 앞에 “to” 누락되어 “want to play” 형태로 수정이 필요합니다.
+
+2) 수정글
+  - 학생이 제출한 글을 바탕으로, 피드백을 반영하여 수정한 글을 작성하세요.
+
+JSON으로만 응답:
+{"feedback":"...","modelAnswer":"..."}
+`;
+      const userPrompt = `Content: ${contentText}`;
+      const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user',   content: userPrompt },
+          ],
+          temperature: 0.7,
+        }),
+      });
+      const data = await aiRes.json();
+      let parsed;
       try {
-        const r = await fetch(PROXY_URL, {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json' },
-          body: JSON.stringify({
-            model:'gpt-4o-mini',
-            messages:[{
-              role:'user',
-              content:[
-                {type:'text',text:'Please extract the exact text from the image as it appears. Do not provide any additional commentary.'},
-                {type:'image_url',image_url:{url:`data:${file.type};base64,${b64}`}}
-              ]
-            }],
-            max_tokens:500
-          })
-        });
-        const {choices} = await r.json();
-        ta.value = choices[0]?.message?.content?.trim() || '';
-      } catch(err) {
-        ta.value = 'OCR 에러: ' + err.message;
-      } finally {
-        sp.style.display = 'none';
+        parsed = JSON.parse(data.choices[0].message.content);
+      } catch {
+        parsed = { feedback: data.choices[0].message.content, modelAnswer: '' };
       }
+      return new Response(JSON.stringify(parsed), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
     }
 
-    // OCR 이벤트 등록
-    document.getElementById('contentFile-feedback')
-      .onchange = () => handleOCR('contentFile-feedback','contentText-feedback','ocr-spinner-feedback');
-    document.getElementById('contentFile-final')
-      .onchange = () => handleOCR('contentFile-final','contentText-final','ocr-spinner-final');
-
-    // 피드백 코너 제출
-    document.getElementById('feedback-form').onsubmit = async e => {
-      e.preventDefault();
-      const btn = document.getElementById('submit-feedback-btn');
-      const sp  = document.getElementById('submit-spinner-feedback');
-      btn.disabled = true; sp.style.display='inline-block';
-
-      const content = document.getElementById('contentText-feedback').value;
-      const res = await fetch(`${WORKER_URL}/api/feedback`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ contentText: content })
+    // 2) TTS endpoint
+    if (url.pathname === '/api/tts' && request.method === 'POST') {
+      const { text } = await request.json();
+      const ttsRes = await fetch('https://api.openai.com/v1/audio/speech', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({ model: 'tts-1', voice: 'alloy', input: text }),
       });
-      const { feedback, modelAnswer } = await res.json();
-      btn.disabled = false; sp.style.display='none';
-
-      // 렌더링
-      document.getElementById('feedback-result').innerHTML = `
-        <div class="box" id="fb-box">
-          <h2>Feedback</h2>
-          <div id="fb-content">${feedback.replace(/\n/g,'<br>')}</div>
-          <button id="edit-feedback-btn">Edit Feedback</button>
-        </div>
-        <div class="box">
-          <h2>수정글</h2>
-          <div class="model-box" id="fb-corrected">${modelAnswer.replace(/\n/g,'<br>')}</div>
-        </div>
-        <div class="print-options">
-          <label><input type="checkbox" id="print_orig_fb" checked> 원본</label>
-          <label><input type="checkbox" id="print_fb_fb" checked> 피드백</label>
-          <label><input type="checkbox" id="print_corr_fb" checked> 수정글</label>
-        </div>
-        <button id="print-feedback-btn">Print</button>
-      `;
-
-      // 피드백 편집
-      document.getElementById('edit-feedback-btn').onclick = () => {
-        const div = document.getElementById('fb-content');
-        if (div.tagName==='DIV') {
-          const ta = document.createElement('textarea');
-          ta.id='fb-edit'; ta.style.width='100%'; ta.style.height='150px';
-          ta.value=div.innerText; div.replaceWith(ta);
-          this.textContent='Save';
-        } else {
-          const ta = document.getElementById('fb-edit');
-          const newDiv = document.createElement('div');
-          newDiv.id='fb-content'; newDiv.innerHTML=ta.value.replace(/\n/g,'<br>');
-          ta.replaceWith(newDiv);
-          this.textContent='Edit Feedback';
-        }
-      };
-
-      // 인쇄
-      document.getElementById('print-feedback-btn').onclick = () => {
-        const o = document.getElementById('print_orig_fb').checked;
-        const f = document.getElementById('print_fb_fb').checked;
-        const c = document.getElementById('print_corr_fb').checked;
-        let html='<!doctype html><html><head><meta charset="utf-8"/><title>Print</title>'
-                 +'<style>body{font-family:sans-serif;padding:2rem;}@media print{button{display:none}}</style></head><body>';
-        if(o) html+=`<h2>원본</h2><pre>${document.getElementById('contentText-feedback').value}</pre>`;
-        if(f) html+=`<h2>Feedback</h2>${document.getElementById('fb-content').outerHTML}`;
-        if(c) html+=`<h2>수정글</h2>${document.getElementById('fb-corrected').outerHTML}`;
-        html+='<script>window.print();window.onafterprint=()=>window.close();<\/script></body></html>';
-        const w=window.open(); w.document.write(html); w.document.close();
-      };
-    };
-
-    // 최종 산출물 코너 제출
-    let lastFeedback='';
-    document.getElementById('final-form').onsubmit = async e => {
-      e.preventDefault();
-      const btn = document.getElementById('submit-final-btn');
-      const sp  = document.getElementById('submit-spinner-final');
-      btn.disabled=true; sp.style.display='inline-block';
-
-      const content = document.getElementById('contentText-final').value;
-      const res = await fetch(`${WORKER_URL}/api/feedback`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ contentText: content })
+      const buffer = await ttsRes.arrayBuffer();
+      return new Response(buffer, {
+        headers: {
+          'Content-Type': 'audio/mpeg',
+          'Access-Control-Allow-Origin': '*',
+        },
       });
-      const { feedback, modelAnswer } = await res.json();
-      lastFeedback = feedback;
-      btn.disabled=false; sp.style.display='none';
+    }
 
-      document.getElementById('final-result').innerHTML=`
-        <div class="box" id="fn-box">
-          <h2>수정글</h2>
-          <div class="model-box" id="fn-corrected">${modelAnswer.replace(/\n/g,'<br>')}</div>
-          <button id="edit-final-btn">Edit Final</button>
-        </div>
-        <button id="tts-btn">원어민 음성 듣기<span id="tts-spinner" class="spinner"></span></button>
-        <audio id="tts-audio" controls style="display:none;"></audio>
-        <a id="download-link">Download Audio</a>
-        <div class="print-options">
-          <label><input type="checkbox" id="print_orig_fn" checked> 원본</label>
-          <label><input type="checkbox" id="print_fb_fn"> 피드백</label>
-          <label><input type="checkbox" id="print_corr_fn" checked> 수정글</label>
-        </div>
-        <button id="print-model-btn">Print</button>
-      `;
+    // 3) OCR proxy
+    if (url.pathname === '/proxy' && request.method === 'POST') {
+      const proxyRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
+        },
+        body: await request.text(),
+      });
+      const body = await proxyRes.text();
+      return new Response(body, {
+        status: proxyRes.status,
+        headers: {
+          'Content-Type': proxyRes.headers.get('Content-Type'),
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
 
-      // 수정글 편집
-      document.getElementById('edit-final-btn').onclick = function(){
-        const div=document.getElementById('fn-corrected');
-        if(div.tagName==='DIV'){
-          const ta=document.createElement('textarea');
-          ta.id='fn-edit'; ta.style.width='100%'; ta.style.height='150px';
-          ta.value=div.innerText; div.replaceWith(ta); this.textContent='Save';
-        } else {
-          const ta=document.getElementById('fn-edit');
-          const newDiv=document.createElement('div');
-          newDiv.className='model-box'; newDiv.id='fn-corrected';
-          newDiv.innerHTML=ta.value.replace(/\n/g,'<br>'); ta.replaceWith(newDiv);
-          this.textContent='Edit Final';
-        }
-      };
-
-      // TTS
-      document.getElementById('tts-btn').onclick=async()=>{
-        const tbtn=document.getElementById('tts-btn');
-        const tsp=document.getElementById('tts-spinner');
-        const dl=document.getElementById('download-link');
-        const au=document.getElementById('tts-audio');
-        tbtn.disabled=true; tsp.style.display='inline-block'; dl.style.display='none';
-        const txt=document.getElementById('fn-corrected').innerText;
-        const rr=await fetch(`${WORKER_URL}/api/tts`,{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ text: txt })
-        });
-        const blob=await rr.blob(), url=URL.createObjectURL(blob);
-        au.src=url; au.style.display='block';
-        dl.href=url; dl.download='model-answer.mp3'; dl.style.display='block';
-        tsp.style.display='none'; tbtn.disabled=false;
-      };
-
-      // Print 최종
-      document.getElementById('print-model-btn').onclick=()=>{
-        const o=document.getElementById('print_orig_fn').checked;
-        const f=document.getElementById('print_fb_fn').checked;
-        const c=document.getElementById('print_corr_fn').checked;
-        let html='<!doctype html><html><head><meta charset="utf-8"/><title>Print Final</title>'
-                 +'<style>body{font-family:sans-serif;padding:2rem;}@media print{button{display:none}}</style></head><body>';
-        if(o) html+=`<h2>원본</h2><pre>${document.getElementById('contentText-final').value}</pre>`;
-        if(f) html+=`<h2>Feedback</h2>${lastFeedback.replace(/\n/g,'<br>')}`;
-        if(c) html+=`<h2>수정글</h2>${document.getElementById('fn-corrected').outerHTML}`;
-        html+='<script>window.print();window.onafterprint=()=>window.close();<\/script></body></html>';
-        const w=window.open(); w.document.write(html); w.document.close();
-      };
-    };
-  </script>
-</body>
-</html>
+    return new Response('Not found', { status: 404 });
+  },
+};
