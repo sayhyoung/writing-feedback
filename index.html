@@ -6,62 +6,158 @@
   <title>Writing Assistant</title>
   <style>
     /* 기본 레이아웃 */
-    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; margin: 0; padding: 2rem; display: flex; justify-content: center; }
-    #container { width: 100%; max-width: 700px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 2rem; position: relative; }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+    }
+    #container {
+      width: 100%;
+      max-width: 700px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 2rem;
+      position: relative;
+    }
     h1 { text-align: center; color: #004a99; margin-bottom: 1rem; }
 
     /* Reset 버튼 */
-    #reset-btn { position: absolute; top: 2rem; right: 2rem; background: #0066cc; color: #fff; border: none; border-radius: 4px; padding: 0.5rem 1rem; cursor: pointer; transition: background .2s; }
+    #reset-btn {
+      position: absolute;
+      top: 2rem; right: 2rem;
+      background: #0066cc; color: #fff;
+      border: none; border-radius: 4px;
+      padding: 0.5rem 1rem; cursor: pointer;
+      transition: background .2s;
+    }
     #reset-btn:hover { background: #0052a3; }
 
     /* 탭 */
     nav { text-align: center; margin-bottom: 1rem; }
-    .tab { background: #e9f5ff; color: #004a99; border: none; padding: .5rem 1rem; margin: 0 .5rem; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background .2s ease; }
+    .tab {
+      background: #e9f5ff; color: #004a99;
+      border: none; padding: .5rem 1rem;
+      margin: 0 .5rem; border-radius: 4px;
+      cursor: pointer; font-weight: bold;
+      transition: background .2s ease;
+    }
     .tab.active { background: #0066cc; color: #fff; }
     .section { display: none; }
     .section.active { display: block; }
 
     /* 입력 영역 */
-    .input-area { width: 100%; min-height: 150px; padding: 1rem; border: 2px solid #cbd7e0; border-radius: 8px; background: #f9fcff; resize: vertical; box-sizing: border-box; font-family: inherit; font-size: 14px; line-height: 1.5; transition: border-color .3s; }
+    .input-area {
+      width: 100%; min-height: 150px;
+      padding: 1rem;
+      border: 2px solid #cbd7e0;
+      border-radius: 8px;
+      background: #f9fcff;
+      resize: vertical;
+      box-sizing: border-box;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.5;
+      transition: border-color .3s;
+    }
     .input-area:focus { outline: none; border-color: #0066cc; }
     .input-area.has-image { background: #e9f5ff; border-color: #0066cc; }
 
     /* 액션 아이콘 */
-    .action-icons { display: flex; justify-content: flex-end; gap: .5rem; margin-bottom: .5rem; }
-    .icon-btn { width:32px; height:32px; border:none; border-radius:6px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,0.1); display:flex; align-items:center; justify-content:center; position:relative; cursor:pointer; transition:background .2s; }
-    .icon-btn:hover { background:#f0f4f8; }
-    .icon-btn input[type="file"] { position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+    .action-icons {
+      display: flex; justify-content: flex-end;
+      gap: .5rem; margin-bottom: .5rem;
+    }
+    .icon-btn {
+      width: 32px; height: 32px;
+      border: none; border-radius: 6px;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex; align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .icon-btn:hover { background: #f0f4f8; }
+    .icon-btn input[type="file"] {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%; opacity: 0;
+      cursor: pointer;
+    }
 
-    /* 파일 정보 & 닫기 버튼 제거 */
-    .file-info { margin-top:.5rem; padding:.5rem; background:#e9f5ff; border-radius:4px; display:none; font-size:.9rem; }
-    .file-info.show { display:flex; }
-    .file-info .file-name { flex:1; color:#004a99; font-weight:500; }
+    /* 파일 정보 (닫기 버튼 제거) */
+    .file-info {
+      margin-top: .5rem; padding: .5rem;
+      background: #e9f5ff; border-radius: 4px;
+      display: none; font-size: .9rem;
+    }
+    .file-info.show { display: flex; }
+    .file-info .file-name { flex: 1; color: #004a99; font-weight: 500; }
 
     /* OCR 상태 */
-    .ocr-status { margin-top:.5rem; padding:.5rem; background:#fff3cd; border:1px solid #ffeaa7; border-radius:4px; color:#856404; font-size:.9rem; display:none; align-items:center; gap:.5rem; }
-    .ocr-status.show { display:flex; }
-    .ocr-spinner { width:16px; height:16px; border:2px solid #856404; border-top:2px solid transparent; border-radius:50%; animation:spin 1s linear infinite; }
-    @keyframes spin { to { transform:rotate(360deg); } }
+    .ocr-status {
+      margin-top: .5rem; padding: .5rem;
+      background: #fff3cd; border: 1px solid #ffeaa7;
+      border-radius: 4px; color: #856404;
+      font-size: .9rem; display: none;
+      align-items: center; gap: .5rem;
+    }
+    .ocr-status.show { display: flex; }
+    .ocr-spinner {
+      width: 16px; height: 16px;
+      border: 2px solid #856404;
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* 일반 버튼 */
-    button:not(.icon-btn) { background:#0066cc; color:#fff; border:none; border-radius:4px; padding:.75rem 1.5rem; cursor:pointer; transition:background .2s; }
-    button:hover { background:#0052a3; }
+    button:not(.icon-btn) {
+      background: #0066cc; color: #fff;
+      border: none; border-radius: 4px;
+      padding: .75rem 1.5rem; cursor: pointer;
+      transition: background .2s; margin-top: 1rem;
+    }
+    button:hover { background: #0052a3; }
 
     /* 결과 박스 */
-    .box, .model-box { background:#fff; border-radius:4px; padding:1rem; margin-top:1rem; }
-    .box h2, .model-box h2 { margin:0 0 .5rem; color:#004a99; }
-    .model-box { font-size:1.1rem; line-height:1.5; }
+    .box, .model-box {
+      background: #fff; border-radius: 4px;
+      padding: 1rem; margin-top: 1rem;
+    }
+    .box h2, .model-box h2 { margin: 0 0 .5rem; color: #004a99; }
+    .model-box { font-size: 1.1rem; line-height: 1.5; }
 
     /* 모달 (Print 옵션) */
-    .modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; }
-    .modal-content { background:#fff; padding:1rem; border-radius:4px; width:90%; max-width:400px; }
-    .modal-content h3 { margin-top:0; color:#004a99; }
-    .modal-content .print-options label { display:block; margin-bottom:.5rem; }
+    .modal {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none; align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #fff; padding: 1rem;
+      border-radius: 4px;
+      width: 90%; max-width: 400px;
+    }
+    .modal-content h3 { margin-top: 0; color: #004a99; }
+    .modal-content .print-options label {
+      display: block; margin-bottom: .5rem;
+    }
+
+    /* 자동 이미지 방향 보정 */
+    img { image-orientation: from-image; }
 
     @media print {
-      nav, button, #reset-btn { display:none!important; }
-      body { background:#fff; margin:0; }
-      img { max-width: 100%; height: auto; }
+      nav, button, #reset-btn { display: none !important; }
+      body { background: #fff; margin: 0; }
+      img { max-width: 100%; height: auto; image-orientation: from-image; }
       @page { size: A4; margin: 1cm; }
     }
   </style>
@@ -73,7 +169,7 @@
 
     <nav>
       <button id="tab-feedback" class="tab active">피드백 코너</button>
-      <button id="tab-final"    class="tab">최종 산출물 코너</button>
+      <button id="tab-final" class="tab">최종 산출물 코너</button>
     </nav>
 
     <!-- 피드백 섹션 -->
@@ -89,6 +185,8 @@
         <div class="ocr-status" id="ocr-status-feedback"><div class="ocr-spinner"></div><span>이미지에서 텍스트 추출 중...</span></div>
         <div style="text-align: right;"><button type="button" id="edit-feedback-btn">Edit Feedback</button></div>
         <div class="box" id="feedback-result"></div>
+        <!-- 제출 버튼 및 스피너 -->
+        <button type="submit" id="submit-feedback-btn">Get Feedback <span id="submit-spinner-feedback" class="spinner"></span></button>
         <button id="print-feedback-btn">Print</button>
       </form>
 
@@ -98,7 +196,7 @@
           <h3>Print Options</h3>
           <div class="print-options">
             <label><input type="checkbox" id="print_orig_fb" checked> 원본</label>
-            <label><input type="checkbox" id="print_fb_fb"   checked> 피드백</label>
+            <label><input type="checkbox" id="print_fb_fb" checked> 피드백</label>
             <label><input type="checkbox" id="print_corr_fb" checked> 수정글</label>
           </div>
           <button id="confirm-print-feedback-btn">Confirm</button>
@@ -117,149 +215,4 @@
         </div>
         <textarea id="contentText-final" class="input-area"></textarea>
         <div class="file-info" id="file-info-final"><span class="file-name"></span></div>
-        <div class="ocr-status" id="ocr-status-final"><div class="ocr-spinner"></div><span>이미지에서 텍스트 추출 중...</span></div>
-        <div style="text-align: right;"><button type="button" id="edit-final-btn">Edit Final</button></div>
-        <div class="box" id="final-result"></div>
-        <button id="print-final-btn">Print</button>
-      </form>
-
-      <!-- Print 옵션 모달 -->
-      <div id="final-print-modal" class="modal">
-        <div class="modal-content">
-          <h3>Print Options</h3>
-          <div class="print-options">
-            <label><input type="checkbox" id="print_orig_fn" checked> 원본</label>
-            <label><input type="checkbox" id="print_fb_fn">        피드백</label>
-            <label><input type="checkbox" id="print_corr_fn" checked> 수정글</label>
-          </div>
-          <button id="confirm-print-final-btn">Confirm</button>
-          <button id="cancel-print-final-btn">Cancel</button>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <script>
-    const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
-    const PROXY_URL  = WORKER_URL + '/proxy';
-    window.feedbackFileURL = '';
-    window.finalFileURL = '';
-    let lastFeedback = '';
-
-    document.getElementById('reset-btn').onclick = () => {
-      ['feedback','final'].forEach(sec => {
-        document.getElementById(`contentText-${sec}`).value = '';
-        document.getElementById(`file-info-${sec}`).classList.remove('show');
-        document.getElementById(`ocr-status-${sec}`).classList.remove('show');
-        document.getElementById(`contentText-${sec}`).classList.remove('has-image');
-        window[`${sec}FileURL`] = '';
-        document.getElementById(`${sec}-result`).innerHTML = '';
-      });
-    };
-
-    document.getElementById('tab-feedback').onclick = () => {
-      document.getElementById('feedback-section').classList.add('active');
-      document.getElementById('tab-feedback').classList.add('active');
-      document.getElementById('final-section').classList.remove('active');
-      document.getElementById('tab-final').classList.remove('active');
-    };
-    document.getElementById('tab-final').onclick = () => {
-      document.getElementById('final-section').classList.add('active');
-      document.getElementById('tab-final').classList.add('active');
-      document.getElementById('feedback-section').classList.remove('active');
-      document.getElementById('tab-feedback').classList.remove('active');
-    };
-
-    function setupFile(section) {
-      ['camera','gallery'].forEach(src => {
-        const inp = document.getElementById(`contentFile-${src}-${section}`);
-        inp.onchange = e => {
-          const file = e.target.files[0]; if (!file) return;
-          const url = URL.createObjectURL(file); window[`${section}FileURL`] = url;
-          const info = document.getElementById(`file-info-${section}`);
-          info.querySelector('.file-name').textContent = file.name; info.classList.add('show');
-          document.getElementById(`contentText-${section}`).classList.add('has-image');
-          doOCR(file, section);
-        };
-      });
-    }
-    setupFile('feedback'); setupFile('final');
-
-    async function doOCR(file, section) {
-      const st = document.getElementById(`ocr-status-${section}`); st.classList.add('show');
-      try {
-        const b64 = await new Promise((res,rej) => { const r=new FileReader(); r.onload=() => res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(file); });
-        const r = await fetch(PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:[{type:'text',text:'Please extract the exact text from the image as it appears.'},{type:'image_url',image_url:{url:`data:${file.type};base64,${b64}`}}]}],max_tokens:500})});
-        const {choices} = await r.json();
-        document.getElementById(`contentText-${section}`).value = (choices[0]?.message?.content||'').trim();
-      } catch(err) { document.getElementById(`contentText-${section}`).value = 'OCR 에러: '+err.message; }
-      finally { st.classList.remove('show'); }
-    }
-
-    function bindEdit(section) {
-      const btn = document.getElementById(section==='feedback'?'edit-feedback-btn':'edit-final-btn');
-      const contentId = section==='feedback'?'feedback-result':'final-result';
-      btn.onclick = () => {
-        const box = document.getElementById(contentId);
-        if (btn.textContent.includes('Edit')) {
-          const text = box.innerText;
-          box.innerHTML = `<textarea id="edit-${section}" style="width:100%;height:150px;box-sizing:border-box;">${text}</textarea>`;
-          btn.textContent = 'Save';
-        } else {
-          const ta = document.getElementById(`edit-${section}`);
-          box.textContent = ta.value;
-          btn.textContent = 'Edit '+(section==='feedback'?'Feedback':'Final');
-        }
-      };
-    }
-
-    function bindPrintModal(section) {
-      const modal = document.getElementById(`${section}-print-modal`);
-      const openBtn = document.getElementById(section==='feedback'?'print-feedback-btn':'print-final-btn');
-      const cancelBtn = document.getElementById(`cancel-print-${section}-btn`);
-      const confirmBtn = document.getElementById(`confirm-print-${section}-btn`);
-      openBtn.onclick = () => modal.style.display='flex';
-      cancelBtn.onclick = () => modal.style.display='none';
-      confirmBtn.onclick = () => {
-        const orig = document.getElementById(`print_orig_${section==='feedback'?'fb':'fn'}`).checked;
-        const fb   = document.getElementById(`print_fb_${section==='feedback'?'fb':'fn'}`).checked;
-        const corr = document.getElementById(`print_corr_${section==='feedback'?'fb':'fn'}`).checked;
-        let html = `<!doctype html><html><head><meta charset="utf-8"/><style>@page{size:A4;margin:1cm;}body{font-family:sans-serif;padding:1cm;}@media print{button{display:none}}img{max-width:100%;height:auto;}</style></head><body>`;
-        if(orig) html+=window[`${section}FileURL`]?`<img src="${window[`${section}FileURL`]}"/>`:`<pre>${document.getElementById(`contentText-${section}`).value}</pre>`;
-        if(fb) html+=section==='feedback'?document.getElementById('fb-content').outerHTML:lastFeedback.replace(/\n/g,'<br>');
-        if(corr) html+=document.getElementById(section==='feedback'?'fb-corrected':'fn-corrected').outerHTML;
-        html+=`</body><script>window.print();window.onafterprint=()=>window.close();</script></html>`;
-        const w = window.open(); w.document.write(html); w.document.close(); modal.style.display='none';
-      };
-    }
-
-    document.getElementById('feedback-form').onsubmit = async e => {
-      e.preventDefault();
-      const btn = document.getElementById('submit-feedback-btn');
-      const sp  = document.getElementById('submit-spinner-feedback');
-      btn.disabled=true; sp.style.display='inline-block';
-      try {
-        const text = document.getElementById('contentText-feedback').value;
-        const res = await fetch(`${WORKER_URL}/api/feedback`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contentText:text})});
-        const {feedback,modelAnswer} = await res.json(); lastFeedback=feedback;
-        document.getElementById('feedback-result').innerHTML = `<div id="fb-content">${feedback.replace(/\n/g,'<br>')}</div><div class="model-box" id="fb-corrected">${modelAnswer.replace(/\n/g,'<br>')}</div>`;
-        bindEdit('feedback'); bindPrintModal('feedback');
-      } catch(err) { alert('오류'); } finally { btn.disabled=false; sp.style.display='none'; }
-    };
-
-    document.getElementById('final-form').onsubmit = async e => {
-      e.preventDefault();
-      const btn = document.getElementById('submit-final-btn');
-      const sp  = document.getElementById('submit-spinner-final');
-      btn.disabled=true; sp.style.display='inline-block';
-      try {
-        const text = document.getElementById('contentText-final').value;
-        const res = await fetch(`${WORKER_URL}/api/feedback`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contentText:text})});
-        const {feedback,modelAnswer} = await res.json(); lastFeedback=feedback;
-        document.getElementById('final-result').innerHTML = `<div class="model-box" id="fn-corrected">${modelAnswer.replace(/\n/g,'<br>')}</div>`;
-        bindEdit('final'); bindPrintModal('final');
-      } catch(err) { alert('오류'); } finally { btn.disabled=false; sp.style.display='none'; }
-    };
-  </script>
-</body>
-</html>
+        <div c
