@@ -1,433 +1,212 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Writing Assistant</title>
-  <style>
-    /* --- 레이아웃 & 기본 스타일 (원본 그대로) --- */
-    body {
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: #f0f4f8;
-      margin: 0; padding: 2rem;
-      display: flex; justify-content: center;
-      line-height: 1.6;
-    }
-    #container {
-      width: 100%; max-width: 700px;
-      background: #fff; border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      padding: 2rem; position: relative;
-    }
-    h1 { text-align: center; color: #004a99; margin-bottom: 1rem; }
-
-    /* --- Reset 버튼 --- */
-    #reset-btn {
-      position: absolute;
-      top: 2rem; right: 2rem;
-      background: #0066cc; color: #fff;
-      border: none; border-radius: 4px;
-      padding: 0.5rem 1rem; cursor: pointer;
-      transition: background .2s;
-    }
-    #reset-btn:hover { background: #0052a3; }
-
-    /* --- 탭 --- */
-    nav { text-align: center; margin-bottom: 1rem; }
-    .tab {
-      background: #e9f5ff; color: #004a99;
-      border: none; padding: .5rem 1rem;
-      margin: 0 .5rem; border-radius: 4px;
-      cursor: pointer; font-weight: bold;
-      transition: background .2s ease;
-    }
-    .tab.active { background: #0066cc; color: #fff; }
-    .tab:hover:not(.active) { background: #d4edff; }
-    .section { display: none; }
-    .section.active { display: block; }
-
-    /* --- 입력 영역 --- */
-    .input-area {
-      width: 100%; min-height: 150px; padding: 1rem;
-      border: 2px solid #cbd7e0; border-radius: 8px;
-      background: #f9fcff; resize: vertical;
-      transition: border-color .3s;
-      box-sizing: border-box;
-      font-family: inherit; font-size:14px; line-height:1.5;
-    }
-    .input-area:focus { outline: none; border-color: #0066cc; }
-    .input-area.has-image { background: #e9f5ff; border-color: #0066cc; }
-
-    /* --- 아이콘 버튼 (카메라/갤러리) --- */
-    .action-icons {
-      display: flex; justify-content: flex-end; gap: .5rem;
-      margin-bottom: .5rem;
-    }
-    .icon-btn {
-      width:32px; height:32px; border:none; border-radius:6px;
-      background:#fff; box-shadow:0 2px 4px rgba(0,0,0,0.1);
-      display:flex; align-items:center; justify-content:center;
-      position:relative; cursor:pointer; transition:background .2s;
-    }
-    .icon-btn:hover { background:#f0f4f8; }
-    .icon-btn input[type="file"] {
-      position:absolute; top:0; left:0; width:100%; height:100%;
-      opacity:0; cursor:pointer;
-    }
-
-    /* --- 파일 정보 --- */
-    .file-info {
-      margin-top:.5rem; padding:.5rem;
-      background:#e9f5ff; border-radius:4px;
-      display:none; font-size:.9rem;
-      align-items:center;
-    }
-    .file-info.show { display:flex; }
-    .file-info .file-name { flex:1; color:#004a99; font-weight:500; }
-
-    /* --- OCR 상태 표시 --- */
-    .ocr-status {
-      margin-top:.5rem; padding:.5rem;
-      background:#fff3cd; border:1px solid #ffeaa7;
-      border-radius:4px; color:#856404;
-      font-size:.9rem; display:none;
-      align-items:center; gap:.5rem;
-    }
-    .ocr-status.show { display:flex; }
-    .ocr-status .spinner {
-      width:16px; height:16px; border:2px solid #856404;
-      border-top:2px solid transparent; border-radius:50%;
-      animation:spin 1s linear infinite;
-    }
-    @keyframes spin { to { transform:rotate(360deg); } }
-
-    /* --- 일반 버튼 --- */
-    button:not(.icon-btn) {
-      background:#0066cc; color:#fff;
-      border:none; border-radius:4px;
-      padding:.75rem 1.5rem; cursor:pointer;
-      transition:background .2s; margin-top:1rem;
-    }
-    button:hover { background:#0052a3; }
-
-    /* --- 스피너 --- */
-    .spinner {
-      display:none; width:16px; height:16px;
-      border:2px solid #0066cc; border-top:2px solid transparent;
-      border-radius:50%; animation:spin 1s linear infinite;
-      vertical-align:middle; margin-left:.5rem;
-    }
-    #tts-spinner { border:2px solid red; border-top:2px solid transparent; }
-
-    /* --- 결과 박스 --- */
-    .box, .model-box {
-      background:#fff; border-radius:4px;
-      padding:1rem; margin-top:1rem;
-    }
-    .box h2, .model-box h2 { margin:0 0 .5rem; color:#004a99; }
-    .model-box { font-size:1.1rem; line-height:1.5; }
-
-    /* --- 모달 (Print 옵션) --- */
-    .modal {
-      position:fixed; top:0; left:0; width:100%; height:100%;
-      background:rgba(0,0,0,0.5); display:none;
-      align-items:center; justify-content:center;
-    }
-    .modal-content {
-      background:#fff; padding:1rem; border-radius:4px;
-      width:90%; max-width:400px;
-    }
-    .modal-content h3 { margin-top:0; color:#004a99; }
-    .modal-content .print-options label {
-      display:block; margin-bottom:.5rem;
-    }
-
-    @media print {
-      nav, button, #reset-btn { display:none!important; }
-      body { background:#fff; margin:0; }
-    }
-  </style>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Writing Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background: #f5f7fa; }
+        .header-gradient { background: linear-gradient(90deg,#1e3a8a 0%,#2563eb 100%); }
+        .tab-active { color: #2563eb; border-bottom: 3px solid #2563eb; font-weight:600; }
+        .modal { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);
+                 display:none;align-items:center;justify-content:center; }
+    </style>
 </head>
 <body>
-  <div id="container">
-    <h1>🤖 Writing Assistant</h1>
-    <button id="reset-btn">Reset</button>
 
-    <nav>
-      <button id="tab-feedback" class="tab active">피드백 코너</button>
-      <button id="tab-final"    class="tab">최종 산출물 코너</button>
-    </nav>
+  <!-- 메인 페이지 -->
+  <div class="main-page">
+    <!-- 헤더 -->
+    <header class="header-gradient text-white p-4 shadow-lg">
+      <div class="container mx-auto flex flex-col items-center">
+        <div class="flex items-center">
+          <i class="fas fa-pen-fancy text-2xl mr-3"></i>
+          <h1 class="text-2xl font-bold">Writing Assistant</h1>
+        </div>
+        <p class="text-sm mt-1">글쓰기 피드백 시스템</p>
+      </div>
+    </header>
 
-    <!-- 피드백 섹션 -->
-    <section id="feedback-section" class="section active">
-      <form id="feedback-form">
-        <label>영작 내용을 입력하거나 이미지를 업로드하세요</label>
-        <div class="action-icons">
-          <button type="button" class="icon-btn" title="사진 촬영">📷
-            <input type="file" id="contentFile-camera-feedback" accept="image/*" capture="environment"/>
+    <div class="container mx-auto p-4">
+      <!-- 학생 정보 -->
+      <div class="bg-white rounded-lg shadow-md p-6 mb-6 flex flex-col md:flex-row md:space-x-6">
+        <div class="flex-1">
+          <label class="block text-gray-700 mb-2">학생 이름</label>
+          <input id="student-name" type="text" placeholder="학생의 이름을 입력하세요"
+                 class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"/>
+        </div>
+        <div class="flex-1 mt-4 md:mt-0">
+          <label class="block text-gray-700 mb-2">센터</label>
+          <input id="center-name" type="text" placeholder="센터 이름을 입력하세요"
+                 class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"/>
+        </div>
+      </div>
+
+      <!-- 글쓰기 입력 -->
+      <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex items-center mb-4">
+          <i class="fas fa-edit text-blue-600 mr-2"></i>
+          <h2 class="text-lg font-semibold">글쓰기 입력</h2>
+        </div>
+        <label class="block text-gray-700 mb-2">영작 내용을 입력하거나 이미지를 업로드하세요</label>
+        <div class="action-icons flex justify-end gap-2 mb-2">
+          <button type="button" class="icon-btn bg-white p-2 rounded-md shadow hover:bg-gray-100">
+            📷<input type="file" id="camera-input" accept="image/*" capture="environment"/>
           </button>
-          <button type="button" class="icon-btn" title="이미지 선택">🖼️
-            <input type="file" id="contentFile-gallery-feedback" accept="image/*"/>
+          <button type="button" class="icon-btn bg-white p-2 rounded-md shadow hover:bg-gray-100">
+            🖼️<input type="file" id="gallery-input" accept="image/*"/>
           </button>
         </div>
-        <textarea id="contentText-feedback" class="input-area" placeholder="여기에 텍스트를 입력하세요"></textarea>
-        <div class="file-info"   id="file-info-feedback"><span class="file-name"></span></div>
-        <div class="ocr-status"  id="ocr-status-feedback">
-          <div class="spinner"></div><span>이미지에서 텍스트를 추출 중입니다...</span>
-        </div>
-        <button type="submit" id="submit-feedback-btn">
+        <textarea id="userWriting"
+                  class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 mb-2"
+                  rows="6">Yesterday, I go to the park with my friends.
+The weather is very good and we are happy.
+After playing, I bought some ice cream for my friends.
+It was very delicious.
+I think that this day is most happy day in this month.
+We played basketball for two hours.</textarea>
+        <button id="getFeedbackBtn"
+                class="bg-blue-600 text-white px-6 py-2 rounded-md shadow hover:bg-blue-700 transition">
           Get Feedback
-          <span id="submit-spinner-feedback" class="spinner"></span>
         </button>
-      </form>
-      <div id="feedback-result"></div>
-
-      <!-- Print 옵션 모달 -->
-      <div id="feedback-print-modal" class="modal">
-        <div class="modal-content">
-          <h3>Print Options</h3>
-          <div class="print-options">
-            <label><input type="checkbox" id="print_orig_fb" checked> 원본</label>
-            <label><input type="checkbox" id="print_fb_fb"   checked> 피드백</label>
-            <label><input type="checkbox" id="print_corr_fb" checked> 수정글</label>
-          </div>
-          <button id="confirm-print-feedback-btn">Confirm</button>
-          <button id="cancel-print-feedback-btn">Cancel</button>
-        </div>
       </div>
-    </section>
 
-    <!-- 최종 산출물 섹션 -->
-    <section id="final-section" class="section">
-      <form id="final-form">
-        <label>최종 결과물을 위해 텍스트를 입력하거나 이미지를 업로드하세요</label>
-        <div class="action-icons">
-          <button type="button" class="icon-btn" title="사진 촬영">📷
-            <input type="file" id="contentFile-camera-final" accept="image/*" capture="environment"/>
-          </button>
-          <button type="button" class="icon-btn" title="이미지 선택">🖼️
-            <input type="file" id="contentFile-gallery-final" accept="image/*"/>
+      <!-- 피드백 섹션 -->
+      <div id="feedbackSection" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+        <div class="flex justify-between items-center mb-4">
+          <div class="flex items-center">
+            <i class="fas fa-comment-dots text-blue-600 mr-2"></i>
+            <h2 class="text-lg font-semibold">피드백</h2>
+          </div>
+          <button id="editFeedbackBtn"
+                  class="text-sm text-gray-600 hover:text-gray-900">Edit</button>
+        </div>
+        <div id="feedbackContent"><!-- JS 삽입 --></div>
+        <div id="correctedContent" class="mt-6"><!-- JS 삽입 --></div>
+        <div class="flex justify-end mt-6">
+          <button id="printBtn"
+                  class="bg-blue-600 text-white px-6 py-2 rounded-md shadow hover:bg-blue-700 flex items-center">
+            <i class="fas fa-print mr-2"></i> Print
           </button>
         </div>
-        <textarea id="contentText-final" class="input-area" placeholder="여기에 텍스트를 입력하세요"></textarea>
-        <div class="file-info"  id="file-info-final"><span class="file-name"></span></div>
-        <div class="ocr-status" id="ocr-status-final">
-          <div class="spinner"></div><span>이미지에서 텍스트를 추출 중입니다...</span>
-        </div>
-        <button type="submit" id="submit-final-btn">
-          Generate Final
-          <span id="submit-spinner-final" class="spinner"></span>
-        </button>
-      </form>
-      <div id="final-result"></div>
-
-      <!-- Print 옵션 모달 -->
-      <div id="final-print-modal" class="modal">
-        <div class="modal-content">
-          <h3>Print Options</h3>
-          <div class="print-options">
-            <label><input type="checkbox" id="print_orig_fn" checked> 원본</label>
-            <label><input type="checkbox" id="print_fb_fn">      피드백</label>
-            <label><input type="checkbox" id="print_corr_fn" checked> 수정글</label>
-          </div>
-          <button id="confirm-print-final-btn">Confirm</button>
-          <button id="cancel-print-final-btn">Cancel</button>
-        </div>
       </div>
-    </section>
+    </div>
+  </div>
+
+  <!-- Print 옵션 모달 -->
+  <div id="printModal" class="modal">
+    <div class="modal-content bg-white p-6 rounded-lg">
+      <h3 class="text-xl font-semibold text-blue-600 mb-4">Print Options</h3>
+      <div class="print-options mb-4">
+        <label class="block"><input type="checkbox" id="opt-orig" checked/> 원본</label>
+        <label class="block"><input type="checkbox" id="opt-fb" checked/> 피드백</label>
+        <label class="block"><input type="checkbox" id="opt-corr" checked/> 수정글</label>
+      </div>
+      <div class="flex justify-end space-x-4">
+        <button id="cancelPrint" class="px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
+        <button id="confirmPrint"
+                class="px-4 py-2 bg-blue-600 text-white rounded-md">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Print 전용 섹션 -->
+  <div class="print-page p-8">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-blue-800">🚀 윤선생 리얼 스피치</h1>
+      <p class="text-lg text-gray-600">글쓰기 피드백 결과</p>
+      <div class="mt-4">
+        <span class="font-medium">이름:</span> <span id="printName"></span>
+         
+        <span class="font-medium">센터:</span> <span id="printCenter"></span>
+         
+        <span class="font-medium">날짜:</span> <span id="printDate"></span>
+      </div>
+    </div>
+    <div id="printOrig" class="mb-6"><!-- 원본 --></div>
+    <div id="printFb" class="mb-6"><!-- 피드백 --></div>
+    <div id="printCorr" class="mb-6"><!-- 수정글 --></div>
   </div>
 
   <script>
-    const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
-    const PROXY_URL  = WORKER_URL + '/proxy';
+    // Utility
+    function el(q){return document.querySelector(q);}
+    function show(q){el(q).classList.remove('hidden');}
+    function hide(q){el(q).classList.add('hidden');}
 
-    let feedbackFileURL = '';
-    let finalFileURL    = '';
-    let lastFeedback    = '';
+    // 날짜 세팅
+    const today = new Date();
+    const ds = `${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일`;
+    el('#printDate').textContent = ds;
 
-    // Reset
-    document.getElementById('reset-btn').onclick = () => {
-      ['feedback','final'].forEach(sec => {
-        document.getElementById(`contentText-${sec}`).value = '';
-        document.getElementById(`file-info-${sec}`).classList.remove('show');
-        document.getElementById(`ocr-status-${sec}`).classList.remove('show');
-        document.getElementById(`contentText-${sec}`).classList.remove('has-image');
-        window[`${sec}FileURL`] = '';
-        document.getElementById(`${sec}-result`).innerHTML = '';
+    // Get Feedback
+    el('#getFeedbackBtn').onclick = async () => {
+      const txt = el('#userWriting').value;
+      // TODO: 이미지 OCR 있으면 contentText 대신 OCR 결과 전송
+      const res = await fetch('/api/feedback', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ contentText: txt })
       });
+      const { feedback, modelAnswer } = await res.json();
+      // 1) insert feedback cards (HTML 그대로 삽입)
+      el('#feedbackContent').innerHTML = feedback;
+      el('#correctedContent').innerHTML = `
+        <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+          ${modelAnswer}
+        </div>`;
+      show('#feedbackSection');
     };
 
-    // Tabs
-    document.getElementById('tab-feedback').onclick = () => {
-      document.getElementById('feedback-section').classList.add('active');
-      document.getElementById('tab-feedback').classList.add('active');
-      document.getElementById('final-section').classList.remove('active');
-      document.getElementById('tab-final').classList.remove('active');
-    };
-    document.getElementById('tab-final').onclick = () => {
-      document.getElementById('final-section').classList.add('active');
-      document.getElementById('tab-final').classList.add('active');
-      document.getElementById('feedback-section').classList.remove('active');
-      document.getElementById('tab-feedback').classList.remove('active');
-    };
-
-    // OCR helper
-    async function doOCR(file, section) {
-      const status = document.getElementById(`ocr-status-${section}`);
-      status.classList.add('show');
-      const ta = document.getElementById(`contentText-${section}`);
-      try {
-        const b64 = await new Promise((res,rej)=>{
-          const r = new FileReader();
-          r.onload = ()=>res(r.result.split(',')[1]);
-          r.onerror=rej; r.readAsDataURL(file);
-        });
-        const resp = await fetch(PROXY_URL, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            model:'gpt-4o-mini',
-            messages:[{
-              role:'user',
-              content:[
-                { type:'text', text:'Please extract the exact text from the image as it appears. Do not provide any additional commentary.' },
-                { type:'image_url', image_url:{ url:`data:${file.type};base64,${b64}` } }
-              ]
-            }],
-            max_tokens:500
-          })
-        });
-        const { choices } = await resp.json();
-        ta.value = (choices[0]?.message?.content || '').trim();
-      } catch(err) {
-        ta.value = 'OCR 에러: ' + err.message;
-      } finally {
-        status.classList.remove('show');
+    // Edit 버튼
+    let editing = false;
+    el('#editFeedbackBtn').onclick = () => {
+      const cnt = el('#feedbackContent');
+      if (!editing) {
+        const ta = document.createElement('textarea');
+        ta.id = 'fb-edit';
+        ta.className = 'w-full p-2 border rounded';
+        ta.value = cnt.innerText.trim();
+        cnt.replaceWith(ta);
+        el('#editFeedbackBtn').textContent='Save';
+      } else {
+        const ta = el('#fb-edit');
+        const div = document.createElement('div');
+        div.id='feedbackContent';
+        div.innerHTML = ta.value.replace(/\n/g,'<br>');
+        ta.replaceWith(div);
+        el('#editFeedbackBtn').textContent='Edit';
       }
-    }
-
-    // 파일 입력 바인딩
-    ['feedback','final'].forEach(sec => {
-      ['camera','gallery'].forEach(src => {
-        const inp = document.getElementById(`contentFile-${src}-${sec}`);
-        inp.onchange = e => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const info = document.getElementById(`file-info-${sec}`);
-          feedbackFileURL = finalFileURL = '';
-          window[`${sec}FileURL`] = URL.createObjectURL(file);
-          info.querySelector('.file-name').textContent = file.name;
-          info.classList.add('show');
-          document.getElementById(`contentText-${sec}`).classList.add('has-image');
-          doOCR(file, sec);
-        };
-      });
-    });
-
-    // Print modal 바인딩
-    function bindPrintModal(section) {
-      const modal = document.getElementById(`${section}-print-modal`);
-      const btnOpen = document.getElementById(
-        section==='feedback'?'print-feedback-btn':'print-model-btn'
-      );
-      const btnCancel = document.getElementById(
-        `cancel-print-${section}-btn`.replace('-', `-${section}-`)
-      );
-      const btnConfirm = document.getElementById(
-        `confirm-print-${section}-btn`.replace('-', `-${section}-`)
-      );
-
-      btnOpen?.addEventListener('click', ()=>modal.style.display='flex');
-      btnCancel?.addEventListener('click', ()=>modal.style.display='none');
-      btnConfirm?.addEventListener('click', ()=>{
-        const o = document.getElementById(`print_orig_${section==='feedback'?'fb':'fn'}`).checked;
-        const f = document.getElementById(`print_fb_${section==='feedback'?'fb':'fn'}`).checked;
-        const c = document.getElementById(`print_corr_${section==='feedback'?'fb':'fn'}`).checked;
-        modal.style.display='none';
-
-        let html = `<!doctype html><html><head><meta charset="utf-8"/><title>Print</title>`
-                 + `<style>body{font-family:sans-serif;padding:2rem;}@media print{button{display:none}}</style></head><body>`;
-        if (o) {
-          html+= `<h2>원본</h2>`;
-          if (window[`${section}FileURL`]) html+= `<img src="${window[`${section}FileURL`]}" style="max-width:100%"/>`;
-          else html+= `<pre>${document.getElementById(`contentText-${section}`).value}</pre>`;
-        }
-        if (f) {
-          html+= `<h2>Feedback</h2>`;
-          if (section==='feedback') html+= document.getElementById('fb-content').outerHTML;
-          else html+= lastFeedback.replace(/\n/g,'<br>');
-        }
-        if (c) {
-          html+= `<h2>수정글</h2>` +
-            document.getElementById(
-              section==='feedback'?'fb-corrected':'fn-corrected'
-            ).outerHTML;
-        }
-        html+= `<script>window.print();window.onafterprint=()=>window.close();<\/script></body></html>`;
-        const w=window.open(); w.document.write(html); w.document.close();
-      });
-    }
-
-    // 피드백 폼 제출
-    document.getElementById('feedback-form').onsubmit = async e => {
-      e.preventDefault();
-      const btn = document.getElementById('submit-feedback-btn');
-      const sp  = document.getElementById('submit-spinner-feedback');
-      btn.disabled=true; sp.style.display='inline-block';
-      const text = document.getElementById('contentText-feedback').value;
-      try {
-        const res = await fetch(`${WORKER_URL}/api/feedback`, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({ contentText: text })
-        });
-        const { feedback, modelAnswer } = await res.json();
-        lastFeedback = feedback;
-        document.getElementById('feedback-result').innerHTML = `
-          <div class="box" id="fb-box">
-            <h2>Feedback</h2>
-            <div id="fb-content">${feedback.replace(/\n/g,'<br>')}</div>
-            <button id="print-feedback-btn">Print</button>
-          </div>
-          <div class="box">
-            <h2>수정글</h2>
-            <div class="model-box" id="fb-corrected">${modelAnswer.replace(/\n/g,'<br>')}</div>
-          </div>`;
-        bindPrintModal('feedback');
-      } catch {
-        alert('피드백 요청 중 오류가 발생했습니다.');
-      } finally {
-        btn.disabled=false; sp.style.display='none';
-      }
+      editing = !editing;
     };
 
-    // 최종 폼 제출
-    document.getElementById('final-form').onsubmit = async e => {
-      e.preventDefault();
-      const btn = document.getElementById('submit-final-btn');
-      const sp  = document.getElementById('submit-spinner-final');
-      btn.disabled=true; sp.style.display='inline-block';
-      const text = document.getElementById('contentText-final').value;
-      try {
-        const res = await fetch(`${WORKER_URL}/api/feedback`, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({ contentText: text })
-        });
-        const { feedback, modelAnswer } = await res.json();
-        lastFeedback = feedback;
-        document.getElementById('final-result').innerHTML = `
-          <div class="box" id="fn-box">
-            <h2>수정글</h2>
-            <div class="model-box" id="fn-corrected">${modelAnswer.replace(/\n/g,'<br>')}</div>
-            <button id="print-model-btn">Print</button>
-          </div>`;
-        bindPrintModal('final');
-      } catch {
-        alert('최종 결과물 요청 중 오류가 발생했습니다.');
-      } finally {
-        btn.disabled=false; sp.style.display='none';
-      }
+    // Print flow
+    el('#printBtn').onclick = ()=>el('#printModal').style.display='flex';
+    el('#cancelPrint').onclick = ()=>el('#printModal').style.display='none';
+    el('#confirmPrint').onclick = ()=>{
+      // 학생정보
+      el('#printName').textContent   = el('#student-name').value || '(미입력)';
+      el('#printCenter').textContent = el('#center-name').value || '(미입력)';
+      // 원본
+      if(el('#opt-orig').checked) {
+        el('#printOrig').innerHTML = `
+          <h2 class="text-xl font-bold mb-2">원본 작성글</h2>
+          <pre>${el('#userWriting').value}</pre>`;
+      } else el('#printOrig').innerHTML='';
+      // 피드백
+      if(el('#opt-fb').checked)
+        el('#printFb').innerHTML = `<h2 class="text-xl font-bold mb-2">피드백</h2>` +
+          el('#feedbackContent').outerHTML;
+      else el('#printFb').innerHTML='';
+      // 수정글
+      if(el('#opt-corr').checked)
+        el('#printCorr').innerHTML = `<h2 class="text-xl font-bold mb-2">수정글</h2>` +
+          el('#correctedContent').innerHTML;
+      else el('#printCorr').innerHTML='';
+      el('#printModal').style.display='none';
+      window.print();
     };
   </script>
 </body>
