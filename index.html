@@ -1,257 +1,1536 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>글쓰기 피드백 시스템 - Writing Assistant</title>
-  <!-- Tailwind CSS, FontAwesome & Google Fonts -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet"/>
-  <style>
-    /* ---------- GENSPARK snippet styles ---------- */
-    body { font-family: 'Noto Sans KR', sans-serif; background-color: #f5f7fa; }
-    .header-gradient {
-      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #2563eb 100%);
-      position: relative; overflow: hidden;
-    }
-    .header-gradient::before {
-      content: "";
-      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-      background: radial-gradient(circle at 20% 150%, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 50%);
-    }
-    .tab-button { position: relative; transition: all 0.3s ease; }
-    .tab-button::after {
-      content: ''; position: absolute; bottom: -5px; left: 0; width: 0; height: 2px;
-      background-color: white; transition: width 0.3s ease;
-    }
-    .tab-button:hover::after { width: 100%; }
-    .tab-active { background-color: rgba(255,255,255,0.2); border-radius: 0.375rem; }
-    .tab-active::after { width: 100%; }
-    .grammar-error { color: #ef4444; font-weight: 500; }
-    .vocabulary-improvement { color: #3b82f6; font-weight: 500; }
-    .expression-enhancement { color: #10b981; font-weight: 500; }
-    .good-point { background-color: #ecfccb; padding: 0.5rem; border-radius: 0.25rem; }
-    .grammar-error-badge { background-color: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-    .vocabulary-badge { background-color: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-    .expression-badge { background-color: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-    .good-point-badge { background-color: #ecfccb; color: #3f6212; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-    .feedback-card { border-left: 4px solid transparent; transition: all 0.2s ease; }
-    .feedback-card.grammar     { border-left-color: #ef4444; }
-    .feedback-card.vocabulary  { border-left-color: #3b82f6; }
-    .feedback-card.expression  { border-left-color: #10b981; }
-    .feedback-card.good-point  { border-left-color: #84cc16; }
-    .filter-tab { color: #2563eb; border-bottom: 3px solid #2563eb; font-weight: 600; }
-    .corrected { color: #047857; }
-    .print-page { display: none; }
-    @media print {
-      .main-page { display: none; }
-      .print-page { display: block; padding: 2rem; }
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>글쓰기 피드백 시스템 - Writing Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        .header-gradient {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #2563eb 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-gradient::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 150%, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 50%);
+        }
+        
+        .tab-button {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-button::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: white;
+            transition: width 0.3s ease;
+        }
+        
+        .tab-button:hover::after {
+            width: 100%;
+        }
+        
+        .tab-active {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 0.375rem;
+        }
+        
+        .tab-active::after {
+            width: 100%;
+        }
+        
+        .feature-card {
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .grammar-error {
+            color: #ef4444;
+            font-weight: 500;
+            position: relative;
+        }
+        
+        .vocabulary-improvement {
+            color: #3b82f6;
+            font-weight: 500;
+        }
+        
+        .expression-enhancement {
+            color: #10b981;
+            font-weight: 500;
+        }
+        
+        .good-point {
+            background-color: #ecfccb;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+        }
+        
+        .grammar-error-badge {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .vocabulary-badge {
+            background-color: #dbeafe;
+            color: #1e40af;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .expression-badge {
+            background-color: #d1fae5;
+            color: #065f46;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .good-point-badge {
+            background-color: #ecfccb;
+            color: #3f6212;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .feedback-card {
+            border-left: 4px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .feedback-card.grammar {
+            border-left-color: #ef4444;
+        }
+        
+        .feedback-card.vocabulary {
+            border-left-color: #3b82f6;
+        }
+        
+        .feedback-card.expression {
+            border-left-color: #10b981;
+        }
+        
+        .feedback-card.good-point {
+            border-left-color: #84cc16;
+        }
+        
+        .filter-tab {
+            color: #2563eb;
+            border-bottom: 3px solid #2563eb;
+            font-weight: 600;
+        }
+        
+        .corrected {
+            color: #047857;
+        }
+        
+        .print-page {
+            display: none;
+        }
+        
+        @media print {
+            .main-page {
+                display: none;
+            }
+            
+            .print-page {
+                display: block;
+                padding: 2rem;
+            }
+        }
 
-    /* ---------- your existing functional styles ---------- */
-    #container { max-width: 700px; margin: auto; background: white; border-radius: .5rem; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
-    .content-tab { display: none; }
-    .content-tab.active { display: block; }
-    .input-area { width: 100%; min-height: 150px; padding: 1rem; border: 2px solid #cbd7e0; border-radius: .5rem; background: #f9fcff; resize: vertical; transition: border-color .3s; }
-    .input-area:focus { outline: none; border-color: #0066cc; }
-    .input-area.has-image { background: #e9f5ff; border-color: #0066cc; }
-    .action-icons { display:flex; justify-content:flex-end; gap:.5rem; margin-bottom:.5rem; }
-    .icon-btn { width:32px; height:32px; border:none; border-radius:.375rem; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.1); display:flex; align-items:center; justify-content:center; position:relative; cursor:pointer; transition:background .2s; }
-    .icon-btn:hover { background:#f0f4f8; }
-    .icon-btn input[type="file"] { position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; }
-    .file-info { margin-top:.5rem; padding:.5rem; background:#e9f5ff; border-radius:.25rem; display:none; font-size:.875rem; }
-    .file-info.show { display:flex; }
-    .file-info .file-name { flex:1; color:#004a99; font-weight:500; }
-    .ocr-status { margin-top:.5rem; padding:.5rem; background:#fff3cd; border:1px solid #ffeaa7; border-radius:.25rem; color:#856404; font-size:.875rem; display:none; align-items:center; gap:.5rem; }
-    .ocr-status.show { display:flex; }
-    .ocr-status .spinner { width:16px; height:16px; border:2px solid #856404; border-top:2px solid transparent; border-radius:50%; animation:spin 1s linear infinite; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-    .modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; }
-    .modal-content { background:#fff; padding:1rem; border-radius:.25rem; width:90%; max-width:400px; }
-    .modal-content h3 { margin-top:0; color:#004a99; }
-    .modal-content .print-options label { display:block; margin-bottom:.5rem; }
-    .box, .model-box { background:#fff; border-radius:.25rem; padding:1rem; margin-top:1rem; }
-    .box h2, .model-box h2 { margin:0 0 .5rem; color:#004a99; }
-    .spinner { display:none; width:16px; height:16px; border:2px solid #0066cc; border-top:2px solid transparent; border-radius:50%; animation:spin 1s linear infinite; vertical-align:middle; margin-left:.5rem; }
-    #tts-spinner { border:2px solid red; border-top:2px solid transparent; }
-  </style>
+        .btn:hover {
+            background-color: #1e40af;
+        }
+        
+        .feedback-explanation {
+            line-height: 1.6;
+        }
+
+        .section-title {
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .btn-primary {
+            transition: all 0.3s ease;
+            background-color: #2563eb;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            transition: all 0.3s ease;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e5e7eb;
+            transform: translateY(-1px);
+        }
+        
+        .btn-danger {
+            transition: all 0.3s ease;
+            background-color: #ef4444;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #e5e7eb;
+            overflow: hidden;
+        }
+        
+        .progress-value {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+        
+        .floating-label {
+            position: absolute;
+            pointer-events: none;
+            left: 15px;
+            top: 13px;
+            transition: 0.2s ease all;
+            color: #6b7280;
+        }
+        
+        .form-input:focus ~ .floating-label,
+        .form-input:not(:placeholder-shown) ~ .floating-label {
+            top: -10px;
+            left: 10px;
+            font-size: 12px;
+            color: #2563eb;
+            background-color: white;
+            padding: 0 5px;
+        }
+        
+        .form-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .print-option {
+            cursor: pointer;
+        }
+        
+        .print-option-checkbox {
+            width: 1.2rem;
+            height: 1.2rem;
+        }
+        
+        .audio-player {
+            background-color: #f3f4f6;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .audio-player-button {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background-color: #3b82f6;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .audio-player-button:hover {
+            background-color: #2563eb;
+            transform: scale(1.05);
+        }
+        
+        .audio-progress {
+            height: 6px;
+            border-radius: 3px;
+            background-color: #e5e7eb;
+            overflow: hidden;
+        }
+        
+        .audio-progress-value {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            border-radius: 3px;
+            transition: width 0.1s linear;
+            width: 0%;
+        }
+        
+        .content-tab {
+            display: none;
+        }
+        
+        .content-tab.active {
+            display: block;
+        }
+    </style>
 </head>
-<body class="bg-gray-100">
-  <div id="container" class="main-page p-6">
-    <!-- header + tabs -->
-    <div class="header-gradient text-white p-6 mb-6 relative">
-      <button id="reset-btn" class="btn-danger absolute top-4 right-4">
-        <i class="fas fa-sync-alt mr-2"></i> Reset
-      </button>
-      <div class="text-center">
-        <div class="inline-flex items-center justify-center bg-white rounded-full p-3 mb-4">
-          <i class="fas fa-pen-fancy text-2xl text-blue-600"></i>
-        </div>
-        <h1 class="text-3xl font-bold">Writing Assistant</h1>
-        <p class="text-blue-100">글쓰기 피드백 시스템</p>
-      </div>
-      <div class="flex justify-center mt-6 space-x-4">
-        <button id="feedbackTabBtn" class="tab-button tab-active px-6 py-2">피드백 코너</button>
-        <button id="finalTabBtn"    class="tab-button px-6 py-2">최종 산출물 코너</button>
-      </div>
-    </div>
-
-    <!-- 피드백 코너 -->
-    <div id="feedbackTab" class="content-tab active">
-      <!-- 학생 정보 -->
-      <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="relative">
-            <input type="text" id="studentName" class="form-input w-full px-4 py-3 border rounded-md placeholder-transparent" placeholder=" "/>
-            <label for="studentName" class="floating-label">학생의 이름을 입력하세요</label>
-          </div>
-          <div class="relative">
-            <input type="text" id="centerName" class="form-input w-full px-4 py-3 border rounded-md placeholder-transparent" placeholder=" "/>
-            <label for="centerName" class="floating-label">센터 이름을 입력하세요</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- 입력 -->
-      <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold flex items-center">
-            <i class="fas fa-edit text-blue-600 mr-2"></i> 글쓰기 입력
-          </h2>
-          <div class="flex space-x-2">
-            <label class="btn-secondary cursor-pointer">
-              <i class="fas fa-camera mr-2"></i> 카메라 촬영
-              <input type="file" id="contentFile-camera-feedback" accept="image/*" capture="environment" class="hidden"/>
-            </label>
-            <label class="btn-secondary cursor-pointer">
-              <i class="fas fa-image mr-2"></i> 이미지 업로드
-              <input type="file" id="contentFile-gallery-feedback" accept="image/*" class="hidden"/>
-            </label>
-          </div>
-        </div>
-        <label class="block text-gray-700 mb-2">영작 내용을 입력하거나 이미지를 업로드하세요</label>
-        <textarea id="contentText-feedback" class="input-area" placeholder="여기에 텍스트를 입력하세요"></textarea>
-        <div id="file-info-feedback" class="file-info"><span class="file-name"></span></div>
-        <div id="ocr-status-feedback" class="ocr-status"><div class="spinner"></div><span>이미지에서 텍스트를 추출 중입니다...</span></div>
-        <div class="flex justify-end">
-          <button id="submit-feedback-btn" class="btn-primary">
-            <i class="fas fa-check mr-2"></i> 분석하기
-            <span id="submit-spinner-feedback" class="spinner"></span>
-          </button>
-        </div>
-      </div>
-
-      <!-- 피드백 영역 -->
-      <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <div class="flex justify-between mb-4">
-          <h2 class="text-lg font-semibold flex items-center">
-            <i class="fas fa-comment-dots text-blue-600 mr-2"></i> 피드백
-          </h2>
-          <div class="relative">
-            <button id="printBtn" class="btn-secondary">
-              <i class="fas fa-print mr-2"></i> 인쇄하기
-            </button>
-            <div id="printOptions" class="hidden mt-3 ml-2 p-4 bg-gray-50 rounded-lg shadow">
-              <p class="font-medium mb-2">인쇄 항목 선택:</p>
-              <label class="flex items-center mb-2"><input type="checkbox" class="print-option-checkbox mr-2" value="original" checked/>원본글</label>
-              <label class="flex items-center mb-2"><input type="checkbox" class="print-option-checkbox mr-2" value="feedback" checked/>피드백</label>
-              <label class="flex items-center"><input type="checkbox" class="print-option-checkbox mr-2" value="corrected" checked/>교정된 버전</label>
-              <button id="confirmPrintBtn" class="btn-primary mt-4"><i class="fas fa-print mr-2"></i> 인쇄 확인</button>
+<body>
+    <div class="main-page">
+        <header class="header-gradient text-white shadow-lg">
+            <div class="container mx-auto py-6 px-4">
+                <div class="flex flex-col items-center justify-center relative">
+                    <button id="resetBtn" class="btn-danger absolute right-0 top-0">
+                        <i class="fas fa-sync-alt mr-2"></i> Reset
+                    </button>
+                    
+                    <div class="text-center mb-6">
+                        <div class="bg-white p-3 rounded-full shadow-md mx-auto mb-2" style="width:60px; height:60px; display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-pen-fancy text-2xl text-blue-600"></i>
+                        </div>
+                        <h1 class="text-3xl font-bold">Writing Assistant</h1>
+                        <p class="text-blue-100">글쓰기 피드백 시스템</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center mt-4">
+                    <button id="feedbackTabBtn" class="tab-button tab-active px-6 py-2 mx-2 text-white font-medium">
+                        피드백 코너
+                    </button>
+                    <button id="finalTabBtn" class="tab-button px-6 py-2 mx-2 text-white font-medium">
+                        최종 산출물 코너
+                    </button>
+                </div>
             </div>
-          </div>
+        </header>
+
+        <div id="feedbackTab" class="content-tab active">
+            <div class="container mx-auto p-4">
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-blue-50 p-2 rounded-full mr-2">
+                            <i class="fas fa-user-graduate text-blue-600"></i>
+                        </div>
+                        <h2 class="text-lg font-semibold">학생 정보</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <input type="text" id="studentName" class="form-input w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-transparent" placeholder=" ">
+                            <label for="studentName" class="floating-label">학생의 이름을 입력하세요</label>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="centerName" class="form-input w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-transparent" placeholder=" ">
+                            <label for="centerName" class="floating-label">센터 이름을 입력하세요</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="bg-blue-50 p-2 rounded-full mr-2">
+                                <i class="fas fa-edit text-blue-600"></i>
+                            </div>
+                            <h2 class="text-lg font-semibold">글쓰기 입력</h2>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <button class="btn-secondary">
+                                <i class="fas fa-camera mr-2"></i> 카메라 촬영
+                            </button>
+                            <button class="btn-secondary">
+                                <i class="fas fa-image mr-2"></i> 이미지 업로드
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">영작 내용을 입력하거나 이미지를 업로드하세요</label>
+                        <textarea id="userWriting" class="w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" rows="8" style="min-height: 200px;">Yesterday, I go to the park with my friends.
+The weather is very good and we are happy.
+After playing, I bought some ice cream for my friends.
+It was very delicious.
+I think that this day is most happy day in this month.
+We played basketball for two hours.</textarea>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button id="analyzeBtn" class="btn-primary">
+                            <i class="fas fa-check mr-2"></i> 분석하기
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-blue-50 p-2 rounded-full mr-2">
+                            <i class="fas fa-comment-dots text-blue-600"></i>
+                        </div>
+                        <h2 class="text-lg font-semibold">피드백</h2>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <button id="printBtn" class="btn-secondary">
+                            <i class="fas fa-print mr-2"></i> 인쇄하기
+                        </button>
+                        
+                        <div id="printOptions" class="mt-3 ml-2 p-4 bg-gray-50 rounded-lg hidden">
+                            <p class="mb-2 font-medium text-gray-700">인쇄 항목 선택:</p>
+                            <div class="space-y-2 mb-3">
+                                <label class="flex items-center print-option">
+                                    <input type="checkbox" class="print-option-checkbox mr-2" value="original" checked> 원본글
+                                </label>
+                                <label class="flex items-center print-option">
+                                    <input type="checkbox" class="print-option-checkbox mr-2" value="feedback" checked> 피드백
+                                </label>
+                                <label class="flex items-center print-option">
+                                    <input type="checkbox" class="print-option-checkbox mr-2" value="corrected" checked> 교정된 버전
+                                </label>
+                            </div>
+                            <button id="confirmPrintBtn" class="btn-primary">
+                                <i class="fas fa-print mr-2"></i> 인쇄 확인
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6 bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-medium text-gray-800 mb-2">피드백 요약</h3>
+                        <p class="text-gray-700 mb-4">
+                            이 글은 시제 사용에 있어 몇 가지 일관성 문제가 있습니다. 과거 사건을 설명할 때 현재 시제를 혼용하고 있어 문법적 오류가 발생했습니다. 
+                            어휘 선택은 기본적이지만 적절하며, 일부 표현은 더 세련되게 개선할 수 있습니다. 전반적으로 구체적인 시간 표현을 잘 활용한 점이 돋보입니다.
+                        </p>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="bg-white p-3 rounded-lg border border-gray-200 text-center">
+                                <div class="text-red-500 text-xl font-bold mb-1">4</div>
+                                <div class="text-sm text-gray-600">문법 오류</div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg border border-gray-200 text-center">
+                                <div class="text-blue-500 text-xl font-bold mb-1">1</div>
+                                <div class="text-sm text-gray-600">어휘 개선</div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg border border-gray-200 text-center">
+                                <div class="text-green-500 text-xl font-bold mb-1">1</div>
+                                <div class="text-sm text-gray-600">표현 향상</div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg border border-gray-200 text-center">
+                                <div class="text-lime-500 text-xl font-bold mb-1">1</div>
+                                <div class="text-sm text-gray-600">잘한 점</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex border-b mb-4 overflow-x-auto">
+                        <button class="filter-tab px-4 py-2 mr-2 whitespace-nowrap">전체</button>
+                        <button class="text-gray-600 hover:text-gray-900 px-4 py-2 mr-2 flex items-center whitespace-nowrap">
+                            <span class="inline-block w-2 h-2 bg-red-500 rounded-full mr-1"></span>
+                            문법 오류
+                        </button>
+                        <button class="text-gray-600 hover:text-gray-900 px-4 py-2 mr-2 flex items-center whitespace-nowrap">
+                            <span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-1"></span>
+                            어휘 개선
+                        </button>
+                        <button class="text-gray-600 hover:text-gray-900 px-4 py-2 mr-2 flex items-center whitespace-nowrap">
+                            <span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                            표현 향상
+                        </button>
+                        <button class="text-gray-600 hover:text-gray-900 px-4 py-2 flex items-center whitespace-nowrap">
+                            <span class="inline-block w-2 h-2 bg-lime-500 rounded-full mr-1"></span>
+                            잘한 점
+                        </button>
+                    </div>
+                    
+                    <div id="feedbackContent">
+                        <div class="mb-6 p-4 bg-gray-50 rounded-lg feedback-card grammar">
+                            <div class="flex justify-between items-start">
+                                <p class="mb-2 text-gray-800 text-lg">Yesterday, I <span class="grammar-error">go</span> to the park with my friends.</p>
+                                <button class="edit-feedback-btn text-gray-500 hover:text-blue-600 ml-2">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                            <div class="feedback-content">
+                                <div class="pl-4 border-l-2 border-red-500 mt-3">
+                                    <div class="flex items-center mb-1">
+                                        <span class="grammar-error-badge">문법 오류</span>
+                                        <span class="ml-2 font-medium">go → went</span>
+                                    </div>
+                                    <p class="text-gray-700 feedback-explanation">
+                                        과거 시제로 표현해야 합니다. 'Yesterday'라는 과거 시간 부사와 함께 사용되므로 'go'가 아닌 'went'를 사용하세요.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="edit-form hidden mt-3">
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">피드백 유형</label>
+                                    <select class="feedback-type-select w-full px-3 py-2 border rounded-md">
+                                        <option value="grammar" selected>문법 오류</option>
+                                        <option value="vocabulary">어휘 개선</option>
+                                        <option value="expression">표현 향상</option>
+                                        <option value="good-point">잘한 점</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">수정 제안</label>
+                                    <input type="text" class="correction-input w-full px-3 py-2 border rounded-md" value="go → went">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">설명</label>
+                                    <textarea class="explanation-input w-full px-3 py-2 border rounded-md" rows="3">과거 시제로 표현해야 합니다. 'Yesterday'라는 과거 시간 부사와 함께 사용되므로 'go'가 아닌 'went'를 사용하세요.</textarea>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="save-feedback-btn btn-primary">저장</button>
+                                    <button class="cancel-edit-btn btn-secondary">취소</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6 p-4 bg-gray-50 rounded-lg feedback-card grammar">
+                            <div class="flex justify-between items-start">
+                                <p class="mb-2 text-gray-800 text-lg">The weather <span class="grammar-error">is</span> very good and we <span class="grammar-error">are</span> happy.</p>
+                                <button class="edit-feedback-btn text-gray-500 hover:text-blue-600 ml-2">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                            <div class="feedback-content">
+                                <div class="pl-4 border-l-2 border-red-500 mt-3">
+                                    <div class="flex items-center mb-1">
+                                        <span class="grammar-error-badge">문법 오류</span>
+                                        <span class="ml-2 font-medium">is → was, are → were</span>
+                                    </div>
+                                    <p class="text-gray-700 feedback-explanation">
+                                        과거 사건을 설명하고 있으므로 현재 시제가 아닌 과거 시제를 사용해야 합니다.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="edit-form hidden mt-3">
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">피드백 유형</label>
+                                    <select class="feedback-type-select w-full px-3 py-2 border rounded-md">
+                                        <option value="grammar" selected>문법 오류</option>
+                                        <option value="vocabulary">어휘 개선</option>
+                                        <option value="expression">표현 향상</option>
+                                        <option value="good-point">잘한 점</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">수정 제안</label>
+                                    <input type="text" class="correction-input w-full px-3 py-2 border rounded-md" value="is → was, are → were">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">설명</label>
+                                    <textarea class="explanation-input w-full px-3 py-2 border rounded-md" rows="3">과거 사건을 설명하고 있으므로 현재 시제가 아닌 과거 시제를 사용해야 합니다.</textarea>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="save-feedback-btn btn-primary">저장</button>
+                                    <button class="cancel-edit-btn btn-secondary">취소</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6 p-4 bg-gray-50 rounded-lg feedback-card">
+                            <div class="flex justify-between items-start">
+                                <p class="mb-2 text-gray-800 text-lg">After playing, I bought some ice cream for my friends.</p>
+                                <button class="edit-feedback-btn text-gray-500 hover:text-blue-600 ml-2">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                            <div class="feedback-content">
+                                </div>
+                            <div class="edit-form hidden mt-3">
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">피드백 유형</label>
+                                    <select class="feedback-type-select w-full px-3 py-2 border rounded-md">
+                                        <option value="grammar">문법 오류</option>
+                                        <option value="vocabulary">어휘 개선</option>
+                                        <option value="expression">표현 향상</option>
+                                        <option value="good-point">잘한 점</option>
+                                        <option value="none" selected>피드백 없음</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3 feedback-details hidden">
+                                    <div class="mb-3">
+                                        <label class="block text-gray-700 mb-1 text-sm">수정 제안</label>
+                                        <input type="text" class="correction-input w-full px-3 py-2 border rounded-md" value="">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="block text-gray-700 mb-1 text-sm">설명</label>
+                                        <textarea class="explanation-input w-full px-3 py-2 border rounded-md" rows="3"></textarea>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="save-feedback-btn btn-primary">저장</button>
+                                    <button class="cancel-edit-btn btn-secondary">취소</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6 p-4 bg-gray-50 rounded-lg feedback-card vocabulary">
+                            <div class="flex justify-between items-start">
+                                <p class="mb-2 text-gray-800 text-lg">It was very <span class="vocabulary-improvement">delicious</span>.</p>
+                                <button class="edit-feedback-btn text-gray-500 hover:text-blue-600 ml-2">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                            <div class="feedback-content">
+                                <div class="pl-4 border-l-2 border-blue-500 mt-3">
+                                    <div class="flex items-center mb-1">
+                                        <span class="vocabulary-badge">어휘 개선</span>
+                                        <span class="ml-2 font-medium">delicious → tasty, mouth-watering, scrumptious</span>
+                                    </div>
+                                    <p class="text-gray-700 feedback-explanation">
+                                        다양한 표현을 사용하면 글의 풍부함이 더해집니다. 'delicious' 대신 'tasty', 'mouth-watering', 'scrumptious' 등의 표현도 고려해 보세요.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="edit-form hidden mt-3">
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">피드백 유형</label>
+                                    <select class="feedback-type-select w-full px-3 py-2 border rounded-md">
+                                        <option value="grammar">문법 오류</option>
+                                        <option value="vocabulary" selected>어휘 개선</option>
+                                        <option value="expression">표현 향상</option>
+                                        <option value="good-point">잘한 점</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">수정 제안</label>
+                                    <input type="text" class="correction-input w-full px-3 py-2 border rounded-md" value="delicious → tasty, mouth-watering, scrumptious">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">설명</label>
+                                    <textarea class="explanation-input w-full px-3 py-2 border rounded-md" rows="3">다양한 표현을 사용하면 글의 풍부함이 더해집니다. 'delicious' 대신 'tasty', 'mouth-watering', 'scrumptious' 등의 표현도 고려해 보세요.</textarea>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="save-feedback-btn btn-primary">저장</button>
+                                    <button class="cancel-edit-btn btn-secondary">취소</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6 p-4 bg-gray-50 rounded-lg feedback-card expression">
+                            <div class="flex justify-between items-start">
+                                <p class="mb-2 text-gray-800 text-lg">I <span class="expression-enhancement">think that</span> this day <span class="grammar-error">is</span> <span class="grammar-error">most</span> happy day in this month.</p>
+                                <button class="edit-feedback-btn text-gray-500 hover:text-blue-600 ml-2">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                            <div class="feedback-content">
+                                <div class="pl-4 border-l-2 border-green-500 mt-3">
+                                    <div class="flex items-center mb-1">
+                                        <span class="expression-badge">표현 향상</span>
+                                        <span class="ml-2 font-medium">I think that → "I believe" 또는 "In my opinion"</span>
+                                    </div>
+                                    <p class="text-gray-700 feedback-explanation">
+                                        보다 자신감 있고 세련된 표현을 사용하면 글의 설득력이 높아집니다. "I think that" 대신 "I believe" 또는 "In my opinion"과 같은 표현을 사용해 보세요.
+                                    </p>
+                                </div>
+                                <div class="pl-4 border-l-2 border-red-500 mt-3">
+                                    <div class="flex items-center mb-1">
+                                        <span class="grammar-error-badge">문법 오류</span>
+                                        <span class="ml-2 font-medium">is → was</span>
+                                    </div>
+                                    <p class="text-gray-700 feedback-explanation">
+                                        과거 사건을 설명하고 있으므로 'is'가 아닌 'was'를 사용해야 합니다.
+                                    </p>
+                                </div>
+                                <div class="pl-4 border-l-2 border-red-500 mt-3">
+                                    <div class="flex items-center mb-1">
+                                        <span class="grammar-error-badge">문법 오류</span>
+                                        <span class="ml-2 font-medium">most happy → the most happy</span>
+                                    </div>
+                                    <p class="text-gray-700 feedback-explanation">
+                                        최상급 표현을 사용할 때는 'the most'의 형태가 필요합니다.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="edit-form hidden mt-3">
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">피드백 유형 (주요 피드백)</label>
+                                    <select class="feedback-type-select w-full px-3 py-2 border rounded-md">
+                                        <option value="grammar">문법 오류</option>
+                                        <option value="vocabulary">어휘 개선</option>
+                                        <option value="expression" selected>표현 향상</option>
+                                        <option value="good-point">잘한 점</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">수정 제안 (표현)</label>
+                                    <input type="text" class="correction-input w-full px-3 py-2 border rounded-md" value="I think that → &quot;I believe&quot; 또는 &quot;In my opinion&quot;">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">설명 (표현)</label>
+                                    <textarea class="explanation-input w-full px-3 py-2 border rounded-md" rows="3">보다 자신감 있고 세련된 표현을 사용하면 글의 설득력이 높아집니다. "I think that" 대신 "I believe" 또는 "In my opinion"과 같은 표현을 사용해 보세요.</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">수정 제안 (문법 1)</label>
+                                    <input type="text" class="correction-input w-full px-3 py-2 border rounded-md" value="is → was">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">설명 (문법 1)</label>
+                                    <textarea class="explanation-input w-full px-3 py-2 border rounded-md" rows="3">과거 사건을 설명하고 있으므로 'is'가 아닌 'was'를 사용해야 합니다.</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">수정 제안 (문법 2)</label>
+                                    <input type="text" class="correction-input w-full px-3 py-2 border rounded-md" value="most happy → the most happy">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">설명 (문법 2)</label>
+                                    <textarea class="explanation-input w-full px-3 py-2 border rounded-md" rows="3">최상급 표현을 사용할 때는 'the most'의 형태가 필요합니다.</textarea>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="save-feedback-btn btn-primary">저장</button>
+                                    <button class="cancel-edit-btn btn-secondary">취소</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-6 p-4 bg-gray-50 rounded-lg feedback-card good-point">
+                            <div class="flex justify-between items-start">
+                                <p class="mb-2 text-gray-800 text-lg">We played basketball for two hours.</p>
+                                <button class="edit-feedback-btn text-gray-500 hover:text-blue-600 ml-2">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                            <div class="feedback-content">
+                                <div class="pl-4 border-l-2 border-lime-500 mt-3">
+                                    <div class="flex items-center mb-1">
+                                        <span class="good-point-badge">잘한 점</span>
+                                        <span class="ml-2 font-medium">구체적인 시간 표현</span>
+                                    </div>
+                                    <p class="text-gray-700 feedback-explanation">
+                                        'for two hours'와 같이 구체적인 시간 표현을 사용하여 문장에 명확성을 더한 점이 좋습니다.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="edit-form hidden mt-3">
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">피드백 유형</label>
+                                    <select class="feedback-type-select w-full px-3 py-2 border rounded-md">
+                                        <option value="grammar">문법 오류</option>
+                                        <option value="vocabulary">어휘 개선</option>
+                                        <option value="expression">표현 향상</option>
+                                        <option value="good-point" selected>잘한 점</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">수정 제안</label>
+                                    <input type="text" class="correction-input w-full px-3 py-2 border rounded-md" value="구체적인 시간 표현">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="block text-gray-700 mb-1 text-sm">설명</label>
+                                    <textarea class="explanation-input w-full px-3 py-2 border rounded-md" rows="3">'for two hours'와 같이 구체적인 시간 표현을 사용하여 문장에 명확성을 더한 점이 좋습니다.</textarea>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="save-feedback-btn btn-primary">저장</button>
+                                    <button class="cancel-edit-btn btn-secondary">취소</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- 요약 대시보드 -->
-        <div class="bg-gray-50 p-4 rounded mb-6">
-          <h3 class="font-medium mb-2">피드백 요약</h3>
-          <p class="text-gray-700 mb-4">
-            이 글은 시제 사용에 있어 몇 가지 일관성 문제가 있습니다. 과거 사건을 설명할 때 현재 시제를 혼용하고 있어 문법적 오류가 발생했습니다. 어휘 선택은 기본적이지만 적절하며, 일부 표현은 더 세련되게 개선할 수 있습니다. 전반적으로 구체적인 시간 표현을 잘 활용한 점이 돋보입니다.
-          </p>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="bg-white p-3 rounded border text-center">
-              <div class="text-red-500 text-xl font-bold mb-1">4</div><div class="text-sm">문법 오류</div>
+        <div id="finalTab" class="content-tab">
+            <div class="container mx-auto p-4">
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-blue-50 p-2 rounded-full mr-2">
+                            <i class="fas fa-book-open text-blue-600"></i>
+                        </div>
+                        <h2 class="text-lg font-semibold">원본글</h2>
+                    </div>
+                    <div class="mb-4">
+                        <textarea id="originalWriting" class="w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" rows="8" style="min-height: 200px;" readonly>Yesterday, I go to the park with my friends.
+The weather is very good and we are happy.
+After playing, I bought some ice cream for my friends.
+It was very delicious.
+I think that this day is most happy day in this month.
+We played basketball for two hours.</textarea>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="bg-blue-50 p-2 rounded-full mr-2">
+                                <i class="fas fa-clipboard-check text-blue-600"></i>
+                            </div>
+                            <h2 class="text-lg font-semibold">교정된 버전</h2>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="listenAudioBtn" class="btn-secondary">
+                                <i class="fas fa-volume-up mr-2"></i> 음성 듣기
+                            </button>
+                            <button id="downloadAudioBtn" class="btn-secondary">
+                                <i class="fas fa-download mr-2"></i> 음원 다운로드
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <textarea id="correctedWriting" class="w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" rows="8" style="min-height: 200px;" readonly>Yesterday, I went to the park with my friends. The weather was very good and we were happy. After playing, I bought some ice cream for my friends. It was very delicious. I believe that this day was the happiest day this month. We played basketball for two hours.</textarea>
+                    </div>
+                    
+                    <div id="audioPlayerContainer" class="audio-player flex items-center space-x-4 hidden">
+                        <audio id="audioElement" src="" preload="auto"></audio>
+                        <button id="playPauseBtn" class="audio-player-button">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <div class="flex-grow">
+                            <div class="audio-progress">
+                                <div id="audioProgressBar" class="audio-progress-value"></div>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1 flex justify-between">
+                                <span id="currentTime">0:00</span>
+                                <span id="totalTime">0:00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button id="printFinalBtn" class="btn-primary">
+                        <i class="fas fa-print mr-2"></i> 최종 산출물 인쇄
+                    </button>
+                </div>
             </div>
-            <div class="bg-white p-3 rounded border text-center">
-              <div class="text-blue-500 text-xl font-bold mb-1">1</div><div class="text-sm">어휘 개선</div>
+        </div>
+    </div>
+
+    <div class="print-page">
+        <h1 class="text-2xl font-bold mb-6 text-center">글쓰기 피드백 보고서</h1>
+        <div id="printOriginal" class="mb-8">
+            <h2 class="text-xl font-semibold section-title mb-4">원본글</h2>
+            <div class="bg-gray-100 p-4 rounded-lg text-gray-800 leading-relaxed">
+                Yesterday, I go to the park with my friends.
+                The weather is very good and we are happy.
+                After playing, I bought some ice cream for my friends.
+                It was very delicious.
+                I think that this day is most happy day in this month.
+                We played basketball for two hours.
             </div>
-            <div class="bg-white p-3 rounded border text-center">
-              <div class="text-green-500 text-xl font-bold mb-1">1</div><div class="text-sm">표현 향상</div>
-            </div>
-            <div class="bg-white p-3 rounded border text-center">
-              <div class="text-lime-500 text-xl font-bold mb-1">1</div><div class="text-sm">잘한 점</div>
-            </div>
-          </div>
         </div>
 
-        <!-- 필터 탭 -->
-        <div class="flex border-b mb-4 overflow-x-auto">
-          <button class="filter-tab px-4 py-2 whitespace-nowrap">전체</button>
-          <button class="px-4 py-2 mr-2 text-gray-600 hover:text-gray-900 whitespace-nowrap flex items-center">
-            <span class="w-2 h-2 bg-red-500 rounded-full mr-1"></span> 문법 오류
-          </button>
-          <button class="px-4 py-2 mr-2 text-gray-600 hover:text-gray-900 whitespace-nowrap flex items-center">
-            <span class="w-2 h-2 bg-blue-500 rounded-full mr-1"></span> 어휘 개선
-          </button>
-          <button class="px-4 py-2 mr-2 text-gray-600 hover:text-gray-900 whitespace-nowrap flex items-center">
-            <span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span> 표현 향상
-          </button>
-          <button class="px-4 py-2 text-gray-600 hover:text-gray-900 whitespace-nowrap flex items-center">
-            <span class="w-2 h-2 bg-lime-500 rounded-full mr-1"></span> 잘한 점
-          </button>
+        <div id="printFeedback" class="mb-8">
+            <h2 class="text-xl font-semibold section-title mb-4">피드백</h2>
+            <div class="space-y-4">
+                <div class="p-3 border border-red-200 rounded-lg bg-red-50 feedback-card grammar">
+                    <p class="font-medium text-red-700 mb-1">Yesterday, I <span class="grammar-error">go</span> to the park with my friends.</p>
+                    <div class="ml-4 pl-3 border-l-2 border-red-500">
+                        <span class="grammar-error-badge">문법 오류</span>
+                        <span class="ml-2 font-medium">go → went</span>
+                        <p class="text-gray-700 text-sm mt-1">과거 시제로 표현해야 합니다. 'Yesterday'라는 과거 시간 부사와 함께 사용되므로 'go'가 아닌 'went'를 사용하세요.</p>
+                    </div>
+                </div>
+                <div class="p-3 border border-red-200 rounded-lg bg-red-50 feedback-card grammar">
+                    <p class="font-medium text-red-700 mb-1">The weather <span class="grammar-error">is</span> very good and we <span class="grammar-error">are</span> happy.</p>
+                    <div class="ml-4 pl-3 border-l-2 border-red-500">
+                        <span class="grammar-error-badge">문법 오류</span>
+                        <span class="ml-2 font-medium">is → was, are → were</span>
+                        <p class="text-gray-700 text-sm mt-1">과거 사건을 설명하고 있으므로 현재 시제가 아닌 과거 시제를 사용해야 합니다.</p>
+                    </div>
+                </div>
+                <div class="p-3 border border-blue-200 rounded-lg bg-blue-50 feedback-card vocabulary">
+                    <p class="font-medium text-blue-700 mb-1">It was very <span class="vocabulary-improvement">delicious</span>.</p>
+                    <div class="ml-4 pl-3 border-l-2 border-blue-500">
+                        <span class="vocabulary-badge">어휘 개선</span>
+                        <span class="ml-2 font-medium">delicious → tasty, mouth-watering, scrumptious</span>
+                        <p class="text-gray-700 text-sm mt-1">다양한 표현을 사용하면 글의 풍부함이 더해집니다. 'delicious' 대신 'tasty', 'mouth-watering', 'scrumptious' 등의 표현도 고려해 보세요.</p>
+                    </div>
+                </div>
+                <div class="p-3 border border-green-200 rounded-lg bg-green-50 feedback-card expression">
+                    <p class="font-medium text-green-700 mb-1">I <span class="expression-enhancement">think that</span> this day <span class="grammar-error">is</span> <span class="grammar-error">most</span> happy day in this month.</p>
+                    <div class="ml-4 pl-3 border-l-2 border-green-500">
+                        <span class="expression-badge">표현 향상</span>
+                        <span class="ml-2 font-medium">I think that → "I believe" 또는 "In my opinion"</span>
+                        <p class="text-gray-700 text-sm mt-1">보다 자신감 있고 세련된 표현을 사용하면 글의 설득력이 높아집니다. "I think that" 대신 "I believe" 또는 "In my opinion"과 같은 표현을 사용해 보세요.</p>
+                    </div>
+                    <div class="ml-4 pl-3 border-l-2 border-red-500 mt-2">
+                        <span class="grammar-error-badge">문법 오류</span>
+                        <span class="ml-2 font-medium">is → was</span>
+                        <p class="text-gray-700 text-sm mt-1">과거 사건을 설명하고 있으므로 'is'가 아닌 'was'를 사용해야 합니다.</p>
+                    </div>
+                    <div class="ml-4 pl-3 border-l-2 border-red-500 mt-2">
+                        <span class="grammar-error-badge">문법 오류</span>
+                        <span class="ml-2 font-medium">most happy → the most happy</span>
+                        <p class="text-gray-700 text-sm mt-1">최상급 표현을 사용할 때는 'the most'의 형태가 필요합니다.</p>
+                    </div>
+                </div>
+                <div class="p-3 border border-lime-200 rounded-lg bg-lime-50 feedback-card good-point">
+                    <p class="font-medium text-lime-700 mb-1">We played basketball for two hours.</p>
+                    <div class="ml-4 pl-3 border-l-2 border-lime-500">
+                        <span class="good-point-badge">잘한 점</span>
+                        <span class="ml-2 font-medium">구체적인 시간 표현</span>
+                        <p class="text-gray-700 text-sm mt-1">'for two hours'와 같이 구체적인 시간 표현을 사용하여 문장에 명확성을 더한 점이 좋습니다.</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- 실제 피드백 콘텐츠는 JS로 주입됩니다 -->
-        <div id="feedbackContent"></div>
-      </div>
-
-      <!-- 교정된 버전 -->
-      <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <div class="flex items-center mb-4">
-          <i class="fas fa-check-circle text-green-600 text-xl mr-2"></i>
-          <h2 class="text-lg font-semibold">교정된 버전</h2>
+        <div id="printCorrected">
+            <h2 class="text-xl font-semibold section-title mb-4">교정된 버전</h2>
+            <div class="bg-gray-100 p-4 rounded-lg text-gray-800 leading-relaxed">
+                Yesterday, I went to the park with my friends. The weather was very good and we were happy. After playing, I bought some ice cream for my friends. It was very delicious. I believe that this day was the happiest day this month. We played basketball for two hours.
+            </div>
         </div>
-        <div id="correctedContent" class="p-4 bg-green-50 rounded border border-green-200"></div>
-      </div>
     </div>
 
-    <!-- 최종 산출물 코너 -->
-    <div id="finalTab" class="content-tab p-6">
-      <!-- similar structure… -->
-      <!-- … final input, print modal, corrected text, TTS player … -->
-    </div>
-  </div>
+    <script>
+        const feedbackTabBtn = document.getElementById('feedbackTabBtn');
+        const finalTabBtn = document.getElementById('finalTabBtn');
+        const feedbackTab = document.getElementById('feedbackTab');
+        const finalTab = document.getElementById('finalTab');
+        const resetBtn = document.getElementById('resetBtn');
+        const printBtn = document.getElementById('printBtn');
+        const printOptions = document.getElementById('printOptions');
+        const confirmPrintBtn = document.getElementById('confirmPrintBtn');
+        const printFinalBtn = document.getElementById('printFinalBtn');
+        const listenAudioBtn = document.getElementById('listenAudioBtn');
+        const audioPlayerContainer = document.getElementById('audioPlayerContainer');
+        const audioElement = document.getElementById('audioElement');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const audioProgressBar = document.getElementById('audioProgressBar');
+        const currentTimeDisplay = document.getElementById('currentTime');
+        const totalTimeDisplay = document.getElementById('totalTime');
+        const downloadAudioBtn = document.getElementById('downloadAudioBtn');
+        const userWriting = document.getElementById('userWriting');
+        const originalWriting = document.getElementById('originalWriting');
+        const correctedWriting = document.getElementById('correctedWriting');
+        const analyzeBtn = document.getElementById('analyzeBtn');
 
-  <!-- print-page (for @media print) -->
-  <div class="print-page">
-    <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold text-blue-800">글쓰기 피드백 시스템</h1>
-      <p class="text-lg text-gray-600">Writing Assistant</p>
-    </div>
-    <table class="w-full mb-8">
-      <tr><th class="text-left pr-4">이름:</th><td id="print-student-name" class="border-b"></td></tr>
-      <tr><th class="text-left pr-4">센터:</th><td id="print-center-name" class="border-b"></td></tr>
-      <tr><th class="text-left pr-4">날짜:</th><td id="print-date" class="border-b"></td></tr>
-    </table>
-    <div id="print-original" class="mb-8">
-      <h2 class="text-xl font-bold text-blue-800 section-title">원본글</h2>
-      <div id="print-original-content"></div>
-    </div>
-    <div id="print-feedback" class="mb-8">
-      <h2 class="text-xl font-bold text-blue-800 section-title">피드백</h2>
-      <div id="print-feedback-content"></div>
-    </div>
-    <div id="print-corrected">
-      <h2 class="text-xl font-bold text-blue-800 section-title">교정된 버전</h2>
-      <div id="print-corrected-content"></div>
-    </div>
-  </div>
+        // 초기 탭 설정
+        feedbackTabBtn.addEventListener('click', () => {
+            feedbackTab.classList.add('active');
+            finalTab.classList.remove('active');
+            feedbackTabBtn.classList.add('tab-active');
+            finalTabBtn.classList.remove('tab-active');
+        });
 
-  <script>
-    // (The full JavaScript from your previous inline <script> block,
-    // unchanged—binding tabs, OCR, API calls, print modals, TTS, etc.)
-    // Just be sure it dynamically injects into #feedbackContent, #correctedContent…
-    // and handles #finalTab in the same way.
-  </script>
+        finalTabBtn.addEventListener('click', () => {
+            feedbackTab.classList.remove('active');
+            finalTab.classList.add('active');
+            feedbackTabBtn.classList.remove('tab-active');
+            finalTabBtn.classList.add('tab-active');
+        });
+
+        // Reset 버튼 기능
+        resetBtn.addEventListener('click', () => {
+            if (confirm('모든 내용을 초기화하시겠습니까?')) {
+                document.getElementById('studentName').value = '';
+                document.getElementById('centerName').value = '';
+                userWriting.value = '';
+                originalWriting.value = '';
+                correctedWriting.value = '';
+                document.getElementById('feedbackContent').innerHTML = ''; // 피드백 내용 초기화
+                // 피드백 요약도 초기화 필요 (예: 기본값으로 돌리거나 숨기기)
+                const feedbackSummary = document.querySelector('.bg-gray-50.p-4.rounded-lg');
+                if (feedbackSummary) feedbackSummary.innerHTML = `
+                    <h3 class="font-medium text-gray-800 mb-2">피드백 요약</h3>
+                    <p class="text-gray-700 mb-4">분석할 글을 입력해주세요.</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 text-center">
+                            <div class="text-red-500 text-xl font-bold mb-1">0</div>
+                            <div class="text-sm text-gray-600">문법 오류</div>
+                        </div>
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 text-center">
+                            <div class="text-blue-500 text-xl font-bold mb-1">0</div>
+                            <div class="text-sm text-gray-600">어휘 개선</div>
+                        </div>
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 text-center">
+                            <div class="text-green-500 text-xl font-bold mb-1">0</div>
+                            <div class="text-sm text-gray-600">표현 향상</div>
+                        </div>
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 text-center">
+                            <div class="text-lime-500 text-xl font-bold mb-1">0</div>
+                            <div class="text-sm text-gray-600">잘한 점</div>
+                        </div>
+                    </div>
+                `;
+                audioElement.pause();
+                audioElement.currentTime = 0;
+                audioPlayerContainer.classList.add('hidden');
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                audioProgressBar.style.width = '0%';
+                currentTimeDisplay.textContent = '0:00';
+                totalTimeDisplay.textContent = '0:00';
+            }
+        });
+
+        // 인쇄 버튼 토글
+        printBtn.addEventListener('click', () => {
+            printOptions.classList.toggle('hidden');
+        });
+
+        // 인쇄 확인 버튼
+        confirmPrintBtn.addEventListener('click', () => {
+            const originalCheckbox = document.querySelector('.print-option-checkbox[value="original"]');
+            const feedbackCheckbox = document.querySelector('.print-option-checkbox[value="feedback"]');
+            const correctedCheckbox = document.querySelector('.print-option-checkbox[value="corrected"]');
+
+            // print-page의 각 섹션 표시 여부 설정
+            document.getElementById('printOriginal').style.display = originalCheckbox.checked ? 'block' : 'none';
+            document.getElementById('printFeedback').style.display = feedbackCheckbox.checked ? 'block' : 'none';
+            document.getElementById('printCorrected').style.display = correctedCheckbox.checked ? 'block' : 'none';
+            
+            window.print(); // 인쇄 실행
+            printOptions.classList.add('hidden'); // 인쇄 후 옵션 숨기기
+        });
+
+        printFinalBtn.addEventListener('click', () => {
+            // 최종 산출물 인쇄 시에는 원본글과 교정된 버전만 표시
+            document.getElementById('printOriginal').style.display = 'block';
+            document.getElementById('printFeedback').style.display = 'none'; // 피드백 숨김
+            document.getElementById('printCorrected').style.display = 'block';
+
+            window.print(); // 인쇄 실행
+        });
+
+
+        // Analyze button functionality (placeholder)
+        analyzeBtn.addEventListener('click', () => {
+            // In a real application, this would send userWriting.value to a backend for analysis
+            // and then update the feedback sections and correctedWriting.
+            // For now, we'll just populate the corrected writing with the example text from genspark.html
+            // and show the example feedback.
+
+            originalWriting.value = userWriting.value;
+            correctedWriting.value = `Yesterday, I went to the park with my friends. The weather was very good and we were happy. After playing, I bought some ice cream for my friends. It was very delicious. I believe that this day was the happiest day this month. We played basketball for two hours.`;
+
+            // Simulate feedback content generation
+            document.getElementById('feedbackContent').innerHTML = `
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg feedback-card grammar">
+                    <div class="flex justify-between items-start">
+                        <p class="mb-2 text-gray-800 text-lg">Yesterday, I <span class="grammar-error">go</span> to the park with my friends.</p>
+                        <button class="edit-feedback-btn text-gray-500 hover:text-blue-600 ml-2">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                    <div class="feedback-content">
+                        <div class="pl-4 border-l-2 border-red-500 mt-3">
+                            <div class="flex items-center mb-1">
+                                <span class="grammar-error-badge">문법 오류</span>
+                                <span class="ml-2 font-medium">go → went</span>
+                            </div>
+                            <p class="text-gray-700 feedback-explanation">
+                                과거 시제로 표현해야 합니다. 'Yesterday'라는 과거 시간 부사와 함께 사용되므로 'go'가 아닌 'went'를 사용하세요.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="edit-form hidden mt-3">
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">피드백 유형</label>
+                            <select class="feedback-type-select w-full px-3 py-2 border rounded-md">
+                                <option value="grammar" selected>문법 오류</option>
+                                <option value="vocabulary">어휘 개선</option>
+                                <option value="expression">표현 향상</option>
+                                <option value="good-point">잘한 점</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">수정 제안</label>
+                            <input type="text" class="correction-input w-full px-3 py-2 border rounded-md" value="go → went">
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">설명</label>
+                            <textarea class="explanation-input w-full px-3 py-2 border rounded-md" rows="3">과거 시제로 표현해야 합니다. 'Yesterday'라는 과거 시간 부사와 함께 사용되므로 'go'가 아닌 'went'를 사용하세요.</textarea>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="save-feedback-btn btn-primary">저장</button>
+                            <button class="cancel-edit-btn btn-secondary">취소</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg feedback-card grammar">
+                    <div class="flex justify-between items-start">
+                        <p class="mb-2 text-gray-800 text-lg">The weather <span class="grammar-error">is</span> very good and we <span class="grammar-error">are</span> happy.</p>
+                        <button class="edit-feedback-btn text-gray-500 hover:text-blue-600 ml-2">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                    <div class="feedback-content">
+                        <div class="pl-4 border-l-2 border-red-500 mt-3">
+                            <div class="flex items-center mb-1">
+                                <span class="grammar-error-badge">문법 오류</span>
+                                <span class="ml-2 font-medium">is → was, are → were</span>
+                            </div>
+                            <p class="text-gray-700 feedback-explanation">
+                                과거 사건을 설명하고 있으므로 현재 시제가 아닌 과거 시제를 사용해야 합니다.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="edit-form hidden mt-3">
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">피드백 유형</label>
+                            <select class="feedback-type-select w-full px-3 py-2 border rounded-md">
+                                <option value="grammar" selected>문법 오류</option>
+                                <option value="vocabulary">어휘 개선</option>
+                                <option value="expression">표현 향상</option>
+                                <option value="good-point">잘한 점</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">수정 제안</label>
+                            <input type="text" class="correction-input w-full px-3 py-2 border rounded-md" value="is → was, are → were">
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">설명</label>
+                            <textarea class="explanation-input w-full px-3 py-2 border rounded-md" rows="3">과거 사건을 설명하고 있으므로 현재 시제가 아닌 과거 시제를 사용해야 합니다.</textarea>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="save-feedback-btn btn-primary">저장</button>
+                            <button class="cancel-edit-btn btn-secondary">취소</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg feedback-card">
+                    <div class="flex justify-between items-start">
+                        <p class="mb-2 text-gray-800 text-lg">After playing, I bought some ice cream for my friends.</p>
+                        <button class="edit-feedback-btn text-gray-500 hover:text-blue-600 ml-2">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                    <div class="feedback-content">
+                        </div>
+                    <div class="edit-form hidden mt-3">
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">피드백 유형</label>
+                            <select class="feedback-type-select w-full px-3 py-2 border rounded-md">
+                                <option value="grammar">문법 오류</option>
+                                <option value="vocabulary">어휘 개선</option>
+                                <option value="expression">표현 향상</option>
+                                <option value="good-point">잘한 점</option>
+                                <option value="none" selected>피드백 없음</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 feedback-details hidden">
+                            <div class="mb-3">
+                                <label class="block text-gray-700 mb-1 text-sm">수정 제안</label>
+                                <input type="text" class="correction-input w-full px-3 py-2 border rounded-md" value="">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 mb-1 text-sm">설명</label>
+                                <textarea class="explanation-input w-full px-3 py-2 border rounded-md" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="save-feedback-btn btn-primary">저장</button>
+                            <button class="cancel-edit-btn btn-secondary">취소</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg feedback-card vocabulary">
+                    <div class="flex justify-between items-start">
+                        <p class="mb-2 text-gray-800 text-lg">It was very <span class="vocabulary-improvement">delicious</span>.</p>
+                        <button class="edit-feedback-btn text-gray-500 hover:text-blue-600 ml-2">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                    <div class="feedback-content">
+                        <div class="pl-4 border-l-2 border-blue-500 mt-3">
+                            <div class="flex items-center mb-1">
+                                <span class="vocabulary-badge">어휘 개선</span>
+                                <span class="ml-2 font-medium">delicious → tasty, mouth-watering, scrumptious</span>
+                            </div>
+                            <p class="text-gray-700 feedback-explanation">
+                                다양한 표현을 사용하면 글의 풍부함이 더해집니다. 'delicious' 대신 'tasty', 'mouth-watering', 'scrumptious' 등의 표현도 고려해 보세요.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="edit-form hidden mt-3">
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">피드백 유형</label>
+                            <select class="feedback-type-select w-full px-3 py-2 border rounded-md">
+                                <option value="grammar">문법 오류</option>
+                                <option value="vocabulary" selected>어휘 개선</option>
+                                <option value="expression">표현 향상</option>
+                                <option value="good-point">잘한 점</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">수정 제안</label>
+                            <input type="text" class="correction-input w-full px-3 py-2 border rounded-md" value="delicious → tasty, mouth-watering, scrumptious">
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">설명</label>
+                            <textarea class="explanation-input w-full px-3 py-2 border rounded-md" rows="3">다양한 표현을 사용하면 글의 풍부함이 더해집니다. 'delicious' 대신 'tasty', 'mouth-watering', 'scrumptious' 등의 표현도 고려해 보세요.</textarea>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="save-feedback-btn btn-primary">저장</button>
+                            <button class="cancel-edit-btn btn-secondary">취소</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg feedback-card expression">
+                    <div class="flex justify-between items-start">
+                        <p class="mb-2 text-gray-800 text-lg">I <span class="expression-enhancement">think that</span> this day <span class="grammar-error">is</span> <span class="grammar-error">most</span> happy day in this month.</p>
+                        <button class="edit-feedback-btn text-gray-500 hover:text-blue-600 ml-2">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                    <div class="feedback-content">
+                        <div class="pl-4 border-l-2 border-green-500 mt-3">
+                            <div class="flex items-center mb-1">
+                                <span class="expression-badge">표현 향상</span>
+                                <span class="ml-2 font-medium">I think that → "I believe" 또는 "In my opinion"</span>
+                            </div>
+                            <p class="text-gray-700 feedback-explanation">
+                                보다 자신감 있고 세련된 표현을 사용하면 글의 설득력이 높아집니다. "I think that" 대신 "I believe" 또는 "In my opinion"과 같은 표현을 사용해 보세요.
+                            </p>
+                        </div>
+                        <div class="pl-4 border-l-2 border-red-500 mt-3">
+                            <div class="flex items-center mb-1">
+                                <span class="grammar-error-badge">문법 오류</span>
+                                <span class="ml-2 font-medium">is → was</span>
+                            </div>
+                            <p class="text-gray-700 feedback-explanation">
+                                과거 사건을 설명하고 있으므로 'is'가 아닌 'was'를 사용해야 합니다.
+                            </p>
+                        </div>
+                        <div class="pl-4 border-l-2 border-red-500 mt-3">
+                            <div class="flex items-center mb-1">
+                                <span class="grammar-error-badge">문법 오류</span>
+                                <span class="ml-2 font-medium">most happy → the most happy</span>
+                            </div>
+                            <p class="text-gray-700 feedback-explanation">
+                                최상급 표현을 사용할 때는 'the most'의 형태가 필요합니다.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="edit-form hidden mt-3">
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">피드백 유형 (주요 피드백)</label>
+                            <select class="feedback-type-select w-full px-3 py-2 border rounded-md">
+                                <option value="grammar">문법 오류</option>
+                                <option value="vocabulary">어휘 개선</option>
+                                <option value="expression" selected>표현 향상</option>
+                                <option value="good-point">잘한 점</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">수정 제안 (표현)</label>
+                            <input type="text" class="correction-input w-full px-3 py-2 border rounded-md" value="I think that → &quot;I believe&quot; 또는 &quot;In my opinion&quot;">
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">설명 (표현)</label>
+                            <textarea class="explanation-input w-full px-3 py-2 border rounded-md" rows="3">보다 자신감 있고 세련된 표현을 사용하면 글의 설득력이 높아집니다. "I think that" 대신 "I believe" 또는 "In my opinion"과 같은 표현을 사용해 보세요.</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">수정 제안 (문법 1)</label>
+                            <input type="text" class="correction-input w-full px-3 py-2 border rounded-md" value="is → was">
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">설명 (문법 1)</label>
+                            <textarea class="explanation-input w-full px-3 py-2 border rounded-md" rows="3">과거 사건을 설명하고 있으므로 'is'가 아닌 'was'를 사용해야 합니다.</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">수정 제안 (문법 2)</label>
+                            <input type="text" class="correction-input w-full px-3 py-2 border rounded-md" value="most happy → the most happy">
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">설명 (문법 2)</label>
+                            <textarea class="explanation-input w-full px-3 py-2 border rounded-md" rows="3">최상급 표현을 사용할 때는 'the most'의 형태가 필요합니다.</textarea>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="save-feedback-btn btn-primary">저장</button>
+                            <button class="cancel-edit-btn btn-secondary">취소</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg feedback-card good-point">
+                    <div class="flex justify-between items-start">
+                        <p class="mb-2 text-gray-800 text-lg">We played basketball for two hours.</p>
+                        <button class="edit-feedback-btn text-gray-500 hover:text-blue-600 ml-2">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                    <div class="feedback-content">
+                        <div class="pl-4 border-l-2 border-lime-500 mt-3">
+                            <div class="flex items-center mb-1">
+                                <span class="good-point-badge">잘한 점</span>
+                                <span class="ml-2 font-medium">구체적인 시간 표현</span>
+                            </div>
+                            <p class="text-gray-700 feedback-explanation">
+                                'for two hours'와 같이 구체적인 시간 표현을 사용하여 문장에 명확성을 더한 점이 좋습니다.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="edit-form hidden mt-3">
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">피드백 유형</label>
+                            <select class="feedback-type-select w-full px-3 py-2 border rounded-md">
+                                <option value="grammar">문법 오류</option>
+                                <option value="vocabulary">어휘 개선</option>
+                                <option value="expression">표현 향상</option>
+                                <option value="good-point" selected>잘한 점</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">수정 제안</label>
+                            <input type="text" class="correction-input w-full px-3 py-2 border rounded-md" value="구체적인 시간 표현">
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-gray-700 mb-1 text-sm">설명</label>
+                            <textarea class="explanation-input w-full px-3 py-2 border rounded-md" rows="3">'for two hours'와 같이 구체적인 시간 표현을 사용하여 문장에 명확성을 더한 점이 좋습니다.</textarea>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="save-feedback-btn btn-primary">저장</button>
+                            <button class="cancel-edit-btn btn-secondary">취소</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            // Update feedback summary counts (example values)
+            const summaryDiv = document.querySelector('.bg-gray-50.p-4.rounded-lg');
+            if (summaryDiv) {
+                summaryDiv.innerHTML = `
+                    <h3 class="font-medium text-gray-800 mb-2">피드백 요약</h3>
+                    <p class="text-gray-700 mb-4">
+                        이 글은 시제 사용에 있어 몇 가지 일관성 문제가 있습니다. 과거 사건을 설명할 때 현재 시제를 혼용하고 있어 문법적 오류가 발생했습니다. 
+                        어휘 선택은 기본적이지만 적절하며, 일부 표현은 더 세련되게 개선할 수 있습니다. 전반적으로 구체적인 시간 표현을 잘 활용한 점이 돋보입니다.
+                    </p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 text-center">
+                            <div class="text-red-500 text-xl font-bold mb-1">4</div>
+                            <div class="text-sm text-gray-600">문법 오류</div>
+                        </div>
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 text-center">
+                            <div class="text-blue-500 text-xl font-bold mb-1">1</div>
+                            <div class="text-sm text-gray-600">어휘 개선</div>
+                        </div>
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 text-center">
+                            <div class="text-green-500 text-xl font-bold mb-1">1</div>
+                            <div class="text-sm text-gray-600">표현 향상</div>
+                        </div>
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 text-center">
+                            <div class="text-lime-500 text-xl font-bold mb-1">1</div>
+                            <div class="text-sm text-gray-600">잘한 점</div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+
+        // Floating label functionality for student info
+        document.querySelectorAll('.form-group input').forEach(input => {
+            input.addEventListener('focus', () => {
+                input.nextElementSibling.classList.add('active');
+            });
+            input.addEventListener('blur', () => {
+                if (input.value === '') {
+                    input.nextElementSibling.classList.remove('active');
+                }
+            });
+            // Initial check for pre-filled values
+            if (input.value !== '') {
+                input.nextElementSibling.classList.add('active');
+            }
+        });
+
+        // Audio Player functionality
+        listenAudioBtn.addEventListener('click', () => {
+            audioPlayerContainer.classList.remove('hidden');
+            // In a real app, you would fetch the audio for correctedWriting.value
+            audioElement.src = 'placeholder_audio.mp3'; // Replace with actual audio URL
+            audioElement.load();
+            
+            // Set initial duration if available
+            audioElement.onloadedmetadata = () => {
+                const totalMinutes = Math.floor(audioElement.duration / 60);
+                const totalSeconds = Math.floor(audioElement.duration % 60).toString().padStart(2, '0');
+                totalTimeDisplay.textContent = totalMinutes + ':' + totalSeconds;
+            };
+        });
+
+        playPauseBtn.addEventListener('click', () => {
+            if (audioElement.paused) {
+                audioElement.play();
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
+                audioElement.pause();
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
+        });
+
+        audioElement.addEventListener('timeupdate', () => {
+            const progress = (audioElement.currentTime / audioElement.duration) * 100;
+            audioProgressBar.style.width = progress + '%';
+            
+            const currentMinutes = Math.floor(audioElement.currentTime / 60);
+            const currentSeconds = Math.floor(audioElement.currentTime % 60).toString().padStart(2, '0');
+            currentTimeDisplay.textContent = currentMinutes + ':' + currentSeconds;
+        });
+
+        audioElement.addEventListener('ended', () => {
+            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            audioProgressBar.style.width = '0%';
+            audioElement.currentTime = 0;
+        });
+
+        downloadAudioBtn.addEventListener('click', () => {
+            // In a real app, you would get the actual audio URL
+            const audioUrl = audioElement.src || 'placeholder_audio.mp3'; 
+            
+            const a = document.createElement('a');
+            a.href = audioUrl;
+            a.download = '교정된_영어_음성.mp3';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+
+        // Edit feedback button functionality (example for the first feedback card)
+        document.querySelectorAll('.edit-feedback-btn').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const feedbackCard = event.target.closest('.feedback-card');
+                const feedbackContent = feedbackCard.querySelector('.feedback-content');
+                const editForm = feedbackCard.querySelector('.edit-form');
+
+                feedbackContent.classList.toggle('hidden');
+                editForm.classList.toggle('hidden');
+            });
+        });
+
+        document.querySelectorAll('.save-feedback-btn').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const feedbackCard = event.target.closest('.feedback-card');
+                const feedbackContent = feedbackCard.querySelector('.feedback-content');
+                const editForm = feedbackCard.querySelector('.edit-form');
+
+                // In a real app, you'd save the edited data
+                alert('피드백이 저장되었습니다! (실제 저장 기능은 구현되지 않았습니다.)');
+
+                feedbackContent.classList.remove('hidden');
+                editForm.classList.add('hidden');
+            });
+        });
+
+        document.querySelectorAll('.cancel-edit-btn').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const feedbackCard = event.target.closest('.feedback-card');
+                const feedbackContent = feedbackCard.querySelector('.feedback-content');
+                const editForm = feedbackCard.querySelector('.edit-form');
+
+                feedbackContent.classList.remove('hidden');
+                editForm.classList.add('hidden');
+            });
+        });
+
+        // Filter tabs functionality (basic example)
+        document.querySelectorAll('.flex.border-b button').forEach(tabButton => {
+            tabButton.addEventListener('click', () => {
+                document.querySelectorAll('.flex.border-b button').forEach(btn => {
+                    btn.classList.remove('filter-tab');
+                    btn.classList.add('text-gray-600', 'hover:text-gray-900');
+                });
+                tabButton.classList.add('filter-tab');
+                tabButton.classList.remove('text-gray-600', 'hover:text-gray-900');
+
+                const filterType = tabButton.textContent.trim();
+                document.querySelectorAll('#feedbackContent .feedback-card').forEach(card => {
+                    if (filterType === '전체') {
+                        card.style.display = 'block';
+                    } else if (filterType.includes('문법 오류')) {
+                        if (card.classList.contains('grammar')) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    } else if (filterType.includes('어휘 개선')) {
+                        if (card.classList.contains('vocabulary')) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    } else if (filterType.includes('표현 향상')) {
+                        if (card.classList.contains('expression')) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    } else if (filterType.includes('잘한 점')) {
+                        if (card.classList.contains('good-point')) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+
+        // Initial content for original and corrected writing for demonstration
+        originalWriting.value = `Yesterday, I go to the park with my friends.
+The weather is very good and we are happy.
+After playing, I bought some ice cream for my friends.
+It was very delicious.
+I think that this day is most happy day in this month.
+We played basketball for two hours.`;
+
+        correctedWriting.value = `Yesterday, I went to the park with my friends. The weather was very good and we were happy. After playing, I bought some ice cream for my friends. It was very delicious. I believe that this day was the happiest day this month. We played basketball for two hours.`;
+
+    </script>
 </body>
 </html>
