@@ -21,6 +21,25 @@
     }
     h1 { text-align: center; color: #004a99; margin-bottom: 1rem; }
 
+    /* --- 세부 피드백 카테고리 색상 --- */
+    .feedback-detail h3 {
+      margin-top: 1rem;
+      color: #004a99;
+      font-size: 1.1rem;
+      border-bottom: 2px solid #004a99;
+      padding-bottom: 0.25rem;
+    }
+    .category {
+      margin: 0.5rem 0;
+      padding: 0.75rem;
+      border-radius: 4px;
+      font-size: 0.95rem;
+    }
+    .category.grammar    { background: #fdecea; color: #b71c1c; }
+    .category.vocab      { background: #fff3e0; color: #e65100; }
+    .category.expression { background: #e8f5e9; color: #1b5e20; }
+    .category.strength   { background: #e3f2fd; color: #0d47a1; }
+
     /* --- Reset 버튼 --- */
     #reset-btn {
       position: absolute;
@@ -58,7 +77,7 @@
     .input-area:focus { outline: none; border-color: #0066cc; }
     .input-area.has-image { background: #e9f5ff; border-color: #0066cc; }
 
-    /* --- 아이콘 버튼 (카메라/갤러리) --- */
+    /* --- 아이콘 버튼 --- */
     .action-icons {
       display: flex; justify-content: flex-end; gap: .5rem;
       margin-bottom: .5rem;
@@ -75,7 +94,7 @@
       opacity:0; cursor:pointer;
     }
 
-    /* --- 파일 정보 & 닫기 버튼 제거 --- */
+    /* --- 파일 정보 & OCR 상태 --- */
     .file-info {
       margin-top:.5rem; padding:.5rem;
       background:#e9f5ff; border-radius:4px;
@@ -84,7 +103,6 @@
     .file-info.show { display:flex; }
     .file-info .file-name { flex:1; color:#004a99; font-weight:500; }
 
-    /* --- OCR 상태 표시 --- */
     .ocr-status {
       margin-top:.5rem; padding:.5rem;
       background:#fff3cd; border:1px solid #ffeaa7;
@@ -100,7 +118,7 @@
     }
     @keyframes spin { to { transform:rotate(360deg); } }
 
-    /* --- 일반 버튼 --- */
+    /* --- 일반 버튼 & 스피너 --- */
     button:not(.icon-btn) {
       background:#0066cc; color:#fff;
       border:none; border-radius:4px;
@@ -108,8 +126,6 @@
       transition:background .2s; margin-top:1rem;
     }
     button:hover { background:#0052a3; }
-
-    /* --- 스피너 --- */
     .spinner {
       display:none; width:16px; height:16px;
       border:2px solid #0066cc; border-top:2px solid transparent;
@@ -126,7 +142,7 @@
     .box h2, .model-box h2 { margin:0 0 .5rem; color:#004a99; }
     .model-box { font-size:1.1rem; line-height:1.5; }
 
-    /* --- 모달 (Print 옵션) --- */
+    /* --- 모달 --- */
     .modal {
       position:fixed; top:0; left:0; width:100%; height:100%;
       background:rgba(0,0,0,0.5); display:none;
@@ -145,7 +161,6 @@
       nav, button, #reset-btn { display:none!important; }
       body { background:#fff; margin:0; }
     }
-
   </style>
 </head>
 <body>
@@ -280,16 +295,12 @@
         input.addEventListener('change', e => {
           const file = e.target.files[0];
           if (!file) return;
-          // 원본 이미지 URL 저장
           const url = URL.createObjectURL(file);
           window[`${section}FileURL`] = url;
-          // 파일 정보 표시
           const info = document.getElementById(`file-info-${section}`);
           info.querySelector('.file-name').textContent = file.name;
           info.classList.add('show');
-          // 텍스트 영역에 has-image 클래스
           document.getElementById(`contentText-${section}`).classList.add('has-image');
-          // OCR 수행
           doOCR(file, section);
         });
       });
@@ -311,14 +322,10 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             model: 'gpt-4o-mini',
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'text', text: 'Please extract the exact text from the image as it appears. Do not provide any additional commentary.' },
-                { type: 'image_url', image_url: { url: `data:${file.type};base64,${b64}` } }
-              ]
-            }],
-            max_tokens: 500
+            messages: [
+              { type: 'text', text: 'Please extract the exact text from the image as it appears. Do not provide any additional commentary.' },
+              { type: 'image_url', image_url: { url: `data:${file.type};base64,${b64}` } }
+            ]
           })
         });
         const { choices } = await resp.json();
@@ -331,7 +338,7 @@
       }
     }
 
-    // Print 모달 바인딩 함수
+    // Print 모달 바인딩
     function bindPrintModal(section) {
       const modal = document.getElementById(`${section}-print-modal`);
       const btnOpen  = section === 'feedback'
@@ -353,7 +360,6 @@
           <style>body{font-family:sans-serif;padding:2rem;}@media print{button{display:none}}</style>
         </head><body>`;
 
-        // 원본
         if (orig) {
           html += '<h2>원본</h2>';
           if (window[`${section}FileURL`]) {
@@ -362,7 +368,6 @@
             html += `<pre>${document.getElementById(`contentText-${section}`).value}</pre>`;
           }
         }
-        // Feedback
         if (fb) {
           if (section === 'feedback') {
             html += '<h2>Feedback</h2>' +
@@ -372,14 +377,12 @@
               lastFeedback.replace(/\n/g,'<br>');
           }
         }
-        // 수정글
         if (corr) {
           html += '<h2>수정글</h2>' +
             document.getElementById(section==='feedback'?'fb-corrected':'fn-corrected').outerHTML;
         }
 
         html += `<script>window.print();window.onafterprint=()=>window.close();<\/script></body></html>`;
-
         const win = window.open();
         win.document.write(html);
         win.document.close();
@@ -401,19 +404,28 @@
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ contentText: text })
         });
-        const { feedback, modelAnswer } = await res.json();
+        const { feedback, details, modelAnswer } = await res.json();
         lastFeedback = feedback;
 
-        document.getElementById('feedback-result').innerHTML = `
+        // 결과 렌더링
+        let html = `
           <div class="box" id="fb-box">
             <h2>Feedback</h2>
             <div id="fb-content">${feedback.replace(/\n/g,'<br>')}</div>
+            <div class="feedback-detail">
+              <h3>세부 피드백</h3>
+              <div class="category grammar"><strong>문법 오류:</strong><br>${details.grammar.replace(/\n/g,'<br>')}</div>
+              <div class="category vocab"><strong>어휘 개선:</strong><br>${details.vocab.replace(/\n/g,'<br>')}</div>
+              <div class="category expression"><strong>표현 향상:</strong><br>${details.expression.replace(/\n/g,'<br>')}</div>
+              <div class="category strength"><strong>잘한 점:</strong><br>${details.strength.replace(/\n/g,'<br>')}</div>
+            </div>
             <button id="print-feedback-btn">Print</button>
           </div>
           <div class="box">
             <h2>수정글</h2>
             <div class="model-box" id="fb-corrected">${modelAnswer.replace(/\n/g,'<br>')}</div>
           </div>`;
+        document.getElementById('feedback-result').innerHTML = html;
         bindPrintModal('feedback');
       } catch(err) {
         alert('피드백 요청 중 오류가 발생했습니다.');
@@ -422,7 +434,7 @@
       }
     });
 
-    // Final 제출
+    // Final 제출 (변경 없음)
     let lastFeedback = '';
     document.getElementById('final-form').addEventListener('submit', async e => {
       e.preventDefault();
@@ -445,8 +457,7 @@
             <h2>수정글</h2>
             <div class="model-box" id="fn-corrected">${modelAnswer.replace(/\n/g,'<br>')}</div>
             <button id="print-model-btn">Print</button>
-          </div>
-        `;
+          </div>`;
         bindPrintModal('final');
       } catch(err) {
         alert('최종 결과물 요청 중 오류가 발생했습니다.');
