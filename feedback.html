@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>피드백 결과</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #f9f9f9; margin:0; padding:2rem;
+      color: #333; line-height:1.6;
+    }
+    .container {
+      max-width:800px; margin:0 auto; background:#fff;
+      padding:2rem; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 { color:#004a99; text-align:center; margin-bottom:1.5rem; }
+    .section { margin-bottom:2rem; }
+    .section h2 { color:#004a99; margin-bottom:1rem; }
+    .content-box {
+      background:#f5f5f5; padding:1rem; border-radius:4px;
+      border:1px solid #ddd;
+    }
+    img { max-width:100%; border-radius:4px; }
+    pre { white-space:pre-wrap; word-break:break-word; }
+    .feedback-legend { display:flex; gap:1rem; margin-bottom:1rem; }
+    .legend-item { display:flex; align-items:center; gap:.5rem; }
+    .dot { width:12px; height:12px; border-radius:50%; }
+    .grammar { background:#E57373; }
+    .vocab   { background:#4A90E2; }
+    .expr    { background:#42B883; }
+    .praise  { background:#9CCC65; }
+    .feedback p { margin: .5rem 0; }
+    .highlight { padding:2px 4px; border-radius:3px; }
+    .highlight-grammar { background:rgba(229,115,115,.3); }
+    .highlight-vocab   { background:rgba(74,144,226,.3); }
+    .highlight-expr    { background:rgba(66,184,131,.3); }
+    .highlight-praise  { background:rgba(156,204,101,.3); }
+    button.pdf { display:block; margin:0 auto; background:#4A90E2; color:#fff;
+      border:none; padding:.75rem 1.5rem; border-radius:4px; cursor:pointer; }
+    button.pdf:hover { background:#3a7bc8; }
+    @media print {
+      button.pdf { display:none; }
+      body { margin:0; }
+      .container { box-shadow:none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📝 피드백 결과</h1>
+
+    <div class="section">
+      <h2>원본 작성글</h2>
+      <div class="content-box" id="orig-section">
+        <!-- JS로 텍스트 또는 이미지 삽입 -->
+      </div>
+    </div>
+
+    <div class="section feedback">
+      <h2>🔍 피드백</h2>
+      <div class="feedback-legend">
+        <div class="legend-item"><span class="dot grammar"></span> 문법</div>
+        <div class="legend-item"><span class="dot vocab"></span> 어휘</div>
+        <div class="legend-item"><span class="dot expr"></span> 표현</div>
+        <div class="legend-item"><span class="dot praise"></span> 잘한 점</div>
+      </div>
+      <div class="content-box" id="fb-section"></div>
+    </div>
+
+    <div class="section">
+      <h2>✨ 최종 수정본</h2>
+      <div class="content-box" id="corr-section"></div>
+    </div>
+
+    <button class="pdf" onclick="window.print()">PDF로 내보내기</button>
+  </div>
+
+  <script>
+    // 로컬스토리지에서 데이터 읽어오기
+    const data = JSON.parse(localStorage.getItem('feedback_data') || '{}');
+
+    // 원본
+    const origEl = document.getElementById('orig-section');
+    if (data.originalImageURL) {
+      const img = document.createElement('img');
+      img.src = data.originalImageURL;
+      origEl.appendChild(img);
+    } else {
+      const pre = document.createElement('pre');
+      pre.textContent = data.originalText || '';
+      origEl.appendChild(pre);
+    }
+
+    // 피드백
+    document.getElementById('fb-section').innerHTML =
+      (data.feedback || '').replace(/\n/g,'<br>');
+
+    // 수정본
+    document.getElementById('corr-section').innerHTML =
+      (data.modelAnswer || '').replace(/\n/g,'<br>');
+  </script>
+</body>
+</html>
