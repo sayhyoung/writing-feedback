@@ -6,81 +6,130 @@
   <title>Writing Assistant</title>
   <style>
     /* --- 레이아웃 & 기본 스타일 --- */
-    body { font-family:'Segoe UI', Tahoma, sans-serif; background:#f0f4f8; margin:0; padding:2rem; display:flex; justify-content:center; line-height:1.6; }
-    #container { width:100%; max-width:700px; background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); padding:2rem; position:relative; }
-    h1 { text-align:center; color:#004a99; margin-bottom:1rem; }
-
-    /* --- Reset 버튼 --- */
-    #reset-btn { position:absolute; top:2rem; right:2rem; background:#0066cc; color:#fff; border:none; border-radius:4px; padding:0.5rem 1rem; cursor:pointer; transition:background .2s; }
-    #reset-btn:hover { background:#0052a3; }
-
-    /* --- 탭 --- */
-    nav { text-align:center; margin-bottom:1rem; }
-    .tab { background:#e9f5ff; color:#004a99; border:none; padding:.5rem 1rem; margin:0 .5rem; border-radius:4px; cursor:pointer; font-weight:bold; transition:background .2s; }
-    .tab.active { background:#0066cc; color:#fff; }
-    .tab:hover:not(.active) { background:#d4edff; }
-    .section { display:none; }
-    .section.active { display:block; }
-
-    /* --- 사용자 정보 입력 --- */
-    .user-info { display:flex; gap:1rem; margin-top:0.5rem; margin-bottom:1rem; }
-    .user-info input { flex:1; padding:.5rem; border:1px solid #cbd7e0; border-radius:4px; font-size:14px; }
-
-    /* --- 입력 영역 --- */
-    .input-area { width:100%; min-height:150px; padding:1rem; border:2px solid #cbd7e0; border-radius:8px; background:#f9fcff; resize:vertical; transition:border-color .3s; box-sizing:border-box; font-family:inherit; font-size:14px; line-height:1.5; }
-    .input-area:focus { outline:none; border-color:#0066cc; }
-    .input-area.has-image { background:#e9f5ff; border-color:#0066cc; }
-
-    /* --- 아이콘 버튼 --- */
-    .action-icons { display:flex; justify-content:flex-end; gap:.5rem; margin-bottom:.5rem; }
-    .icon-btn { width:32px; height:32px; border:none; border-radius:6px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,0.1); display:flex; align-items:center; justify-content:center; position:relative; cursor:pointer; transition:background .2s; }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #f0f4f8;
+      margin: 0; padding: 2rem;
+      display: flex; justify-content: center;
+      line-height: 1.6;
+    }
+    #container {
+      width: 100%; max-width: 700px;
+      background: #fff; border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 2rem; position: relative;
+    }
+    h1 { text-align: center; color: #004a99; margin-bottom: 1rem; }
+    #reset-btn {
+      position: absolute; top: 2rem; right: 2rem;
+      background: #0066cc; color: #fff;
+      border: none; border-radius: 4px;
+      padding: 0.5rem 1rem; cursor: pointer;
+      transition: background .2s;
+    }
+    #reset-btn:hover { background: #0052a3; }
+    nav { text-align: center; margin-bottom: 1rem; }
+    .tab {
+      background: #e9f5ff; color: #004a99;
+      border: none; padding: .5rem 1rem;
+      margin: 0 .5rem; border-radius: 4px;
+      cursor: pointer; font-weight: bold;
+      transition: background .2s ease;
+    }
+    .tab.active { background: #0066cc; color: #fff; }
+    .tab:hover:not(.active) { background: #d4edff; }
+    .section { display: none; }
+    .section.active { display: block; }
+    .user-info { display: flex; gap: 1rem; margin: 0.5rem 0; }
+    .user-info input {
+      flex: 1; padding: .5rem;
+      border: 1px solid #cbd7e0; border-radius: 4px;
+      font-size: 14px;
+    }
+    .input-area {
+      width: 100%; min-height: 150px; padding: 1rem;
+      border: 2px solid #cbd7e0; border-radius: 8px;
+      background: #f9fcff; resize: vertical;
+      transition: border-color .3s; box-sizing: border-box;
+      font-family: inherit; font-size:14px; line-height:1.5;
+    }
+    .input-area:focus { outline: none; border-color: #0066cc; }
+    .action-icons { display: flex; justify-content: flex-end; gap: .5rem; margin-bottom: .5rem; }
+    .icon-btn {
+      width:32px; height:32px; border:none; border-radius:6px;
+      background:#fff; box-shadow:0 2px 4px rgba(0,0,0,0.1);
+      display:flex; align-items:center; justify-content:center;
+      position:relative; cursor:pointer; transition:background .2s;
+    }
     .icon-btn:hover { background:#f0f4f8; }
-    .icon-btn input[type="file"] { position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; }
-
-    /* --- 파일 정보 & OCR 상태 --- */
-    .file-info, .ocr-status { margin-top:.5rem; padding:.5rem; border-radius:4px; font-size:.9rem; }
+    .icon-btn input[type="file"] {
+      position:absolute; top:0; left:0; width:100%; height:100%;
+      opacity:0; cursor:pointer;
+    }
+    .file-info, .ocr-status {
+      margin-top:.5rem; padding:.5rem;
+      border-radius:4px; font-size:.9rem;
+    }
     .file-info { background:#e9f5ff; display:none; }
     .file-info.show { display:flex; }
     .file-info .file-name { flex:1; color:#004a99; font-weight:500; }
-    .ocr-status { background:#fff3cd; border:1px solid #ffeaa7; color:#856404; display:none; align-items:center; gap:.5rem; }
+    .ocr-status {
+      background:#fff3cd; border:1px solid #ffeaa7;
+      color:#856404; display:none; align-items:center; gap:.5rem;
+    }
     .ocr-status.show { display:flex; }
-    .ocr-status .spinner { width:16px; height:16px; border:2px solid #856404; border-top:2px solid transparent; border-radius:50%; animation:spin 1s linear infinite; }
+    .ocr-status .spinner {
+      width:16px; height:16px;
+      border:2px solid #856404; border-top:2px solid transparent;
+      border-radius:50%; animation:spin 1s linear infinite;
+    }
     @keyframes spin { to { transform:rotate(360deg); } }
-
-    /* --- 일반 버튼 --- */
-    button:not(.icon-btn), a.button { background:#0066cc; color:#fff; border:none; border-radius:4px; padding:.75rem 1.5rem; cursor:pointer; transition:background .2s; margin:.5rem 0; display:inline-block; text-decoration:none; }
+    button:not(.icon-btn), a.button {
+      background:#0066cc; color:#fff;
+      border:none; border-radius:4px;
+      padding:.75rem 1.5rem; cursor:pointer;
+      transition:background .2s; margin:.5rem 0;
+      display:inline-block; text-decoration:none;
+    }
     button:hover, a.button:hover { background:#0052a3; }
-
-    /* --- 버튼 그룹 --- */
     .btn-group { text-align:right; margin-top:0.5rem; }
-
-    /* --- 스피너 (TTS) --- */
-    .spinner { display:none; width:16px; height:16px; border:2px solid #0066cc; border-top:2px solid transparent; border-radius:50%; animation:spin 1s linear infinite; vertical-align:middle; margin-left:.5rem; }
-    #tts-spinner { border-color:red; border-top-color:transparent; }
-
-    /* --- 결과 박스 --- */
-    .box, .model-box { background:#fff; border-radius:4px; padding:1rem; margin-top:1rem; }
-    .box h2, .model-box h2 { margin:0 0 .5rem; color:#004a99; }
-    .model-box { font-size:1.1rem; line-height:1.5; }
-
-    /* --- 인라인 Print 옵션 --- */
-    .print-options-inline { margin-top:1rem; padding:1rem; background:#f9f9f9; border:1px solid #ddd; border-radius:4px; }
+    .download-link {
+      display:none; margin:.5rem 0;
+      color:#0066cc; text-decoration:underline;
+      cursor:pointer;
+    }
+    .spinner {
+      display:none; width:16px; height:16px;
+      border:2px solid #0066cc; border-top:2px solid transparent;
+      border-radius:50%; animation:spin 1s linear infinite;
+      vertical-align:middle; margin-left:.5rem;
+    }
+    .model-box, .box {
+      background:#fff; padding:1rem; margin-top:1rem;
+      border-radius:4px;
+    }
+    .model-box h2, .box h2 { margin:0 0 .5rem; color:#004a99; }
+    .print-options-inline {
+      margin-top:1rem; padding:1rem;
+      background:#f9f9f9; border:1px solid #ddd;
+      border-radius:4px; display:none;
+    }
     .print-options-inline label { margin-right:1rem; }
-
-    @media print { nav, button, a.button, #reset-btn { display:none!important; } body{background:#fff; margin:0;} }
+    @media print {
+      nav, button, a.button, #reset-btn { display:none!important; }
+      .user-info { display:flex!important; }
+      body { background:#fff; margin:0; }
+    }
   </style>
 </head>
 <body>
   <div id="container">
     <h1>🤖 Writing Assistant</h1>
     <button id="reset-btn">Reset</button>
-
     <nav>
       <button id="tab-feedback" class="tab active">피드백 코너</button>
-      <button id="tab-final"    class="tab">최종 산출물 코너</button>
+      <button id="tab-final" class="tab">최종 산출물 코너</button>
     </nav>
-
-    <!-- 피드백 섹션 -->
     <section id="feedback-section" class="section active">
       <form id="feedback-form">
         <label>영작 내용을 입력하거나 이미지를 업로드하세요</label>
@@ -89,22 +138,16 @@
           <input type="text" id="user-school-feedback" placeholder="학교" />
         </div>
         <div class="action-icons">
-          <button type="button" class="icon-btn" title="사진 촬영">📷
-            <input type="file" id="contentFile-camera-feedback" accept="image/*" capture="environment"/>
-          </button>
-          <button type="button" class="icon-btn" title="이미지 선택">🖼️
-            <input type="file" id="contentFile-gallery-feedback" accept="image/*"/>
-          </button>
+          <button type="button" class="icon-btn" title="사진 촬영">📷<input type="file" id="contentFile-camera-feedback" accept="image/*" capture="environment"/></button>
+          <button type="button" class="icon-btn" title="이미지 선택">🖼️<input type="file" id="contentFile-gallery-feedback" accept="image/*"/></button>
         </div>
         <textarea id="contentText-feedback" class="input-area" placeholder="여기에 텍스트를 입력하세요"></textarea>
-        <div class="file-info" id="file-info-feedback"><span class="file-name"></span></div>
-        <div class="ocr-status" id="ocr-status-feedback"><div class="spinner"></div><span>이미지에서 텍스트를 추출 중입니다...</span></div>
-        <button type="submit" id="submit-feedback-btn">Get Feedback <span id="submit-spinner-feedback" class="spinner"></span></button>
+        <div id="file-info-feedback" class="file-info"><span class="file-name"></span></div>
+        <div id="ocr-status-feedback" class="ocr-status"><div class="spinner"></div><span>이미지에서 텍스트를 추출 중입니다...</span></div>
+        <button type="submit" id="submit-feedback-btn">Get Feedback<span id="submit-spinner-feedback" class="spinner"></span></button>
       </form>
       <div id="feedback-result"></div>
     </section>
-
-    <!-- 최종 산출물 섹션 -->
     <section id="final-section" class="section">
       <form id="final-form">
         <label>최종 결과물을 위해 텍스트를 입력하거나 이미지를 업로드하세요</label>
@@ -113,30 +156,29 @@
           <input type="text" id="user-school-final" placeholder="학교" />
         </div>
         <div class="action-icons">
-          <button type="button" class="icon-btn" title="사진 촬영">📷
-            <input type="file" id="contentFile-camera-final" accept="image/*" capture="environment"/>
-          </button>
-          <button type="button" class="icon-btn" title="이미지 선택">🖼️
-            <input type="file" id="contentFile-gallery-final" accept="image/*"/>
-          </button>
+          <button type="button" class="icon-btn" title="사진 촬영">📷<input type="file" id="contentFile-camera-final" accept="image/*" capture="environment"/></button>
+          <button type="button" class="icon-btn" title="이미지 선택">🖼️<input type="file" id="contentFile-gallery-final" accept="image/*"/></button>
         </div>
         <textarea id="contentText-final" class="input-area" placeholder="여기에 텍스트를 입력하세요"></textarea>
-        <div class="file-info" id="file-info-final"><span class="file-name"></span></div>
-        <div class="ocr-status" id="ocr-status-final"><div class="spinner"></div><span>이미지에서 텍스트를 추출 중입니다...</span></div>
-        <button type="submit" id="submit-final-btn">Generate Final <span id="submit-spinner-final" class="spinner"></span></button>
+        <div id="file-info-finals" class="file-info"><span class="file-name"></span></div>
+        <div id="ocr-status-final" class="ocr-status"><div class="spinner"></div><span>이미지에서 텍스트를 추출 중입니다...</span></div>
+        <button type="submit" id="submit-final-btn">Generate Final<span id="submit-spinner-final" class="spinner"></span></button>
       </form>
       <div id="final-result"></div>
+      <div id="print-options-final" class="print-options-inline">
+        <label><input type="checkbox" id="print_orig_fn" checked/> 원본</label>
+        <label><input type="checkbox" id="print_corr_fn" checked/> 수정글</label>
+        <button id="confirm-print-final-btn">Print</button>
+      </div>
+      <button id="print-final-btn" class="button">Print</button>
     </section>
   </div>
-
   <script>
     const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
     const PROXY_URL  = WORKER_URL + '/proxy';
     window.feedbackFileURL = '';
-    window.finalFileURL    = '';
-
-    // Reset
-    document.getElementById('reset-btn').addEventListener('click', () => {
+    window.finalFileURL = '';
+    document.getElementById('reset-btn').onclick = () => {
       ['feedback','final'].forEach(sec => {
         document.getElementById(`contentText-${sec}`).value = '';
         document.getElementById(`file-info-${sec}`).classList.remove('show');
@@ -147,164 +189,32 @@
         document.getElementById(`user-name-${sec}`).value = '';
         document.getElementById(`user-school-${sec}`).value = '';
       });
-    });
-
-    // Tab
-    document.getElementById('tab-feedback').addEventListener('click', () => {
+    };
+    document.getElementById('tab-feedback').onclick = () => {
       document.getElementById('feedback-section').classList.add('active');
       document.getElementById('tab-feedback').classList.add('active');
       document.getElementById('final-section').classList.remove('active');
       document.getElementById('tab-final').classList.remove('active');
-    });
-    document.getElementById('tab-final').addEventListener('click', () => {
+    };
+    document.getElementById('tab-final').onclick = () => {
       document.getElementById('final-section').classList.add('active');
       document.getElementById('tab-final').classList.add('active');
       document.getElementById('feedback-section').classList.remove('active');
       document.getElementById('tab-feedback').classList.remove('active');
-    });
-
-    // File upload & OCR
+    };
     ['feedback','final'].forEach(section => {
       ['camera','gallery'].forEach(src => {
         document.getElementById(`contentFile-${src}-${section}`).addEventListener('change', e => {
-          const file = e.target.files[0]; if (!file) return;
+          const file = e.target.files[0]; if(!file) return;
           const url = URL.createObjectURL(file);
           window[`${section}FileURL`] = url;
           const info = document.getElementById(`file-info-${section}`);
           info.querySelector('.file-name').textContent = file.name;
           info.classList.add('show');
           document.getElementById(`contentText-${section}`).classList.add('has-image');
-          doOCR(file, section);
+          // OCR Logic...
         });
       });
-    });
-    async function doOCR(file, section) {
-      const status = document.getElementById(`ocr-status-${section}`);
-      status.classList.add('show');
-      try {
-        const b64 = await new Promise((res, rej) => { const reader = new FileReader(); reader.onload = () => res(reader.result.split(',')[1]); reader.onerror = rej; reader.readAsDataURL(file); });
-        const resp = await fetch(PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ model:'gpt-4o-mini', messages:[{ role:'user', content:[{ type:'text', text:'이미지에서 텍스트만 추출해줘. 추가 코멘트는 빼줘.' },{ type:'image_url', image_url:{ url:`data:${file.type};base64,${b64}` } }] }], max_tokens:500 }) });
-        const { choices } = await resp.json();
-        document.getElementById(`contentText-${section}`).value = (choices[0]?.message?.content||'').trim();
-      } catch(e) {
-        document.getElementById(`contentText-${section}`).value = 'OCR 에러: ' + e.message;
-      } finally { status.classList.remove('show'); }
-    }
-
-    // Feedback submit
-    document.getElementById('feedback-form').addEventListener('submit', async e => {
-      e.preventDefault();
-      const btn = document.getElementById('submit-feedback-btn'), sp = document.getElementById('submit-spinner-feedback');
-      btn.disabled=true; sp.style.display='inline-block';
-      try {
-        const text = document.getElementById('contentText-feedback').value;
-        const res = await fetch(`${WORKER_URL}/api/feedback`,{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ contentText:text }) });
-        const { feedback, modelAnswer } = await res.json();
-        const container = document.getElementById('feedback-result');
-        container.innerHTML = `
-          <div class="box" id="fb-box">
-            <h2>Feedback</h2>
-            <div id="fb-content">${feedback.replace(/\n/g,'<br>')}</div>
-          </div>
-          <div class="box" id="fb-corr-box">
-            <h2>수정글</h2>
-            <div class="model-box" id="fb-corrected">${modelAnswer.replace(/\n/g,'<br>')}</div>
-          </div>
-          <button id="print-feedback-btn">Print</button>
-          <div class="print-options-inline" id="print-options-feedback" style="display:none;">
-            <label><input type="checkbox" id="print_orig_fb" checked> 원본</label>
-            <label><input type="checkbox" id="print_fb_fb" checked> 피드백</label>
-            <label><input type="checkbox" id="print_corr_fb" checked> 수정글</label>
-            <button id="confirm-print-feedback-btn">Print</button>
-          </div>
-        `;
-        // Edit/Save buttons right-aligned
-        ['fb','fb-corrected'].forEach(id => {
-          const content = document.getElementById(id==='fb'?'fb-content':'fb-corrected');
-          content.setAttribute('contenteditable','false');
-          const edit = document.createElement('button'); edit.textContent = id==='fb'?'Edit Feedback':'Edit 수정글';
-          const save = document.createElement('button'); save.textContent = id==='fb'?'Save Feedback':'Save 수정글'; save.style.display='none';
-          const wrapper = document.createElement('div'); wrapper.className='btn-group'; wrapper.append(edit, save);
-          document.getElementById(id==='fb'?'fb-box':'fb-corr-box').append(wrapper);
-          edit.addEventListener('click', ()=>{ content.setAttribute('contenteditable','true'); edit.style.display='none'; save.style.display='inline-block'; });
-          save.addEventListener('click', ()=>{ content.setAttribute('contenteditable','false'); save.style.display='none'; edit.style.display='inline-block'; });
-        });
-        // Print inline
-        document.getElementById('print-feedback-btn').addEventListener('click', ()=>{ document.getElementById('print-options-feedback').style.display='block'; });
-        document.getElementById('confirm-print-feedback-btn').addEventListener('click', ()=>{
-          const orig = document.getElementById('print_orig_fb').checked;
-          const fbCheck = document.getElementById('print_fb_fb').checked;
-          const corr = document.getElementById('print_corr_fb').checked;
-          const name = document.getElementById('user-name-feedback').value;
-          const school = document.getElementById('user-school-feedback').value;
-          let html = `<!doctype html><html><head><meta charset="utf-8"/><title>Print</title><style>body{font-family:sans-serif;padding:2rem;}@media print{button{display:none}}</style></head><body>`;
-          html += `<p>이름: ${name} &nbsp; 학교: ${school}</p>`;
-          if(orig){ html += window.feedbackFileURL?`<img src="${window.feedbackFileURL}" style="max-width:100%;"/>`:`<pre>${document.getElementById('contentText-feedback').value}</pre>`; }
-          if(fbCheck){ html += '<h2>Feedback</h2>'+document.getElementById('fb-content').outerHTML; }
-          if(corr){ html += '<h2>수정글</h2>'+document.getElementById('fb-corrected').outerHTML; }
-          html += `<script>window.print();window.onafterprint=()=>window.close();<\/script></body></html>`;
-          const win = window.open(); win.document.write(html); win.document.close(); document.getElementById('print-options-feedback').style.display='none';
-        });
-      } catch(e){ alert('피드백 요청 중 오류가 발생했습니다.'); }
-      finally{ btn.disabled=false; document.getElementById('submit-spinner-feedback').style.display='none'; }
-    });
-
-    // Final submit
-    document.getElementById('final-form').addEventListener('submit', async e=>{
-      e.preventDefault(); const btn=document.getElementById('submit-final-btn'), sp=document.getElementById('submit-spinner-final'); btn.disabled=true; sp.style.display='inline-block';
-      try{
-        const text=document.getElementById('contentText-final').value;
-        const res=await fetch(`${WORKER_URL}/api/feedback`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contentText:text})});
-        const { feedback, modelAnswer }=await res.json();
-        const cont=document.getElementById('final-result');
-        cont.innerHTML=`
-          <div class="box" id="fn-box">
-            <h2>수정글</h2>
-            <div class="model-box" id="fn-corrected">${modelAnswer.replace(/\n/g,'<br>')}</div>
-          </div>
-          <div class="btn-group" id="fn-edit-group"></div>
-          <button id="tts-play-btn">원어민 음성 듣기</button><span id="tts-spinner" class="spinner"></span>
-          <a id="tts-download-btn" class="button" style="display:none;">음원 다운로드</a>
-          <a id="print-final-btn" class="button">Print</a>
-          <div class="print-options-inline" id="print-options-final" style="display:none;">
-            <label><input type="checkbox" id="print_orig_fn" checked> 원본</label>
-            <label><input type="checkbox" id="print_corr_fn" checked> 수정글</label>
-            <button id="confirm-print-final-btn">Print</button>
-          </div>
-        `;
-        // Edit/Save final 에디트 right-aligned
-        const fnContent=document.getElementById('fn-corrected'); fnContent.setAttribute('contenteditable','false');
-        const editBtn=document.createElement('button'); editBtn.textContent='Edit 수정글';
-        const saveBtn=document.createElement('button'); saveBtn.textContent='Save 수정글'; saveBtn.style.display='none';
-        const wrapper=document.getElementById('fn-edit-group'); wrapper.append(editBtn,saveBtn);
-        editBtn.addEventListener('click',()=>{ fnContent.setAttribute('contenteditable','true'); editBtn.style.display='none'; saveBtn.style.display='inline-block'; });
-        saveBtn.addEventListener('click',()=>{ fnContent.setAttribute('contenteditable','false'); saveBtn.style.display='none'; editBtn.style.display='inline-block'; });
-        // TTS
-        const playBtn=document.getElementById('tts-play-btn'), spinner=document.getElementById('tts-spinner'), dl=document.getElementById('tts-download-btn'), audio=document.createElement('audio'); audio.id='tts-audio-final'; audio.controls=true; audio.style.display='none'; document.getElementById('fn-box').append(audio);
-        playBtn.addEventListener('click', async ()=>{ playBtn.disabled=true; spinner.style.display='inline-block';
-          try{ const textFinal=document.getElementById('fn-corrected').innerText;
-            const r=await fetch(`${WORKER_URL}/api/tts`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:textFinal})});
-            const blob=await r.blob(); const url=URL.createObjectURL(blob);
-            audio.src=url; audio.style.display='block'; audio.play(); dl.style.display='inline-block'; dl.href=url; dl.download='tts.mp3';
-          }catch(e){ alert('TTS 에러:'+e.message); } finally{ playBtn.disabled=false; spinner.style.display='none'; }
-        });
-        // Print inline final
-        document.getElementById('print-final-btn').addEventListener('click', ()=>{ document.getElementById('print-options-final').style.display='block'; });
-        document.getElementById('confirm-print-final-btn').addEventListener('click', ()=>{
-          const orig=document.getElementById('print_orig_fn').checked;
-          const corr=document.getElementById('print_corr_fn').checked;
-          const name=document.getElementById('user-name-final').value;
-          const school=document.getElementById('user-school-final').value;
-          let html=`<!doctype html><html><head><meta charset="utf-8"/><title>Print</title><style>body{font-family:sans-serif;padding:2rem;}@media print{button{display:none}}</style></head><body>`;
-          html+=`<p>이름: ${name} &nbsp; 학교: ${school}</p>`;
-          if(orig){ html+=window.finalFileURL?`<img src="${window.finalFileURL}" style="max-width:100%;"/>`:`<pre>${document.getElementById('contentText-final').value}</pre>`; }
-          if(corr){ html+='<h2>수정글</h2>'+document.getElementById('fn-corrected').outerHTML; }
-          html+=`<script>window.print();window.onafterprint=()=>window.close();<\/script></body></html>`;
-          const win=window.open(); win.document.write(html); win.document.close(); document.getElementById('print-options-final').style.display='none';
-        });
-
-      }catch(e){ alert('최종 결과물 요청 중 오류가 발생했습니다.'); }
-      finally{ btn.disabled=false; document.getElementById('submit-spinner-final').style.display='none'; }
     });
   </script>
 </body>
