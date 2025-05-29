@@ -503,23 +503,23 @@
 
 <body>
     <div id="container">
-        <h1>✨ 글쓰기 도우미 ✨</h1>
-        <button id="reset-btn">초기화</button>
+        <h1>✨ Writing Assistant ✨</h1>
+        <button id="reset-btn">Reset</button>
 
         <nav>
             <button id="tab-feedback" class="tab active">피드백 받기</button>
-            <button id="tab-final" class="tab">최종 결과물</button>
+            <button id="tab-final" class="tab">최종 결과물 생성</button>
         </nav>
 
         <section id="feedback-section" class="section active">
             <form id="feedback-form">
-                <label for="contentText-feedback">영작 내용을 입력하거나 이미지를 업로드해 주세요.</label>
+                <label for="contentText-feedback">영작한 내용을 입력하거나 찍어서 업로드해 주세요.</label>
                 <div class="user-info">
                     <input type="text" id="user-name-feedback" placeholder="이름" />
-                    <input type="text" id="user-school-feedback" placeholder="학교" />
+                    <input type="text" id="user-school-feedback" placeholder="학교(학년)" />
                 </div>
                 <div class="action-icons">
-                    <button type="button" class="icon-btn" title="사진 촬영">📷
+                    <button type="button" class="icon-btn" title="사진 촬영">📸
                         <input type="file" id="contentFile-camera-feedback" accept="image/*" capture="environment" />
                     </button>
                     <button type="button" class="icon-btn" title="이미지 선택">🖼️
@@ -539,13 +539,13 @@
 
         <section id="final-section" class="section">
             <form id="final-form">
-                <label for="contentText-final">최종 결과물을 위해 텍스트를 입력하거나 이미지를 업로드해 주세요.</label>
+                <label for="contentText-final">최종 결과물을 위해 텍스트를 입력하거나 찍어서 업로드해 주세요.</label>
                 <div class="user-info">
                     <input type="text" id="user-name-final" placeholder="이름" />
                     <input type="text" id="user-school-final" placeholder="학교" />
                 </div>
                 <div class="action-icons">
-                    <button type="button" class="icon-btn" title="사진 촬영">📷
+                    <button type="button" class="icon-btn" title="사진 촬영">📸
                         <input type="file" id="contentFile-camera-final" accept="image/*" capture="environment" />
                     </button>
                     <button type="button" class="icon-btn" title="이미지 선택">🖼️
