@@ -6,164 +6,191 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Writing Assistant</title>
     <style>
-        /* --- 기본 스타일 --- */
+        /* --- 기본 스타일 및 레이아웃 --- */
         body {
-            font-family: 'Comic Sans MS', cursive, sans-serif; /* 친근한 폰트 */
-            background: #f8f0e3; /* 부드러운 배경색 */
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8fafc; /* 라이트 그레이 배경 */
             margin: 0;
-            padding: 2rem;
+            padding: 2.5rem;
             display: flex;
             justify-content: center;
+            align-items: flex-start; /* 상단 정렬 */
+            min-height: 100vh; /* 최소 높이 설정 */
             line-height: 1.6;
-            font-size: 16px; /* 기본 글꼴 크기 증가 */
+            color: #334155; /* 기본 텍스트 색상 */
         }
 
         #container {
             width: 100%;
-            max-width: 700px;
-            background: #fff;
-            border-radius: 15px; /* 더 둥근 테두리 */
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
+            max-width: 768px; /* 최대 너비 증가 */
+            background-color: #ffffff;
+            border-radius: 12px; /* 부드러운 모서리 */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* 깊이감 있는 그림자 */
+            padding: 2.5rem;
             position: relative;
-            border: 2px solid #ffe082; /* 밝은 테두리 */
+            border: 1px solid #e2e8f0; /* 미묘한 테두리 */
         }
 
         h1 {
             text-align: center;
-            color: #ff8a65; /* 발랄한 제목 색상 */
-            margin-bottom: 1.5rem;
-            font-size: 2.5rem;
+            color: #1e3a8a; /* 짙은 파란색 제목 */
+            margin-bottom: 2rem;
+            font-size: 2.25rem; /* 글꼴 크기 키우기 */
+            font-weight: 700; /* 볼드 */
         }
 
         /* --- Reset 버튼 --- */
         #reset-btn {
             position: absolute;
-            top: 1rem; /* 위치 조정 */
-            right: 1rem; /* 위치 조정 */
-            background: #4db6ac; /* 시원한 색상 */
-            color: #fff;
+            top: 1.5rem;
+            right: 1.5rem;
+            background-color: #ef4444; /* 경고 색상 */
+            color: #ffffff;
             border: none;
-            border-radius: 8px; /* 둥근 테두리 */
+            border-radius: 6px;
             padding: 0.6rem 1.2rem;
             cursor: pointer;
-            transition: background .2s;
-            font-weight: bold;
+            transition: background-color 0.2s ease-in-out;
+            font-weight: 500;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         #reset-btn:hover {
-            background: #26a69a;
+            background-color: #dc2626;
         }
 
         /* --- 탭 --- */
         nav {
             text-align: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
         }
 
         .tab {
-            background: #ffe0b2; /* 밝은 배경색 */
-            color: #795548; /* 따뜻한 글자색 */
+            background-color: #e0e7ff; /* 밝은 파란색 배경 */
+            color: #3b82f6; /* 파란색 텍스트 */
             border: none;
-            padding: .6rem 1.2rem;
-            margin: 0 .6rem;
+            padding: 0.8rem 1.8rem;
             border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
-            transition: background .2s;
+            font-weight: 600;
             font-size: 1rem;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .tab.active {
-            background: #ffb74d; /* 강조 색상 */
-            color: #fff;
+            background-color: #3b82f6; /* 활성 탭 색상 */
+            color: #ffffff;
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
         }
 
         .tab:hover:not(.active) {
-            background: #ffcc80;
+            background-color: #c7d2fe;
+            color: #2563eb;
         }
 
         .section {
             display: none;
-            padding: 1rem 0;
+            animation: fadeIn 0.5s ease-out;
         }
 
         .section.active {
             display: block;
         }
 
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         /* --- 사용자 정보 입력 --- */
         .user-info {
             display: flex;
-            gap: 0.8rem;
+            gap: 1rem;
             margin-top: 1rem;
-            margin-bottom: 1.2rem;
+            margin-bottom: 1.5rem;
         }
 
         .user-info input {
             flex: 1;
-            padding: .6rem;
-            border: 1px solid #ffcc80; /* 부드러운 테두리 */
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
             border-radius: 8px;
             font-size: 1rem;
+            color: #475569;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+        .user-info input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }
 
         /* --- 입력 영역 --- */
         .input-area {
             width: 100%;
-            min-height: 150px;
-            padding: 1rem;
-            border: 2px solid #ffcc80; /* 강조 테두리 */
-            border-radius: 12px;
-            background: #fff8e1; /* 밝은 배경색 */
+            min-height: 180px; /* 높이 증가 */
+            padding: 1.25rem;
+            border: 2px solid #cbd5e1;
+            border-radius: 10px;
+            background-color: #f8fafc;
             resize: vertical;
-            transition: border-color .3s;
+            transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
             box-sizing: border-box;
             font-family: inherit;
-            font-size: 1rem;
+            font-size: 1.05rem;
             line-height: 1.7;
+            color: #334155;
         }
 
         .input-area:focus {
             outline: none;
-            border-color: #ffb74d;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
         }
 
         .input-area.has-image {
-            background: #fff59d;
-            border-color: #ffb74d;
+            background-color: #eff6ff; /* 이미지 있을 때 배경색 */
+            border-color: #2563eb;
         }
 
         /* --- 아이콘 버튼 --- */
         .action-icons {
             display: flex;
             justify-content: flex-end;
-            gap: 0.6rem;
-            margin-bottom: 0.8rem;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
         }
 
         .icon-btn {
-            width: 40px; /* 키우기 */
-            height: 40px; /* 키우기 */
+            width: 44px; /* 크기 키우기 */
+            height: 44px; /* 크기 키우기 */
             border: none;
-            border-radius: 10px; /* 더 둥글게 */
-            background: #e0f7fa; /* 밝은 배경 */
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            background-color: #ffffff;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             cursor: pointer;
-            transition: background .2s;
-            font-size: 1.2rem; /* 아이콘 크기 */
-            color: #00bcd4; /* 아이콘 색상 */
+            transition: all 0.2s ease-in-out;
+            font-size: 1.5rem; /* 아이콘 크기 */
+            color: #64748b; /* 아이콘 색상 */
         }
 
         .icon-btn:hover {
-            background: #b2ebf2;
+            background-color: #f1f5f9;
+            transform: translateY(-2px); /* 살짝 올라가는 효과 */
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
         }
 
-        .icon-btn input {
+        .icon-btn input[type="file"] {
             position: absolute;
             top: 0;
             left: 0;
@@ -176,17 +203,20 @@
         /* --- 파일 정보 & OCR 상태 --- */
         .file-info,
         .ocr-status {
-            margin-top: 0.6rem;
-            padding: 0.6rem;
+            margin-top: 1rem;
+            padding: 0.75rem;
             border-radius: 8px;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
 
         .file-info {
-            background: #e1f5fe; /* 밝은 배경 */
+            background-color: #e0f2fe;
+            border: 1px solid #93c5fd;
+            color: #1d4ed8;
             display: none;
-            border: 1px solid #81d4fa;
-            color: #0277bd;
         }
 
         .file-info.show {
@@ -195,17 +225,14 @@
 
         .file-info .file-name {
             flex: 1;
-            color: #0277bd;
             font-weight: 500;
         }
 
         .ocr-status {
-            background: #fffde7; /* 밝은 배경 */
-            border: 1px solid #fff9c4;
-            color: #f9a825;
+            background-color: #fefce8;
+            border: 1px solid #fde68a;
+            color: #b45309;
             display: none;
-            align-items: center;
-            gap: 0.5rem;
         }
 
         .ocr-status.show {
@@ -213,9 +240,9 @@
         }
 
         .ocr-status .spinner {
-            width: 18px;
-            height: 18px;
-            border: 3px solid #f9a825;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #b45309;
             border-top: 3px solid transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -228,88 +255,139 @@
         }
 
         /* --- 일반 버튼 --- */
-        button:not(.icon-btn),
+        button:not(.icon-btn):not(#reset-btn),
         a.button {
-            background: #ffb74d; /* 활기찬 색상 */
-            color: #fff;
+            background-color: #3b82f6; /* 주 버튼 색상 */
+            color: #ffffff;
             border: none;
             border-radius: 8px;
-            padding: 0.8rem 1.6rem;
+            padding: 0.85rem 1.8rem;
             cursor: pointer;
-            transition: background .2s;
-            margin: 0.6rem 0;
-            display: inline-block;
+            transition: all 0.2s ease-in-out;
+            margin-top: 1.5rem; /* 위쪽 마진 */
+            display: inline-flex; /* 텍스트와 스피너 정렬 */
+            align-items: center;
+            justify-content: center;
             text-decoration: none;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 1rem;
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
         }
 
-        button:hover,
+        button:hover:not(.icon-btn):not(#reset-btn),
         a.button:hover {
-            background: #ffa726;
+            background-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        button:disabled, a.button:disabled {
+            background-color: #93c5fd;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         /* --- 버튼 그룹 --- */
         .btn-group {
             text-align: right;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
         }
 
         .btn-group button {
-            margin-left: 0.5rem;
+            margin-top: 0; /* 상단 마진 재설정 */
+            background-color: #64748b; /* 보조 버튼 색상 */
+            box-shadow: none;
         }
+
+        .btn-group button:hover {
+            background-color: #475569;
+            transform: translateY(-2px);
+        }
+
 
         /* --- 스피너 (TTS) --- */
         .spinner {
             display: none;
             width: 18px;
             height: 18px;
-            border: 3px solid #ff8a65; /* 눈에 띄는 색상 */
+            border: 3px solid #ffffff; /* 스피너 색상 */
             border-top: 3px solid transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             vertical-align: middle;
-            margin-left: 0.6rem;
+            margin-left: 0.8rem;
         }
 
         #tts-spinner {
-            border-color: #ff8a65;
+            border-color: #3b82f6; /* TTS 스피너 색상 */
             border-top-color: transparent;
         }
 
         /* --- 결과 박스 --- */
         .box,
         .model-box {
-            background: #fff;
-            border-radius: 12px;
-            padding: 1.2rem;
-            margin-top: 1.2rem;
-            border: 1px solid #ffe0b2;
+            background-color: #f1f5f9; /* 결과 박스 배경색 */
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 2rem; /* 위쪽 마진 */
+            border: 1px solid #e2e8f0;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .box h2,
         .model-box h2 {
-            margin: 0 0 .8rem;
-            color: #ff8a65;
-            font-size: 1.6rem;
+            margin: 0 0 1rem;
+            color: #1e3a8a;
+            font-size: 1.8rem;
+            font-weight: 600;
         }
 
         .model-box {
+            background-color: #ffffff; /* 수정글 박스 배경색 */
             font-size: 1.1rem;
             line-height: 1.8;
+            border: 1px solid #d1d5db;
         }
 
         /* --- 인라인 Print 옵션 --- */
         .print-options-inline {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: #fbe9e7; /* 부드러운 배경 */
-            border: 1px solid #ffccbc;
+            margin-top: 1.5rem;
+            padding: 1.25rem;
+            background-color: #f0f9ff; /* 밝은 파란색 배경 */
+            border: 1px solid #bfdbfe;
             border-radius: 8px;
+            display: flex; /* 가로 정렬 */
+            flex-wrap: wrap; /* 반응형 줄바꿈 */
+            gap: 1rem; /* 간격 */
+            align-items: center;
         }
 
         .print-options-inline label {
-            margin-right: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            color: #475569;
+            cursor: pointer;
+        }
+
+        .print-options-inline input[type="checkbox"] {
+            transform: scale(1.2); /* 체크박스 크기 키우기 */
+            cursor: pointer;
+        }
+        
+        .print-options-inline button {
+            margin-top: 0; /* 상단 마진 재설정 */
+            margin-left: auto; /* 오른쪽으로 밀기 */
+            background-color: #10b981; /* 녹색 버튼 */
+        }
+
+        .print-options-inline button:hover {
+            background-color: #059669;
         }
 
         /* --- 최종 산출물 코너 특정 스타일 --- */
@@ -317,53 +395,107 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
         }
 
         #final-section .audio-controls-area {
-            margin-top: 1rem;
+            margin-top: 1.5rem;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 1rem;
             align-items: flex-start;
+            width: 100%; /* 너비 100%로 설정 */
         }
 
-        #final-section .print-button-bottom {
-            margin-top: 2rem;
-            text-align: center;
+        #final-section #tts-play-btn {
+            width: fit-content; /* 내용에 맞게 너비 조절 */
+            margin-top: 0;
+            box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2); /* 보라색 계열 그림자 */
+            background-color: #6366f1;
+        }
+
+        #final-section #tts-play-btn:hover {
+            background-color: #4f46e5;
         }
 
         #final-section #tts-audio-final {
+            width: 100%; /* 재생바 너비 100% */
             border-radius: 8px;
-            border: 1px solid #ffb74d;
-            padding: 0.5rem;
-            background-color: #fffde7;
+            border: 1px solid #a78bfa;
+            background-color: #f5f3ff;
+            outline: none; /* 포커스 아웃라인 제거 */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
-
+        
         #final-section #tts-download-btn {
-            color: #ff8a65;
-            font-weight: bold;
+            color: #3b82f6; /* 파란색 링크 */
+            text-decoration: none; /* 밑줄 제거 */
+            font-weight: 500;
+            padding: 0.5rem 0; /* 패딩 추가 */
+            display: inline-block; /* 링크처럼 보이게 */
+            transition: color 0.2s ease-in-out;
+            margin-top: -0.5rem; /* 위쪽으로 살짝 붙이기 */
         }
 
+        #final-section #tts-download-btn:hover {
+            color: #2563eb;
+            text-decoration: underline; /* 호버 시 밑줄 */
+        }
 
+        #final-section .print-button-bottom {
+            margin-top: 2.5rem; /* 다른 요소들과 충분한 간격 확보 */
+            text-align: center; /* Print 버튼을 중앙 정렬 */
+            width: 100%;
+        }
+        
+        #final-section .print-button-bottom .button {
+            width: fit-content;
+        }
+
+        /* 인쇄 시 스타일 */
         @media print {
-            nav,
-            button,
-            a.button,
-            #reset-btn {
-                display: none !important;
+            nav, button, a.button, #reset-btn, .action-icons, .btn-group,
+            .print-options-inline, #tts-audio-final + #tts-download-btn {
+                display: none !important; /* 인쇄 시 숨김 */
             }
-
             body {
-                background: #fff;
+                background-color: #ffffff;
                 margin: 0;
-                font-family: sans-serif; /* 인쇄 시 기본 폰트 */
+                padding: 1rem;
+                color: #000000;
+                font-family: serif; /* 인쇄 시 가독성 좋은 폰트 */
             }
-
             #container {
-                border: none;
                 box-shadow: none;
+                border: none;
                 padding: 0;
+                max-width: 100%;
+            }
+            h1, h2 {
+                color: #000000 !important;
+                text-align: left;
+            }
+            .box, .model-box {
+                background-color: #ffffff;
+                border: 1px solid #cccccc;
+                padding: 1rem;
+                margin-top: 1rem;
+                box-shadow: none;
+            }
+            .user-info {
+                display: block;
+                margin-bottom: 1rem;
+            }
+            .user-info input {
+                border: none;
+                padding: 0;
+                margin-bottom: 0.5rem;
+            }
+            .input-area {
+                border: 1px dashed #cccccc;
+                background-color: #ffffff;
+                padding: 1rem;
+                min-height: auto;
             }
         }
     </style>
@@ -371,33 +503,33 @@
 
 <body>
     <div id="container">
-        <h1>🤖 글쓰기 도우미</h1>
-        <button id="reset-btn">새로 시작</button>
+        <h1>✨ 글쓰기 도우미 ✨</h1>
+        <button id="reset-btn">초기화</button>
 
         <nav>
-            <button id="tab-feedback" class="tab active">피드백 코너</button>
-            <button id="tab-final" class="tab">최종 산출물 코너</button>
+            <button id="tab-feedback" class="tab active">피드백 받기</button>
+            <button id="tab-final" class="tab">최종 결과물</button>
         </nav>
 
         <section id="feedback-section" class="section active">
             <form id="feedback-form">
-                <label>영작 내용을 입력하거나 그림을 올려주세요</label>
+                <label for="contentText-feedback">영작 내용을 입력하거나 이미지를 업로드해 주세요.</label>
                 <div class="user-info">
                     <input type="text" id="user-name-feedback" placeholder="이름" />
                     <input type="text" id="user-school-feedback" placeholder="학교" />
                 </div>
                 <div class="action-icons">
-                    <button type="button" class="icon-btn" title="사진 찍기">📷
+                    <button type="button" class="icon-btn" title="사진 촬영">📷
                         <input type="file" id="contentFile-camera-feedback" accept="image/*" capture="environment" />
                     </button>
-                    <button type="button" class="icon-btn" title="사진 선택">🖼️
+                    <button type="button" class="icon-btn" title="이미지 선택">🖼️
                         <input type="file" id="contentFile-gallery-feedback" accept="image/*" />
                     </button>
                 </div>
-                <textarea id="contentText-feedback" class="input-area" placeholder="여기에 내용을 써 주세요"></textarea>
+                <textarea id="contentText-feedback" class="input-area" placeholder="여기에 텍스트를 입력하세요."></textarea>
                 <div class="file-info" id="file-info-feedback"><span class="file-name"></span></div>
                 <div class="ocr-status" id="ocr-status-feedback">
-                    <div class="spinner"></div><span>그림에서 글자를 찾는 중이에요...</span>
+                    <div class="spinner"></div><span>이미지에서 텍스트를 추출 중입니다...</span>
                 </div>
                 <button type="submit" id="submit-feedback-btn">피드백 받기 <span id="submit-spinner-feedback"
                         class="spinner"></span></button>
@@ -407,25 +539,25 @@
 
         <section id="final-section" class="section">
             <form id="final-form">
-                <label>최종 결과물을 위해 내용을 쓰거나 그림을 올려주세요</label>
+                <label for="contentText-final">최종 결과물을 위해 텍스트를 입력하거나 이미지를 업로드해 주세요.</label>
                 <div class="user-info">
                     <input type="text" id="user-name-final" placeholder="이름" />
                     <input type="text" id="user-school-final" placeholder="학교" />
                 </div>
                 <div class="action-icons">
-                    <button type="button" class="icon-btn" title="사진 찍기">📷
+                    <button type="button" class="icon-btn" title="사진 촬영">📷
                         <input type="file" id="contentFile-camera-final" accept="image/*" capture="environment" />
                     </button>
-                    <button type="button" class="icon-btn" title="사진 선택">🖼️
+                    <button type="button" class="icon-btn" title="이미지 선택">🖼️
                         <input type="file" id="contentFile-gallery-final" accept="image/*" />
                     </button>
                 </div>
-                <textarea id="contentText-final" class="input-area" placeholder="여기에 내용을 써 주세요"></textarea>
+                <textarea id="contentText-final" class="input-area" placeholder="여기에 텍스트를 입력하세요."></textarea>
                 <div class="file-info" id="file-info-final"><span class="file-name"></span></div>
                 <div class="ocr-status" id="ocr-status-final">
-                    <div class="spinner"></div><span>그림에서 글자를 찾는 중이에요...</span>
+                    <div class="spinner"></div><span>이미지에서 텍스트를 추출 중입니다...</span>
                 </div>
-                <button type="submit" id="submit-final-btn">최종 결과 만들기 <span id="submit-spinner-final"
+                <button type="submit" id="submit-final-btn">최종 결과 생성 <span id="submit-spinner-final"
                         class="spinner"></span></button>
             </form>
             <div id="final-result"></div>
@@ -513,7 +645,7 @@
                 const { choices } = await resp.json();
                 document.getElementById(`contentText-${section}`).value = (choices[0]?.message?.content || '').trim();
             } catch (e) {
-                document.getElementById(`contentText-${section}`).value = 'OCR 에러: ' + e.message;
+                document.getElementById(`contentText-${section}`).value = 'OCR 오류: ' + e.message;
             } finally {
                 status.classList.remove('show');
             }
@@ -541,15 +673,15 @@
                         <div id="fb-content">${feedback.replace(/\n/g,'<br>')}</div>
                     </div>
                     <div class="box" id="fb-corr-box">
-                        <h2>고쳐진 글</h2>
+                        <h2>수정글</h2>
                         <div class="model-box" id="fb-corrected">${modelAnswer.replace(/\n/g,'<br>')}</div>
                     </div>
-                    <button id="print-feedback-btn">인쇄하기</button>
+                    <button id="print-feedback-btn">인쇄</button>
                     <div class="print-options-inline" id="print-options-feedback" style="display:none;">
                         <label><input type="checkbox" id="print_orig_fb" checked> 원본</label>
                         <label><input type="checkbox" id="print_fb_fb" checked> 피드백</label>
-                        <label><input type="checkbox" id="print_corr_fb" checked> 고쳐진 글</label>
-                        <button id="confirm-print-feedback-btn">인쇄 시작!</button>
+                        <label><input type="checkbox" id="print_corr_fb" checked> 수정글</label>
+                        <button id="confirm-print-feedback-btn">인쇄하기</button>
                     </div>
                 `;
                 // Edit/Save buttons right-aligned
@@ -557,9 +689,9 @@
                     const content = document.getElementById(id === 'fb' ? 'fb-content' : 'fb-corrected');
                     content.setAttribute('contenteditable', 'false');
                     const edit = document.createElement('button');
-                    edit.textContent = id === 'fb' ? '피드백 고치기' : '고쳐진 글 고치기';
+                    edit.textContent = id === 'fb' ? '피드백 수정' : '수정글 수정';
                     const save = document.createElement('button');
-                    save.textContent = id === 'fb' ? '피드백 저장' : '고쳐진 글 저장';
+                    save.textContent = id === 'fb' ? '피드백 저장' : '수정글 저장';
                     save.style.display = 'none';
                     const wrapper = document.createElement('div');
                     wrapper.className = 'btn-group';
@@ -578,7 +710,7 @@
                 });
                 // Print inline
                 document.getElementById('print-feedback-btn').addEventListener('click', () => {
-                    document.getElementById('print-options-feedback').style.display = 'block';
+                    document.getElementById('print-options-feedback').style.display = 'flex';
                 });
                 document.getElementById('confirm-print-feedback-btn').addEventListener('click', () => {
                     const orig = document.getElementById('print_orig_fb').checked;
@@ -586,7 +718,7 @@
                     const corr = document.getElementById('print_corr_fb').checked;
                     const name = document.getElementById('user-name-feedback').value;
                     const school = document.getElementById('user-school-feedback').value;
-                    let html = `<!doctype html><html><head><meta charset="utf-8"/><title>인쇄하기</title><style>body{font-family:sans-serif;padding:2rem;}@media print{button{display:none}}</style></head><body>`;
+                    let html = `<!doctype html><html><head><meta charset="utf-8"/><title>인쇄</title><style>body{font-family:sans-serif;padding:2rem;}@media print{button{display:none}}</style></head><body>`;
                     html += `<p>이름: ${name} &nbsp; 학교: ${school}</p>`;
                     if (orig) {
                         html += window.feedbackFileURL ?
@@ -597,7 +729,7 @@
                         html += '<h2>피드백</h2>' + document.getElementById('fb-content').outerHTML;
                     }
                     if (corr) {
-                        html += '<h2>고쳐진 글</h2>' + document.getElementById('fb-corrected').outerHTML;
+                        html += '<h2>수정글</h2>' + document.getElementById('fb-corrected').outerHTML;
                     }
                     html += `<script>window.print();window.onafterprint=()=>window.close();<\/script></body></html>`;
                     const win = window.open();
@@ -606,7 +738,7 @@
                     document.getElementById('print-options-feedback').style.display = 'none';
                 });
             } catch (e) {
-                alert('피드백 요청 중 오류가 발생했어요.');
+                alert('피드백 요청 중 오류가 발생했습니다.');
             } finally {
                 btn.disabled = false;
                 document.getElementById('submit-spinner-feedback').style.display = 'none';
@@ -631,31 +763,31 @@
                 const cont = document.getElementById('final-result');
                 cont.innerHTML = `
                     <div class="box" id="fn-box">
-                        <h2>고쳐진 글</h2>
+                        <h2>수정글</h2>
                         <div class="model-box" id="fn-corrected">${modelAnswer.replace(/\n/g,'<br>')}</div>
                     </div>
                     <div class="btn-group" id="fn-edit-group"></div>
                     <div class="audio-controls-area">
                         <button id="tts-play-btn">원어민 음성 듣기</button><span id="tts-spinner" class="spinner"></span>
-                        <audio id="tts-audio-final" controls style="display:none; width: 100%;"></audio>
-                        <a id="tts-download-btn" style="display:none; color:#ff8a65; text-decoration:underline; margin-top: 5px; font-weight: bold;">음원 다운로드</a>
+                        <audio id="tts-audio-final" controls style="display:none;"></audio>
+                        <a id="tts-download-btn" style="display:none;">음원 다운로드</a>
                     </div>
                     <div class="print-button-bottom">
-                        <a id="print-final-btn" class="button">인쇄하기</a>
+                        <a id="print-final-btn" class="button">인쇄</a>
                     </div>
                     <div class="print-options-inline" id="print-options-final" style="display:none;">
                         <label><input type="checkbox" id="print_orig_fn" checked> 원본</label>
-                        <label><input type="checkbox" id="print_corr_fn" checked> 고쳐진 글</label>
-                        <button id="confirm-print-final-btn">인쇄 시작!</button>
+                        <label><input type="checkbox" id="print_corr_fn" checked> 수정글</label>
+                        <button id="confirm-print-final-btn">인쇄하기</button>
                     </div>
                 `;
                 // Edit/Save final 에디트 right-aligned
                 const fnContent = document.getElementById('fn-corrected');
                 fnContent.setAttribute('contenteditable', 'false');
                 const editBtn = document.createElement('button');
-                editBtn.textContent = '고쳐진 글 고치기';
+                editBtn.textContent = '수정글 수정';
                 const saveBtn = document.createElement('button');
-                saveBtn.textContent = '고쳐진 글 저장';
+                saveBtn.textContent = '수정글 저장';
                 saveBtn.style.display = 'none';
                 const wrapper = document.getElementById('fn-edit-group');
                 wrapper.append(editBtn, saveBtn);
@@ -688,13 +820,13 @@
                         const blob = await r.blob();
                         const url = URL.createObjectURL(blob);
                         audio.src = url;
-                        audio.style.display = 'block'; // 재생바 표시
+                        audio.style.display = 'block';
                         audio.play();
-                        dl.style.display = 'inline-block'; // 다운로드 링크 표시
+                        dl.style.display = 'inline-block';
                         dl.href = url;
                         dl.download = 'tts.mp3';
                     } catch (e) {
-                        alert('음성 듣기 중 오류가 발생했어요: ' + e.message);
+                        alert('TTS 에러:' + e.message);
                     } finally {
                         playBtn.disabled = false;
                         spinner.style.display = 'none';
@@ -702,14 +834,14 @@
                 });
                 // Print inline final
                 document.getElementById('print-final-btn').addEventListener('click', () => {
-                    document.getElementById('print-options-final').style.display = 'block';
+                    document.getElementById('print-options-final').style.display = 'flex';
                 });
                 document.getElementById('confirm-print-final-btn').addEventListener('click', () => {
                     const orig = document.getElementById('print_orig_fn').checked;
                     const corr = document.getElementById('print_corr_fn').checked;
                     const name = document.getElementById('user-name-final').value;
                     const school = document.getElementById('user-school-final').value;
-                    let html = `<!doctype html><html><head><meta charset="utf-8"/><title>인쇄하기</title><style>body{font-family:sans-serif;padding:2rem;}@media print{button{display:none}}</style></head><body>`;
+                    let html = `<!doctype html><html><head><meta charset="utf-8"/><title>인쇄</title><style>body{font-family:sans-serif;padding:2rem;}@media print{button{display:none}}</style></head><body>`;
                     html += `<p>이름: ${name} &nbsp; 학교: ${school}</p>`;
                     if (orig) {
                         html += window.finalFileURL ?
@@ -717,7 +849,7 @@
                             `<pre>${document.getElementById('contentText-final').value}</pre>`;
                     }
                     if (corr) {
-                        html += '<h2>고쳐진 글</h2>' + document.getElementById('fn-corrected').outerHTML;
+                        html += '<h2>수정글</h2>' + document.getElementById('fn-corrected').outerHTML;
                     }
                     html += `<script>window.print();window.onafterprint=()=>window.close();<\/script></body></html>`;
                     const win = window.open();
@@ -727,7 +859,7 @@
                 });
 
             } catch (e) {
-                alert('최종 결과물을 만드는 중 오류가 발생했어요.');
+                alert('최종 결과물 요청 중 오류가 발생했습니다.');
             } finally {
                 btn.disabled = false;
                 document.getElementById('submit-spinner-final').style.display = 'none';
