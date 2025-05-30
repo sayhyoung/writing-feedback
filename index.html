@@ -4,8 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>윤선생 리얼스피치 Writing Assistant</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <title>윤선생 Writing Assistant</title>
     <style>
         /* --- 기본 스타일 및 레이아웃 --- */
         body {
@@ -73,26 +72,45 @@
         .tab {
             background-color: #e0e7ff; /* 밝은 파란색 배경 */
             color: #3b82f6; /* 파란색 텍스트 */
-            border: none;
+            border: 2px solid transparent; /* 투명 테두리 */
             padding: 0.8rem 1.8rem;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
             font-size: 1rem;
-            transition: all 0.2s ease-in-out;
+            transition: all 0.3s ease-in-out;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
         }
 
+        /* 개선된 활성 탭 스타일 */
         .tab.active {
-            background-color: #7299da; /* 활성 탭 색상 */
+            background-color: #1e40af; /* 더 진한 파란색 배경 */
             color: #ffffff;
-            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
-            border: 2px solid #0d0d0e; /* 활성 탭 테두리 추가 */
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.4); /* 더 두드러진 그림자 */
+            border: 2px solid #1e3a8a; /* 진한 테두리 */
+            transform: translateY(-3px); /* 살짝 띄우는 효과 */
+            font-size: 1.05rem; /* 살짝 큰 글씨 */
+        }
+
+        /* 추가된 활성 탭 표시기 */
+        .tab.active::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40%;
+            height: 3px;
+            background-color: #ffffff;
+            border-radius: 3px 3px 0 0;
         }
 
         .tab:hover:not(.active) {
             background-color: #c7d2fe;
             color: #2563eb;
+            transform: translateY(-2px);
         }
 
         .section {
@@ -446,44 +464,15 @@
 
         #final-section .print-button-bottom {
             margin-top: 2.5rem; /* 다른 요소들과 충분한 간격 확보 */
-            text-align: left; /* 인쇄 버튼을 왼쪽 정렬 */
+            text-align: left; /* Print 버튼을 왼쪽 정렬 */
             width: 100%;
         }
         
         #final-section .print-button-bottom .button {
             width: fit-content;
         }
-        
+
         /* 피드백 카테고리 스타일 */
-        .feedback-container {
-            margin-top: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-        
-        .overview-category {
-            background-color: #f5f3ff;
-            border-left: 5px solid #8b5cf6;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-        }
-
-        .overview-category h3 {
-            display: flex;
-            align-items: center;
-            color: #5b21b6;
-            font-size: 1.3rem;
-            margin-top: 0;
-            margin-bottom: 10px;
-        }
-
-        .overview-category h3 i {
-            margin-right: 10px;
-        }
-
         .feedback-category {
             padding: 10px 15px;
             margin-bottom: 15px;
@@ -532,7 +521,30 @@
             background-color: #ebfaf0;
             border-left: 5px solid #2ecc71;
         }
-        
+
+        /* 총평 스타일 */
+        .overview-category {
+            background-color: #f5f3ff;
+            border-left: 5px solid #8b5cf6;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        }
+
+        .overview-category h3 {
+            display: flex;
+            align-items: center;
+            color: #5b21b6;
+            font-size: 1.3rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .overview-category h3 i {
+            margin-right: 10px;
+        }
+
         /* 원문 인용 스타일 */
         .original-text {
             background-color: rgba(255, 255, 255, 0.7);
@@ -553,7 +565,7 @@
             margin-bottom: 5px;
             color: #64748b;
         }
-        
+
         /* 수정글 섹션 스타일 */
         .corrected-section {
             background-color: #ecfdf5;
@@ -595,73 +607,50 @@
             border-radius: 3px;
         }
 
-        /* 인쇄 스타일 개선 */
+        /* 인쇄 스타일 */
         @media print {
+            nav, button, a.button, #reset-btn, .action-icons, .btn-group,
+            .print-options-inline, #tts-audio-final + #tts-download-btn {
+                display: none !important; /* 인쇄 시 숨김 */
+            }
             body {
                 background-color: #ffffff;
                 margin: 0;
-                padding: 0;
+                padding: 1rem;
                 color: #000000;
-                font-family: 'Segoe UI', sans-serif;
+                font-family: serif; /* 인쇄 시 가독성 좋은 폰트 */
             }
-            
             #container {
                 box-shadow: none;
                 border: none;
                 padding: 0;
                 max-width: 100%;
             }
-            
-            .print-header {
-                display: flex;
-                align-items: center;
-                padding: 20px 0;
-                border-bottom: 1px solid #e2e8f0;
-                margin-bottom: 30px;
-            }
-            
-            .print-header .logo {
-                height: 50px;
-                margin-right: 20px;
-            }
-            
-            .print-header .title {
-                flex-grow: 1;
-                text-align: center;
-                font-size: 24px;
-                font-weight: bold;
-                color: #1e3a8a;
-            }
-            
-            .print-footer {
-                margin-top: 40px;
-                padding: 20px 0;
-                border-top: 1px solid #e2e8f0;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            
-            .print-footer .message {
-                font-size: 14px;
-                color: #4b5563;
-                font-style: italic;
-            }
-            
-            .print-footer .brand {
-                font-size: 12px;
-                color: #6b7280;
-                font-weight: 600;
-            }
-            
-            nav, button, a.button, #reset-btn, .action-icons, .btn-group, 
-            .print-options-inline, #tts-audio-final + #tts-download-btn {
-                display: none !important; /* 인쇄 시 숨김 */
-            }
-            
             h1, h2 {
                 color: #000000 !important;
                 text-align: left;
+            }
+            .box, .model-box {
+                background-color: #ffffff;
+                border: 1px solid #cccccc;
+                padding: 1rem;
+                margin-top: 1rem;
+                box-shadow: none;
+            }
+            .user-info {
+                display: block;
+                margin-bottom: 1rem;
+            }
+            .user-info input {
+                border: none;
+                padding: 0;
+                margin-bottom: 0.5rem;
+            }
+            .input-area {
+                border: 1px dashed #cccccc;
+                background-color: #ffffff;
+                padding: 1rem;
+                min-height: auto;
             }
             
             /* 피드백 카테고리 인쇄용 스타일 */
@@ -702,7 +691,14 @@
                 font-style: italic !important;
             }
             
-            /* 수정글 섹션 인쇄 스타일 */
+            /* 헤더 스타일 유지 */
+            .feedback-category h3, .overview-category h3 {
+                font-weight: bold !important;
+                margin-top: 0 !important;
+                margin-bottom: 10px !important;
+            }
+            
+            /* 수정글 섹션 인쇄용 스타일 */
             .corrected-section {
                 page-break-inside: avoid;
                 border-left: 5px solid #10b981 !important;
@@ -726,20 +722,67 @@
                 padding: 0 2px !important;
             }
             
-            /* 헤더 스타일 유지 */
-            .feedback-category h3, .overview-category h3, .corrected-section h3 {
-                font-weight: bold !important;
-                margin-top: 0 !important;
-                margin-bottom: 10px !important;
+            /* 머리글 스타일 */
+            .print-header {
+                display: block !important;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 80px;
+                padding: 10px;
+                border-bottom: 1px solid #ddd;
             }
             
-            /* 아이콘 대체 */
-            .feedback-category h3 i, .overview-category h3 i, .corrected-section h3 i {
-                display: inline-block !important;
-                width: 20px !important;
-                height: 20px !important;
-                margin-right: 8px !important;
-                text-align: center !important;
+            .print-header .logo {
+                float: left;
+                height: 60px;
+            }
+            
+            .print-header .title {
+                text-align: center;
+                margin: 0;
+                line-height: 60px;
+                font-size: 20px;
+                font-weight: bold;
+                color: #1e3a8a;
+            }
+            
+            /* 바닥글 스타일 */
+            .print-footer {
+                display: block !important;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                padding: 10px;
+                border-top: 1px solid #ddd;
+                font-size: 12px;
+            }
+            
+            .print-footer .message {
+                float: left;
+                color: #2ecc71;
+                font-style: italic;
+                font-weight: 600;
+            }
+            
+            .print-footer .brand {
+                float: right;
+                color: #1e3a8a;
+                font-weight: bold;
+            }
+            
+            /* 내용이 머리글/바닥글과 겹치지 않도록 여백 설정 */
+            body {
+                padding-top: 90px !important;
+                padding-bottom: 40px !important;
+            }
+            
+            /* 각 페이지마다 머리글 표시 */
+            @page {
+                margin-top: 100px;
+                margin-bottom: 50px;
             }
         }
     </style>
@@ -813,7 +856,6 @@
         const PROXY_URL = WORKER_URL + '/proxy';
         window.feedbackFileURL = '';
         window.finalFileURL = '';
-        const LOGO_URL = 'https://raw.githubusercontent.com/user-attachments/files/cdf4e5d5-2dc4-424a-bf70-d3efd9520cb8/Screenshot%202024-07-10%20at%2012.38.42.png';
 
         // Reset
         document.getElementById('reset-btn').addEventListener('click', () => {
@@ -859,6 +901,7 @@
                 });
             });
         });
+        
         async function doOCR(file, section) {
             const status = document.getElementById(`ocr-status-${section}`);
             status.classList.add('show');
@@ -896,7 +939,21 @@
             }
         }
 
-        // 피드백 내용 처리 함수 - 불필요한 숫자와 공백 제거
+        // 피드백 텍스트 정리 함수 - 불필요한 숫자와 공백 제거
+        function cleanFeedbackText(text) {
+            // 숫자만 있는 줄 제거 (예: "1.", "2." 등)
+            text = text.replace(/^\s*\d+\.?\s*$/gm, '');
+            
+            // 연속된 공백 줄 하나로 줄이기
+            text = text.replace(/\n\s*\n\s*\n+/g, '\n\n');
+            
+            // 문장 앞의 불필요한 번호 패턴 제거 (예: "1. ", "2) " 등)
+            text = text.replace(/^\s*\d+[\.\)]\s*/gm, '');
+            
+            return text.trim();
+        }
+
+        // 피드백 내용 처리 함수
         function processFeedback(feedback, originalText) {
             // 원문을 줄별로 분리하여 배열로 저장
             const originalLines = originalText.trim().split(/\n+/);
@@ -916,19 +973,16 @@
                 // "총평:" 텍스트 제거 후 내용만 추출
                 const overviewContent = overview[0].replace(/(?:총평|전체\s*평가|종합\s*평가)\s*:/i, '').trim();
                 if (overviewContent) {
-                    // 불필요한 숫자와 공백 제거
-                    const cleanedContent = overviewContent.replace(/^\d+[\.\)\s]+/gm, '');
-                    
                     html += `
                         <div class="overview-category">
                             <h3><i class="fas fa-star"></i> 총평</h3>
-                            <div>${cleanedContent.replace(/\n/g, '<br>')}</div>
+                            <div>${cleanFeedbackText(overviewContent).replace(/\n/g, '<br>')}</div>
                         </div>
                     `;
                 }
             }
             
-            // 문법 오류 섹션
+            // 문법 오류 섹션 - 원문 포함, 개선된 매칭
             const grammar = feedback.match(grammarPattern);
             if (grammar && grammar[0].trim().length > 0) {
                 // "문법 오류:" 텍스트 제거 후 내용만 추출
@@ -945,7 +999,7 @@
                 }
             }
             
-            // 어휘 개선 섹션
+            // 어휘 개선 섹션 - 원문 포함, 개선된 매칭
             const vocab = feedback.match(vocabPattern);
             if (vocab && vocab[0].trim().length > 0) {
                 // "어휘 개선:" 텍스트 제거 후 내용만 추출
@@ -962,7 +1016,7 @@
                 }
             }
             
-            // 표현 향상 섹션
+            // 표현 향상 섹션 - 원문 포함, 개선된 매칭
             const expression = feedback.match(expressionPattern);
             if (expression && expression[0].trim().length > 0) {
                 // "표현 향상:" 텍스트 제거 후 내용만 추출
@@ -979,7 +1033,7 @@
                 }
             }
             
-            // 잘한 점 섹션
+            // 잘한 점 섹션 - 원문 포함, 개선된 매칭
             const strengths = feedback.match(strengthsPattern);
             if (strengths && strengths[0].trim().length > 0) {
                 // "잘한 점:" 텍스트 제거 후 내용만 추출 
@@ -1000,18 +1054,21 @@
             return html;
         }
 
-        // 피드백 포인트에서 원문과 피드백을 추출하는 함수 - 불필요한 숫자와 공백 제거
+        // 피드백 포인트 추출 함수
         function extractFeedbackPoints(content, originalLines) {
+            // 내용 정리 먼저 적용
+            content = cleanFeedbackText(content);
+            
             // 공백 라인으로 개별 피드백 항목 분리
             const points = content.split(/\n\s*\n+/).filter(p => p.trim());
             let html = '';
             
             points.forEach(point => {
-                // 불필요한 숫자와 공백 제거
-                const cleanedPoint = point.replace(/^\d+[\.\)\s]+/gm, '');
+                // 포인트 내부의 불필요한 숫자 패턴도 정리
+                point = point.replace(/^\s*\d+[\.\)]\s*/gm, '');
                 
-                // 영문 인용구 찾기 - 더 정확한 패턴 (따옴표로 감싸진 텍스트 또는 영어 문장)
-                const englishQuotes = cleanedPoint.match(/["']([^"']+)["']|`([^`]+)`|\b([A-Za-z][\w\s,.!?;:'"()-]*?[.!?])\b/g);
+                // 영문 인용구 찾기 - 더 정확한 패턴
+                const englishQuotes = point.match(/["']([^"']+)["']|`([^`]+)`|\b([A-Za-z][\w\s,.!?;:'"()-]*?[.!?])\b/g);
                 
                 // 원문 텍스트 검색
                 let originalTextFound = '';
@@ -1035,7 +1092,7 @@
                 
                 html += `
                     ${originalTextFound ? `<div class="original-text">${originalTextFound}</div>` : ''}
-                    <div class="feedback-point">${cleanedPoint.replace(/\n/g, '<br>')}</div>
+                    <div class="feedback-point">${point.replace(/\n/g, '<br>')}</div>
                     <hr style="border: 0; height: 1px; background-color: #e2e8f0; margin: 10px 0;">
                 `;
             });
@@ -1080,37 +1137,37 @@
                     body: JSON.stringify({ contentText })
                 });
                 const { feedback, modelAnswer } = await res.json();
-                const container = document.getElementById('feedback-result');
                 
                 // 원문과 함께 피드백 처리
                 const formattedFeedback = processFeedback(feedback, contentText);
                 
+                const container = document.getElementById('feedback-result');
                 container.innerHTML = `
-  <p style="text-align: left;">
-    📢 AI는 실수를 할 수 있습니다. 꼭 생성된 내용을 확인 후 필요한 부분은 수정하셔서 이용해주세요~!
-  </p>
-  <div class="box" id="fb-box">
-    <h2>피드백</h2>
-    <div id="fb-content">${formattedFeedback}</div>
-  </div>
-  <div class="corrected-section" id="fb-corr-box">
-    <h3><i class="fas fa-check-circle"></i> 수정글</h3>
-    <div class="corrected-content" id="fb-corrected">${formatCorrectedText(modelAnswer)}</div>
-  </div>
-  <div class="buttons-container">
-    <button id="print-feedback-btn">인쇄</button>
-  </div>
-  <div class="print-options-inline" id="print-options-feedback" style="display:none;">
-      <label><input type="checkbox" id="print_orig_fb" checked> 원본</label>
-      <label><input type="checkbox" id="print_fb_fb" checked> 피드백</label>
-      <label><input type="checkbox" id="print_corr_fb" checked> 수정글</label>
-      <button id="confirm-print-feedback-btn">인쇄하기</button>
-  </div>
-`;
+                    <p style="text-align: left;">
+                        📢 AI는 실수를 할 수 있습니다. 꼭 생성된 내용을 확인 후 필요한 부분은 수정하셔서 이용해주세요~!
+                    </p>
+                    <div class="box" id="fb-box">
+                        <h2>피드백</h2>
+                        <div id="fb-content">${formattedFeedback}</div>
+                    </div>
+                    <div class="corrected-section" id="fb-corr-box">
+                        <h3><i class="fas fa-check-circle"></i> 수정글</h3>
+                        <div class="corrected-content" id="fb-corrected">${formatCorrectedText(modelAnswer)}</div>
+                    </div>
+                    <div class="buttons-container">
+                        <button id="print-feedback-btn">인쇄</button>
+                    </div>
+                    <div class="print-options-inline" id="print-options-feedback" style="display:none;">
+                        <label><input type="checkbox" id="print_orig_fb" checked> 원본</label>
+                        <label><input type="checkbox" id="print_fb_fb" checked> 피드백</label>
+                        <label><input type="checkbox" id="print_corr_fb" checked> 수정글</label>
+                        <button id="confirm-print-feedback-btn">인쇄하기</button>
+                    </div>
+                `;
 
                 // Edit/Save 버튼 텍스트 변경 (피드백 및 수정글)
-                ['fb-content', 'fb-corrected'].forEach(id => {
-                    const content = document.getElementById(id);
+                ['fb', 'fb-corrected'].forEach(id => {
+                    const content = document.getElementById(id === 'fb' ? 'fb-content' : 'fb-corrected');
                     content.setAttribute('contenteditable', 'false');
                     const edit = document.createElement('button');
                     edit.textContent = 'Edit';
@@ -1120,7 +1177,7 @@
                     const wrapper = document.createElement('div');
                     wrapper.className = 'btn-group';
                     wrapper.append(edit, save);
-                    document.getElementById(id === 'fb-content' ? 'fb-box' : 'fb-corr-box').append(wrapper);
+                    document.getElementById(id === 'fb' ? 'fb-box' : 'fb-corr-box').append(wrapper);
                     edit.addEventListener('click', () => {
                         content.setAttribute('contenteditable', 'true');
                         edit.style.display = 'none';
@@ -1133,7 +1190,7 @@
                     });
                 });
                 
-                // Print inline with header and footer
+                // Print inline
                 document.getElementById('print-feedback-btn').addEventListener('click', () => {
                     document.getElementById('print-options-feedback').style.display = 'flex';
                 });
@@ -1143,62 +1200,58 @@
                     const corr = document.getElementById('print_corr_fb').checked;
                     const name = document.getElementById('user-name-feedback').value;
                     const school = document.getElementById('user-school-feedback').value;
-                    
                     let html = `<!doctype html>
                     <html>
                     <head>
                         <meta charset="utf-8"/>
-                        <title>윤선생 리얼스피치 Writing Assistant - 피드백</title>
+                        <title>윤선생 리얼스피치 - 피드백</title>
                         <style>
-                            body { 
-                                font-family: 'Segoe UI', sans-serif; 
-                                padding: 2rem;
-                                margin: 0;
-                            }
+                            /* 기본 스타일 */
+                            body { font-family: 'Segoe UI', sans-serif; padding: 2rem; margin: 0; }
                             
-                            /* 머리글 스타일 */
+                            /* 머리글/바닥글 인쇄 스타일 */
                             .print-header {
-                                display: flex;
-                                align-items: center;
-                                padding-bottom: 20px;
-                                margin-bottom: 30px;
+                                display: block;
+                                height: 80px;
+                                padding: 10px;
                                 border-bottom: 1px solid #ddd;
+                                margin-bottom: 20px;
                             }
                             
                             .print-header .logo {
-                                height: 50px;
-                                margin-right: 20px;
+                                float: left;
+                                height: 60px;
                             }
                             
                             .print-header .title {
-                                flex-grow: 1;
                                 text-align: center;
-                                font-size: 24px;
+                                margin: 0;
+                                line-height: 60px;
+                                font-size: 20px;
                                 font-weight: bold;
                                 color: #1e3a8a;
                             }
                             
-                            /* 바닥글 스타일 */
                             .print-footer {
-                                margin-top: 40px;
-                                padding-top: 20px;
+                                display: block;
+                                padding: 10px;
                                 border-top: 1px solid #ddd;
-                                display: flex;
-                                justify-content: space-between;
-                                align-items: center;
+                                margin-top: 20px;
+                                font-size: 12px;
+                                clear: both;
                             }
                             
                             .print-footer .message {
-                                font-size: 14px;
-                                color: #4b5563;
+                                float: left;
+                                color: #2ecc71;
                                 font-style: italic;
+                                font-weight: 600;
                             }
                             
                             .print-footer .brand {
-                                font-size: 12px;
-                                color: #6b7280;
-                                font-weight: 600;
-                                text-align: right;
+                                float: right;
+                                color: #1e3a8a;
+                                font-weight: bold;
                             }
                             
                             /* 피드백 카테고리 스타일 */
@@ -1222,24 +1275,6 @@
                             .vocabulary { border-left-color: #3498db; background-color: #ebf5fb; }
                             .expression { border-left-color: #9b59b6; background-color: #f4ecf7; }
                             .strengths { border-left-color: #2ecc71; background-color: #ebfaf0; }
-                            
-                            /* 수정글 섹션 스타일 */
-                            .corrected-section {
-                                background-color: #ecfdf5;
-                                border-left: 5px solid #10b981;
-                                padding: 15px;
-                                margin-top: 20px;
-                                border-radius: 8px;
-                            }
-                            
-                            .corrected-content {
-                                background-color: #ffffff;
-                                padding: 18px;
-                                border-radius: 6px;
-                                line-height: 1.8;
-                                font-size: 1.05rem;
-                                border: 1px solid #d1fae5;
-                            }
                             
                             h2 { color: #1e3a8a; margin-top: 1.5rem; }
                             h3 { color: #2d3748; margin: 0 0 10px 0; }
@@ -1265,15 +1300,58 @@
                             }
                             
                             hr { border: 0; height: 1px; background-color: #e2e8f0; margin: 10px 0; }
+                            
+                            .model-box {
+                                background-color: #ffffff;
+                                font-size: 1.1rem;
+                                line-height: 1.8;
+                                border: 1px solid #d1d5db;
+                                padding: 1.5rem;
+                                border-radius: 10px;
+                            }
+                            
+                            .corrected-content {
+                                background-color: #ffffff;
+                                padding: 18px;
+                                border-radius: 6px;
+                                line-height: 1.8;
+                                font-size: 1.05rem;
+                                color: #1f2937;
+                                border: 1px solid #d1fae5;
+                            }
+                            
+                            @media print {
+                                button { display: none; }
+                                .print-header {
+                                    position: fixed;
+                                    top: 0;
+                                    left: 0;
+                                    right: 0;
+                                }
+                                .print-footer {
+                                    position: fixed;
+                                    bottom: 0;
+                                    left: 0;
+                                    right: 0;
+                                }
+                                body {
+                                    padding-top: 100px;
+                                    padding-bottom: 50px;
+                                }
+                                @page {
+                                    margin-top: 100px;
+                                    margin-bottom: 50px;
+                                }
+                            }
                         </style>
                     </head>
                     <body>
-                        <!-- 머리글 -->
                         <div class="print-header">
-                            <img class="logo" src="${LOGO_URL}" alt="윤선생 리얼스피치 로고">
-                            <div class="title">윤선생 리얼스피치 2025</div>
+                            <img src="https://page1.genspark.site/v1/base64_upload/78cc0523b080d22fe6d247fc2d9bf3c4" alt="윤선생 로고" class="logo">
+                            <h1 class="title">윤선생 리얼스피치 2025</h1>
                         </div>
                         
+                        <h2>피드백 결과</h2>
                         <p>이름: ${name} &nbsp; 학교: ${school}</p>`;
                     
                     if (orig) {
@@ -1287,20 +1365,15 @@
                     }
                     
                     if (corr) {
-                        html += `
-                        <div class="corrected-section">
-                            <h3>수정글</h3>
-                            <div class="corrected-content">${document.getElementById('fb-corrected').innerHTML}</div>
-                        </div>`;
+                        html += '<h2>수정글</h2>' + document.getElementById('fb-corrected').outerHTML;
                     }
                     
                     html += `
-                        <!-- 바닥글 -->
                         <div class="print-footer">
                             <div class="message">훌륭해요! 매일 조금씩 발전하고 있어요. 계속 도전하세요!</div>
                             <div class="brand">윤선생 리얼스피치 2025</div>
+                            <div style="clear:both;"></div>
                         </div>
-                    
                         <script>window.print();window.onafterprint=()=>window.close();<\/script>
                     </body>
                     </html>`;
@@ -1327,237 +1400,255 @@
                  return;
             }
             const btn = document.getElementById('submit-final-btn'),
-                  sp = document.getElementById('submit-spinner-final');
-            btn.disabled = true;
-            sp.style.display = 'inline-block';
+          sp = document.getElementById('submit-spinner-final');
+    btn.disabled = true;
+    sp.style.display = 'inline-block';
+    try {
+        const res = await fetch(`${WORKER_URL}/api/feedback`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contentText })
+        });
+        const { feedback, modelAnswer } = await res.json();
+        const cont = document.getElementById('final-result');
+        cont.innerHTML = `
+            <p style="text-align: left;">
+                📢 AI는 실수를 할 수 있습니다. 꼭 생성된 내용을 확인 후 필요한 부분은 수정하셔서 이용해주세요~!
+            </p>
+            <div class="corrected-section" id="fn-box">
+                <h3><i class="fas fa-check-circle"></i> 수정글</h3>
+                <div class="corrected-content" id="fn-corrected">${formatCorrectedText(modelAnswer)}</div>
+            </div>
+            <div class="btn-group" id="fn-edit-group"></div>
+            <div class="audio-controls-area">
+                <button id="tts-play-btn">원어민 음성 듣기</button><span id="tts-spinner" class="spinner"></span>
+                <audio id="tts-audio-final" controls style="display:none;"></audio>
+                <a id="tts-download-btn" style="display:none;">음원 다운로드</a>
+            </div>
+            <div class="print-button-bottom">
+                <a id="print-final-btn" class="button">인쇄</a>
+            </div>
+            <div class="print-options-inline" id="print-options-final" style="display:none;">
+                <label><input type="checkbox" id="print_orig_fn" checked> 원본</label>
+                <label><input type="checkbox" id="print_corr_fn" checked> 수정글</label>
+                <button id="confirm-print-final-btn">인쇄하기</button>
+            </div>
+        `;
+
+        // Edit/Save 버튼 텍스트 변경 (최종 수정글)
+        const fnContent = document.getElementById('fn-corrected');
+        fnContent.setAttribute('contenteditable', 'false');
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit';
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = 'Save';
+        saveBtn.style.display = 'none';
+        const wrapper = document.getElementById('fn-edit-group');
+        wrapper.append(editBtn, saveBtn);
+        editBtn.addEventListener('click', () => {
+            fnContent.setAttribute('contenteditable', 'true');
+            editBtn.style.display = 'none';
+            saveBtn.style.display = 'inline-block';
+        });
+        saveBtn.addEventListener('click', () => {
+            fnContent.setAttribute('contenteditable', 'false');
+            saveBtn.style.display = 'none';
+            editBtn.style.display = 'inline-block';
+        });
+        // TTS
+        const playBtn = document.getElementById('tts-play-btn'),
+              spinner = document.getElementById('tts-spinner'),
+              dl = document.getElementById('tts-download-btn'),
+              audio = document.getElementById('tts-audio-final');
+
+        playBtn.addEventListener('click', async () => {
+            playBtn.disabled = true;
+            spinner.style.display = 'inline-block';
             try {
-                const res = await fetch(`${WORKER_URL}/api/feedback`, {
+                const textFinal = document.getElementById('fn-corrected').innerText;
+                const r = await fetch(`${WORKER_URL}/api/tts`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contentText })
+                    body: JSON.stringify({ text: textFinal })
                 });
-                const { feedback, modelAnswer } = await res.json();
-                const cont = document.getElementById('final-result');
-                cont.innerHTML = `
-  <p style="text-align: left;">
-    📢 AI는 실수를 할 수 있습니다. 꼭 생성된 내용을 확인 후 필요한 부분은 수정하셔서 이용해주세요~!
-  </p>
-  <div class="corrected-section" id="fn-box">
-    <h3><i class="fas fa-check-circle"></i> 수정글</h3>
-    <div class="corrected-content" id="fn-corrected">${formatCorrectedText(modelAnswer)}</div>
-  </div>
-  <div class="btn-group" id="fn-edit-group"></div>
-  <div class="audio-controls-area">
-      <button id="tts-play-btn">원어민 음성 듣기</button><span id="tts-spinner" class="spinner"></span>
-      <audio id="tts-audio-final" controls style="display:none;"></audio>
-      <a id="tts-download-btn" style="display:none;">음원 다운로드</a>
-  </div>
-  <div class="print-button-bottom">
-      <a id="print-final-btn" class="button">인쇄</a>
-  </div>
-  <div class="print-options-inline" id="print-options-final" style="display:none;">
-      <label><input type="checkbox" id="print_orig_fn" checked> 원본</label>
-      <label><input type="checkbox" id="print_corr_fn" checked> 수정글</label>
-      <button id="confirm-print-final-btn">인쇄하기</button>
-  </div>
-`;
-
-                // Edit/Save 버튼 텍스트 변경 (최종 수정글)
-                const fnContent = document.getElementById('fn-corrected');
-                fnContent.setAttribute('contenteditable', 'false');
-                const editBtn = document.createElement('button');
-                editBtn.textContent = 'Edit';
-                const saveBtn = document.createElement('button');
-                saveBtn.textContent = 'Save';
-                saveBtn.style.display = 'none';
-                const wrapper = document.getElementById('fn-edit-group');
-                wrapper.append(editBtn, saveBtn);
-                editBtn.addEventListener('click', () => {
-                    fnContent.setAttribute('contenteditable', 'true');
-                    editBtn.style.display = 'none';
-                    saveBtn.style.display = 'inline-block';
-                });
-                saveBtn.addEventListener('click', () => {
-                    fnContent.setAttribute('contenteditable', 'false');
-                    saveBtn.style.display = 'none';
-                    editBtn.style.display = 'inline-block';
-                });
-                
-                // TTS
-                const playBtn = document.getElementById('tts-play-btn'),
-                      spinner = document.getElementById('tts-spinner'),
-                      dl = document.getElementById('tts-download-btn'),
-                      audio = document.getElementById('tts-audio-final');
-
-                playBtn.addEventListener('click', async () => {
-                    playBtn.disabled = true;
-                    spinner.style.display = 'inline-block';
-                    try {
-                        const textFinal = document.getElementById('fn-corrected').innerText;
-                        const r = await fetch(`${WORKER_URL}/api/tts`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ text: textFinal })
-                        });
-                        const blob = await r.blob();
-                        const url = URL.createObjectURL(blob);
-                        audio.src = url;
-                        audio.style.display = 'block';
-                        // 자동 재생 제거 - 사용자가 재생 컨트롤로 직접 재생
-                        dl.style.display = 'inline-block';
-                        const userName = document.getElementById('user-name-final').value.trim() || 'writing';
-                        dl.href = url;
-                        dl.download = `${userName}.mp3`;
-                    } catch (e) {
-                        alert('TTS 에러: ' + e.message);
-                    } finally {
-                        playBtn.disabled = false;
-                        spinner.style.display = 'none';
-                    }
-                });
-                
-                // Print inline with header and footer
-                document.getElementById('print-final-btn').addEventListener('click', () => {
-                    document.getElementById('print-options-final').style.display = 'flex';
-                });
-                document.getElementById('confirm-print-final-btn').addEventListener('click', () => {
-                    const orig = document.getElementById('print_orig_fn').checked;
-                    const corr = document.getElementById('print_corr_fn').checked;
-                    const name = document.getElementById('user-name-final').value;
-                    const school = document.getElementById('user-school-final').value;
-                    
-                    let html = `<!doctype html>
-                    <html>
-                    <head>
-                        <meta charset="utf-8"/>
-                        <title>윤선생 리얼스피치 Writing Assistant - 최종 결과</title>
-                        <style>
-                            body { 
-                                font-family: 'Segoe UI', sans-serif; 
-                                padding: 2rem;
-                                margin: 0;
-                            }
-                            
-                            /* 머리글 스타일 */
-                            .print-header {
-                                display: flex;
-                                align-items: center;
-                                padding-bottom: 20px;
-                                margin-bottom: 30px;
-                                border-bottom: 1px solid #ddd;
-                            }
-                            
-                            .print-header .logo {
-                                height: 50px;
-                                margin-right: 20px;
-                            }
-                            
-                            .print-header .title {
-                                flex-grow: 1;
-                                text-align: center;
-                                font-size: 24px;
-                                font-weight: bold;
-                                color: #1e3a8a;
-                            }
-                            
-                            /* 바닥글 스타일 */
-                            .print-footer {
-                                margin-top: 40px;
-                                padding-top: 20px;
-                                border-top: 1px solid #ddd;
-                                display: flex;
-                                justify-content: space-between;
-                                align-items: center;
-                            }
-                            
-                            .print-footer .message {
-                                font-size: 14px;
-                                color: #4b5563;
-                                font-style: italic;
-                            }
-                            
-                            .print-footer .brand {
-                                font-size: 12px;
-                                color: #6b7280;
-                                font-weight: 600;
-                                text-align: right;
-                            }
-                            
-                            /* 수정글 섹션 스타일 */
-                            .corrected-section {
-                                background-color: #ecfdf5;
-                                border-left: 5px solid #10b981;
-                                padding: 15px;
-                                margin-top: 20px;
-                                border-radius: 8px;
-                            }
-                            
-                            .corrected-content {
-                                background-color: #ffffff;
-                                padding: 18px;
-                                border-radius: 6px;
-                                line-height: 1.8;
-                                font-size: 1.05rem;
-                                border: 1px solid #d1fae5;
-                            }
-                            
-                            h2 { color: #1e3a8a; margin-top: 1.5rem; }
-                            h3 { color: #2d3748; margin: 0 0 10px 0; }
-                            
-                            .highlight {
-                                background-color: #fef9c3;
-                                padding: 0 3px;
-                                border-radius: 3px;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <!-- 머리글 -->
-                        <div class="print-header">
-                            <img class="logo" src="logo.png" alt="윤선생 리얼스피치 로고">
-                            <div class="title">윤선생 리얼스피치 2025</div>
-                        </div>
-                        
-                        <p>이름: ${name} &nbsp; 학교: ${school}</p>`;
-                    
-                    if (orig) {
-                        html += window.finalFileURL ?
-                            `<img src="${window.finalFileURL}" style="max-width:100%;"/>` :
-                            `<div style="white-space:pre-wrap;padding:15px;border:1px solid #ccc;border-radius:8px;background:#f8fafc;margin-bottom:20px;">${document.getElementById('contentText-final').value}</div>`;
-                    }
-                    
-                    if (corr) {
-                        html += `
-                        <div class="corrected-section">
-                            <h3>수정글</h3>
-                            <div class="corrected-content">${document.getElementById('fn-corrected').innerHTML}</div>
-                        </div>`;
-                    }
-                    
-                    html += `
-                        <!-- 바닥글 -->
-                        <div class="print-footer">
-                            <div class="message">훌륭해요! 매일 조금씩 발전하고 있어요. 계속 도전하세요!</div>
-                            <div class="brand">윤선생 리얼스피치 2025</div>
-                        </div>
-                    
-                        <script>window.print();window.onafterprint=()=>window.close();<\/script>
-                    </body>
-                    </html>`;
-                    
-                    const win = window.open();
-                    win.document.write(html);
-                    win.document.close();
-                    document.getElementById('print-options-final').style.display = 'none';
-                });
+                const blob = await r.blob();
+                const url = URL.createObjectURL(blob);
+                audio.src = url;
+                audio.style.display = 'block';
+                // 자동 재생 제거 - 사용자가 재생 컨트롤로 직접 재생
+                dl.style.display = 'inline-block';
+                const userName = document.getElementById('user-name-final').value.trim() || 'writing';
+                dl.href = url;
+                dl.download = `${userName}.mp3`;
             } catch (e) {
-                alert('최종 결과물 요청 중 오류가 발생했습니다.');
+                alert('TTS 에러: ' + e.message);
             } finally {
-                btn.disabled = false;
-                document.getElementById('submit-spinner-final').style.display = 'none';
+                playBtn.disabled = false;
+                spinner.style.display = 'none';
             }
         });
-    </script>
-</body>
+        // Print inline final
+        document.getElementById('print-final-btn').addEventListener('click', () => {
+            document.getElementById('print-options-final').style.display = 'flex';
+        });
+        document.getElementById('confirm-print-final-btn').addEventListener('click', () => {
+            const orig = document.getElementById('print_orig_fn').checked;
+            const corr = document.getElementById('print_corr_fn').checked;
+            const name = document.getElementById('user-name-final').value;
+            const school = document.getElementById('user-school-final').value;
+            
+            let html = `<!doctype html>
+            <html>
+            <head>
+                <meta charset="utf-8"/>
+                <title>윤선생 리얼스피치 - 최종 결과</title>
+                <style>
+                    /* 기본 스타일 */
+                    body { font-family: 'Segoe UI', sans-serif; padding: 2rem; margin: 0; }
+                    
+                    /* 머리글/바닥글 인쇄 스타일 */
+                    .print-header {
+                        display: block;
+                        height: 80px;
+                        padding: 10px;
+                        border-bottom: 1px solid #ddd;
+                        margin-bottom: 20px;
+                    }
+                    
+                    .print-header .logo {
+                        float: left;
+                        height: 60px;
+                    }
+                    
+                    .print-header .title {
+                        text-align: center;
+                        margin: 0;
+                        line-height: 60px;
+                        font-size: 20px;
+                        font-weight: bold;
+                        color: #1e3a8a;
+                    }
+                    
+                    .print-footer {
+                        display: block;
+                        padding: 10px;
+                        border-top: 1px solid #ddd;
+                        margin-top: 20px;
+                        font-size: 12px;
+                        clear: both;
+                    }
+                    
+                    .print-footer .message {
+                        float: left;
+                        color: #2ecc71;
+                        font-style: italic;
+                        font-weight: 600;
+                    }
+                    
+                    .print-footer .brand {
+                        float: right;
+                        color: #1e3a8a;
+                        font-weight: bold;
+                    }
+                    
+                    .corrected-section {
+                        padding: 15px;
+                        margin-bottom: 20px;
+                        border-radius: 8px;
+                        border-left: 5px solid #10b981;
+                        background-color: #ecfdf5;
+                    }
+                    
+                    h2 { color: #1e3a8a; margin-top: 1.5rem; }
+                    h3 { color: #047857; margin: 0 0 15px 0; }
+                    
+                    .corrected-content {
+                        background-color: #ffffff;
+                        padding: 18px;
+                        border-radius: 6px;
+                        line-height: 1.8;
+                        font-size: 1.05rem;
+                        color: #1f2937;
+                        border: 1px solid #d1fae5;
+                    }
+                    
+                    .highlight {
+                        background-color: #fef9c3;
+                        padding: 0 3px;
+                        border-radius: 3px;
+                    }
+                    
+                    @media print {
+                        button { display: none; }
+                        .print-header {
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                        }
+                        .print-footer {
+                            position: fixed;
+                            bottom: 0;
+                            left: 0;
+                            right: 0;
+                        }
+                        body {
+                            padding-top: 100px;
+                            padding-bottom: 50px;
+                        }
+                        @page {
+                            margin-top: 100px;
+                            margin-bottom: 50px;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="print-header">
+                    <img src="https://page1.genspark.site/v1/base64_upload/78cc0523b080d22fe6d247fc2d9bf3c4" alt="윤선생 로고" class="logo">
+                    <h1 class="title">윤선생 리얼스피치 2025</h1>
+                </div>
+                
+                <h2>최종 결과물</h2>
+                <p>이름: ${name} &nbsp; 학교: ${school}</p>`;
+            
+            if (orig) {
+                html += window.finalFileURL ?
+                    `<img src="${window.finalFileURL}" style="max-width:100%;"/>` :
+                    `<div style="white-space:pre-wrap;padding:15px;border:1px solid #ccc;border-radius:8px;background:#f8fafc;margin-bottom:20px;">${document.getElementById('contentText-final').value}</div>`;
+            }
+            
+            if (corr) {
+                html += `
+                <div class="corrected-section">
+                    <h3>수정글</h3>
+                    <div class="corrected-content">${document.getElementById('fn-corrected').innerHTML}</div>
+                </div>`;
+            }
+            
+            html += `
+                <div class="print-footer">
+                    <div class="message">훌륭해요! 매일 조금씩 발전하고 있어요. 계속 도전하세요!</div>
+                    <div class="brand">윤선생 리얼스피치 2025</div>
+                    <div style="clear:both;"></div>
+                </div>
+                <script>window.print();window.onafterprint=()=>window.close();<\/script>
+            </body>
+            </html>`;
+            
+            const win = window.open();
+            win.document.write(html);
+            win.document.close();
+            document.getElementById('print-options-final').style.display = 'none';
+        });
 
+    } catch (e) {
+        alert('최종 결과물 요청 중 오류가 발생했습니다.');
+    } finally {
+        btn.disabled = false;
+        document.getElementById('submit-spinner-final').style.display = 'none';
+    }
+});
+</script>
+</body>
 </html>
