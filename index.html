@@ -499,6 +499,53 @@
                 min-height: auto;
             }
         }
+
+        /* --- 피드백 섹션 스타일 --- */
+        .feedback-section {
+            margin-top: 1.5rem;
+            padding: 1.25rem;
+            background-color: #f0f9ff; /* 밝은 파란색 배경 */
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .feedback {
+            padding: 1rem;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feedback h3 {
+            margin: 0 0 0.5rem;
+            font-size: 1.2rem;
+            color: #1e3a8a;
+        }
+
+        .feedback p {
+            margin: 0;
+            font-size: 1rem;
+            color: #334155;
+        }
+
+        .feedback.grammar {
+            color: #e3342f; /* 예: 빨강 */
+        }
+
+        .feedback.vocabulary {
+            color: #f59e0b; /* 노랑 */
+        }
+
+        .feedback.expression {
+            color: #6cb2eb; /* 예: 파랑 */
+        }
+
+        .feedback.praise {
+            color: #38c172; /* 녹색 */
+        }
     </style>
 </head>
 
@@ -563,6 +610,26 @@
             </form>
             <div id="final-result"></div>
         </section>
+
+        <!-- 예시: 피드백 영역 -->
+        <div class="feedback-section">
+          <div class="feedback grammar">
+            <h3>문법 오류</h3>
+            <p>[문법 오류 내용]</p>
+          </div>
+          <div class="feedback vocabulary">
+            <h3>어휘 개선</h3>
+            <p>[어휘 개선 내용]</p>
+          </div>
+          <div class="feedback expression">
+            <h3>표현 향상</h3>
+            <p>[표현 향상 내용]</p>
+          </div>
+          <div class="feedback praise">
+            <h3>잘한 점</h3>
+            <p>[잘한 점 내용]</p>
+          </div>
+        </div>
     </div>
 
     <script>
