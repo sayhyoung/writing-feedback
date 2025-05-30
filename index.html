@@ -655,16 +655,20 @@
         // Feedback submit
         document.getElementById('feedback-form').addEventListener('submit', async e => {
             e.preventDefault();
+            const contentText = document.getElementById('contentText-feedback').value.trim();
+            if (!contentText) {
+                 alert("영작한 내용을 입력하거나 이미지 업로드 후 실행해주세요!");
+                 return;
+            }
             const btn = document.getElementById('submit-feedback-btn'),
-                sp = document.getElementById('submit-spinner-feedback');
+                  sp = document.getElementById('submit-spinner-feedback');
             btn.disabled = true;
             sp.style.display = 'inline-block';
             try {
-                const text = document.getElementById('contentText-feedback').value;
                 const res = await fetch(`${WORKER_URL}/api/feedback`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contentText: text })
+                    body: JSON.stringify({ contentText })
                 });
                 const { feedback, modelAnswer } = await res.json();
                 const container = document.getElementById('feedback-result');
@@ -753,20 +757,24 @@
         // Final submit
         document.getElementById('final-form').addEventListener('submit', async e => {
             e.preventDefault();
+            const contentText = document.getElementById('contentText-final').value.trim();
+            if (!contentText) {
+                 alert("영작한 내용을 입력하거나 이미지 업로드 후 실행해주세요!");
+                 return;
+            }
             const btn = document.getElementById('submit-final-btn'),
-                sp = document.getElementById('submit-spinner-final');
-            btn.disabled = true;
-            sp.style.display = 'inline-block';
-            try {
-                const text = document.getElementById('contentText-final').value;
-                const res = await fetch(`${WORKER_URL}/api/feedback`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contentText: text })
-                });
-                const { feedback, modelAnswer } = await res.json();
-                const cont = document.getElementById('final-result');
-                cont.innerHTML = `
+          sp = document.getElementById('submit-spinner-final');
+    btn.disabled = true;
+    sp.style.display = 'inline-block';
+    try {
+        const res = await fetch(`${WORKER_URL}/api/feedback`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contentText })
+        });
+        const { feedback, modelAnswer } = await res.json();
+        const cont = document.getElementById('final-result');
+        cont.innerHTML = `
   <p style="color:#b45309;font-weight:600;text-align:center;">
     AI는 실수를 할 수 있습니다. 꼭 생성된 내용을 확인 후 필요한 부분은 수정하셔서 이용해주세요~!
   </p>
