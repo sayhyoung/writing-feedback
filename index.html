@@ -668,8 +668,8 @@
                 const { feedback, modelAnswer } = await res.json();
                 const container = document.getElementById('feedback-result');
                 container.innerHTML = `
-  <p style="color:#b45309;font-weight:600;text-align:center;">
-    AI는 실수를 할 수 있습니다. 꼭 생성된 내용을 확인 후 필요한 부분은 수정하셔서 이용해주세요~!
+  <p style="color:#FF0000;font-weight:600;text-align:left;">
+    📢AI는 실수를 할 수 있습니다. 꼭 생성된 내용을 확인 후 필요한 부분은 수정하셔서 이용해주세요~!
   </p>
   <div class="box" id="fb-box">
     <h2>피드백</h2>
@@ -811,9 +811,9 @@
                 });
                 // TTS
                 const playBtn = document.getElementById('tts-play-btn'),
-                    spinner = document.getElementById('tts-spinner'),
-                    dl = document.getElementById('tts-download-btn'),
-                    audio = document.getElementById('tts-audio-final');
+                      spinner = document.getElementById('tts-spinner'),
+                      dl = document.getElementById('tts-download-btn'),
+                      audio = document.getElementById('tts-audio-final');
 
                 playBtn.addEventListener('click', async () => {
                     playBtn.disabled = true;
@@ -829,12 +829,13 @@
                         const url = URL.createObjectURL(blob);
                         audio.src = url;
                         audio.style.display = 'block';
-                        audio.play();
+                        // 자동 재생 제거 - 사용자가 재생 컨트롤로 직접 재생
                         dl.style.display = 'inline-block';
+                        const userName = document.getElementById('user-name-final').value.trim() || 'writing';
                         dl.href = url;
-                        dl.download = 'tts.mp3';
+                        dl.download = `${userName}.mp3`;
                     } catch (e) {
-                        alert('TTS 에러:' + e.message);
+                        alert('TTS 에러: ' + e.message);
                     } finally {
                         playBtn.disabled = false;
                         spinner.style.display = 'none';
