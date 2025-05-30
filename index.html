@@ -1,893 +1,169 @@
-
-
-//20250530. 오전 11시 50분 완성도 올린 버전
-
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Writing Assistant</title>
-    <style>
-        /* --- 기본 스타일 및 레이아웃 --- */
-        body {
-            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-            background-color: #f8fafc; /* 라이트 그레이 배경 */
-            margin: 0;
-            padding: 2.5rem;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start; /* 상단 정렬 */
-            min-height: 100vh; /* 최소 높이 설정 */
-            line-height: 1.6;
-            color: #334155; /* 기본 텍스트 색상 */
-        }
-
-        #container {
-            width: 100%;
-            max-width: 768px; /* 최대 너비 증가 */
-            background-color: #ffffff;
-            border-radius: 12px; /* 부드러운 모서리 */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* 깊이감 있는 그림자 */
-            padding: 2.5rem;
-            position: relative;
-            border: 1px solid #e2e8f0; /* 미묘한 테두리 */
-        }
-
-        h1 {
-            text-align: center;
-            color: #1e3a8a; /* 짙은 파란색 제목 */
-            margin-bottom: 2rem;
-            font-size: 2.25rem; /* 글꼴 크기 키우기 */
-            font-weight: 700; /* 볼드 */
-        }
-
-        /* --- Reset 버튼 --- */
-        #reset-btn {
-            position: absolute;
-            top: 1.5rem;
-            right: 1.5rem;
-            background-color: #ef4444; /* 경고 색상 */
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
-            padding: 0.6rem 1.2rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-            font-weight: 500;
-            font-size: 0.9rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        #reset-btn:hover {
-            background-color: #dc2626;
-        }
-
-        /* --- 탭 --- */
-        nav {
-            text-align: center;
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-        }
-
-        .tab {
-            background-color: #e0e7ff; /* 밝은 파란색 배경 */
-            color: #3b82f6; /* 파란색 텍스트 */
-            border: none;
-            padding: 0.8rem 1.8rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .tab.active {
-            background-color: #7299da; /* 활성 탭 색상 */
-            color: #ffffff;
-            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
-            border: 2px solid #0d0d0e; /* 활성 탭 테두리 추가 */
-        }
-
-        .tab:hover:not(.active) {
-            background-color: #c7d2fe;
-            color: #2563eb;
-        }
-
-        .section {
-            display: none;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .section.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* --- 사용자 정보 입력 --- */
-        .user-info {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .user-info input {
-            flex: 1;
-            padding: 0.75rem;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 1rem;
-            color: #475569;
-            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        }
-
-        .user-info input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-        }
-
-        /* --- 입력 영역 --- */
-        .input-area {
-            width: 100%;
-            min-height: 180px; /* 높이 증가 */
-            padding: 1.25rem;
-            border: 2px solid #cbd5e1;
-            border-radius: 10px;
-            background-color: #f8fafc;
-            resize: vertical;
-            transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-            box-sizing: border-box;
-            font-family: inherit;
-            font-size: 1.05rem;
-            line-height: 1.7;
-            color: #334155;
-        }
-
-        .input-area:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
-        }
-
-        .input-area.has-image {
-            background-color: #eff6ff; /* 이미지 있을 때 배경색 */
-            border-color: #2563eb;
-        }
-
-        /* --- 아이콘 버튼 --- */
-        .action-icons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-        }
-
-        .icon-btn {
-            width: 44px; /* 크기 키우기 */
-            height: 44px; /* 크기 키우기 */
-            border: none;
-            border-radius: 10px;
-            background-color: #ffffff;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            font-size: 1.5rem; /* 아이콘 크기 */
-            color: #64748b; /* 아이콘 색상 */
-        }
-
-        .icon-btn:hover {
-            background-color: #f1f5f9;
-            transform: translateY(-2px); /* 살짝 올라가는 효과 */
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
-        }
-
-        .icon-btn input[type="file"] {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        /* --- 파일 정보 & OCR 상태 --- */
-        .file-info,
-        .ocr-status {
-            margin-top: 1rem;
-            padding: 0.75rem;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .file-info {
-            background-color: #e0f2fe;
-            border: 1px solid #93c5fd;
-            color: #1d4ed8;
-            display: none;
-        }
-
-        .file-info.show {
-            display: flex;
-        }
-
-        .file-info .file-name {
-            flex: 1;
-            font-weight: 500;
-        }
-
-        .ocr-status {
-            background-color: #fefce8;
-            border: 1px solid #fde68a;
-            color: #b45309;
-            display: none;
-        }
-
-        .ocr-status.show {
-            display: flex;
-        }
-
-        .ocr-status .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid #b45309;
-            border-top: 3px solid transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* --- 일반 버튼 --- */
-        button:not(.icon-btn):not(#reset-btn),
-        a.button {
-            background-color: #3b82f6; /* 주 버튼 색상 */
-            color: #ffffff;
-            border: none;
-            border-radius: 8px;
-            padding: 0.85rem 1.8rem;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            margin-top: 1.5rem; /* 위쪽 마진 */
-            display: inline-flex; /* 텍스트와 스피너 정렬 */
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1rem;
-            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
-        }
-
-        button:hover:not(.icon-btn):not(#reset-btn),
-        a.button:hover {
-            background-color: #2563eb;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
-        }
-        
-        button:disabled, a.button:disabled {
-            background-color: #93c5fd;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        /* --- 버튼 그룹 --- */
-        .btn-group {
-            text-align: right;
-            margin-top: 1.5rem;
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.75rem;
-        }
-
-        .btn-group button {
-            margin-top: 0; /* 상단 마진 재설정 */
-            background-color: #64748b; /* 보조 버튼 색상 */
-            box-shadow: none;
-        }
-
-        .btn-group button:hover {
-            background-color: #475569;
-            transform: translateY(-2px);
-        }
-
-
-        /* --- 스피너 (TTS) --- */
-        .spinner {
-            display: none;
-            width: 18px;
-            height: 18px;
-            border: 3px solid #ffffff; /* 스피너 색상 */
-            border-top: 3px solid transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            vertical-align: middle;
-            margin-left: 0.8rem;
-        }
-
-        #tts-spinner {
-            border-color: #3b82f6; /* TTS 스피너 색상 */
-            border-top-color: transparent;
-        }
-
-        /* --- 결과 박스 --- */
-        .box,
-        .model-box {
-            background-color: #f1f5f9; /* 결과 박스 배경색 */
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-top: 2rem; /* 위쪽 마진 */
-            border: 1px solid #e2e8f0;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-
-        .box h2,
-        .model-box h2 {
-            margin: 0 0 1rem;
-            color: #1e3a8a;
-            font-size: 1.8rem;
-            font-weight: 600;
-        }
-
-        .model-box {
-            background-color: #ffffff; /* 수정글 박스 배경색 */
-            font-size: 1.1rem;
-            line-height: 1.8;
-            border: 1px solid #d1d5db;
-        }
-
-        /* --- 인라인 Print 옵션 --- */
-        .print-options-inline {
-            margin-top: 1.5rem;
-            padding: 1.25rem;
-            background-color: #f0f9ff; /* 밝은 파란색 배경 */
-            border: 1px solid #bfdbfe;
-            border-radius: 8px;
-            display: flex; /* 가로 정렬 */
-            flex-wrap: wrap; /* 반응형 줄바꿈 */
-            gap: 1rem; /* 간격 */
-            align-items: center;
-        }
-
-        .print-options-inline label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 500;
-            color: #475569;
-            cursor: pointer;
-        }
-
-        .print-options-inline input[type="checkbox"] {
-            transform: scale(1.2); /* 체크박스 크기 키우기 */
-            cursor: pointer;
-        }
-        
-        .print-options-inline button {
-            margin-top: 0; /* 상단 마진 재설정 */
-            margin-left: auto; /* 오른쪽으로 밀기 */
-            background-color: #10b981; /* 녹색 버튼 */
-        }
-
-        .print-options-inline button:hover {
-            background-color: #059669;
-        }
-
-        /* --- 최종 산출물 코너 특정 스타일 --- */
-        #final-section .button-area {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            margin-top: 1.5rem;
-        }
-
-        #final-section .audio-controls-area {
-            margin-top: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            align-items: flex-start;
-            width: 100%; /* 너비 100%로 설정 */
-        }
-
-        #final-section #tts-play-btn {
-            width: fit-content; /* 내용에 맞게 너비 조절 */
-            margin-top: 0;
-            box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2); /* 보라색 계열 그림자 */
-            background-color: #6366f1;
-        }
-
-        #final-section #tts-play-btn:hover {
-            background-color: #4f46e5;
-        }
-
-        #final-section #tts-audio-final {
-            width: 100%; /* 재생바 너비 100% */
-            border-radius: 8px;
-            border: 1px solid #a78bfa;
-            background-color: #f5f3ff;
-            outline: none; /* 포커스 아웃라인 제거 */
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-        
-        #final-section #tts-download-btn {
-            color: #3b82f6; /* 파란색 링크 */
-            text-decoration: none; /* 밑줄 제거 */
-            font-weight: 500;
-            padding: 0.5rem 0; /* 패딩 추가 */
-            display: inline-block; /* 링크처럼 보이게 */
-            transition: color 0.2s ease-in-out;
-            margin-top: -0.5rem; /* 위쪽으로 살짝 붙이기 */
-        }
-
-        #final-section #tts-download-btn:hover {
-            color: #2563eb;
-            text-decoration: underline; /* 호버 시 밑줄 */
-        }
-
-        #final-section .print-button-bottom {
-            margin-top: 2.5rem; /* 다른 요소들과 충분한 간격 확보 */
-            text-align: center; /* Print 버튼을 중앙 정렬 */
-            width: 100%;
-        }
-        
-        #final-section .print-button-bottom .button {
-            width: fit-content;
-        }
-
-        /* 인쇄 시 스타일 */
-        @media print {
-            nav, button, a.button, #reset-btn, .action-icons, .btn-group,
-            .print-options-inline, #tts-audio-final + #tts-download-btn {
-                display: none !important; /* 인쇄 시 숨김 */
-            }
-            body {
-                background-color: #ffffff;
-                margin: 0;
-                padding: 1rem;
-                color: #000000;
-                font-family: serif; /* 인쇄 시 가독성 좋은 폰트 */
-            }
-            #container {
-                box-shadow: none;
-                border: none;
-                padding: 0;
-                max-width: 100%;
-            }
-            h1, h2 {
-                color: #000000 !important;
-                text-align: left;
-            }
-            .box, .model-box {
-                background-color: #ffffff;
-                border: 1px solid #cccccc;
-                padding: 1rem;
-                margin-top: 1rem;
-                box-shadow: none;
-            }
-            .user-info {
-                display: block;
-                margin-bottom: 1rem;
-            }
-            .user-info input {
-                border: none;
-                padding: 0;
-                margin-bottom: 0.5rem;
-            }
-            .input-area {
-                border: 1px dashed #cccccc;
-                background-color: #ffffff;
-                padding: 1rem;
-                min-height: auto;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Writing Assistant with Color-Coded Feedback</title>
+  <style>
+    /* --- 기본 레이아웃 & 스타일 --- */
+    body { font-family:'Segoe UI', Tahoma, sans-serif; background:#f0f4f8; margin:0; padding:2rem; display:flex; justify-content:center; line-height:1.6; color:#334155; }
+    #container { width:100%; max-width:768px; background:#fff; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1); padding:2.5rem; border:1px solid #e2e8f0; position:relative; }
+    h1 { text-align:center; color:#1e3a8a; margin-bottom:2rem; font-size:2.25rem; font-weight:700; }
+    /* Reset 버튼 */
+    #reset-btn { position:absolute; top:1.5rem; right:1.5rem; background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.6rem 1.2rem; cursor:pointer; transition:background-color .2s; font-weight:500; font-size:.9rem; }
+    #reset-btn:hover { background:#dc2626; }
+    /* 탭 */
+    nav { display:flex; justify-content:center; gap:1rem; margin-bottom:2rem; }
+    .tab { background:#e0e7ff; color:#3b82f6; border:none; padding:0.8rem 1.8rem; border-radius:8px; cursor:pointer; font-weight:600; font-size:1rem; transition:all .2s; box-shadow:0 2px 4px rgba(0,0,0,0.05); }
+    .tab.active { background:#7299da; color:#fff; box-shadow:0 4px 8px rgba(59,130,246,0.2); border:2px solid #0d0d0e; }
+    .tab:hover:not(.active) { background:#c7d2fe; color:#2563eb; }
+    .section { display:none; animation:fadeIn .5s ease-out; }
+    .section.active { display:block; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+    /* 입력 필드 */
+    .user-info { display:flex; gap:1rem; margin:1rem 0 1.5rem; }
+    .user-info input { flex:1; padding:.75rem; border:1px solid #cbd5e1; border-radius:8px; font-size:1rem; transition:border-color .2s,box-shadow .2s; }
+    .user-info input:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.2); }
+    .input-area { width:100%; min-height:180px; padding:1.25rem; border:2px solid #cbd5e1; border-radius:10px; background:#f8fafc; resize:vertical; transition:border-color .3s,box-shadow .3s; font-size:1.05rem; line-height:1.7; color:#334155; }
+    .input-area:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 4px rgba(59,130,246,0.2); }
+    .input-area.has-image { background:#eff6ff; border-color:#2563eb; }
+    .action-icons { display:flex; justify-content:flex-end; gap:.75rem; margin-bottom:1rem; }
+    .icon-btn { width:44px; height:44px; border:none; border-radius:10px; background:#fff; box-shadow:0 3px 6px rgba(0,0,0,0.1); display:flex; align-items:center; justify-content:center; position:relative; cursor:pointer; transition:all .2s; font-size:1.5rem; color:#64748b; }
+    .icon-btn:hover { background:#f1f5f9; transform:translateY(-2px); box-shadow:0 5px 10px rgba(0,0,0,0.15); }
+    .icon-btn input { position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+    .file-info, .ocr-status { margin-top:1rem; padding:.75rem; border-radius:8px; font-size:.95rem; display:flex; align-items:center; gap:.75rem; }
+    .file-info { background:#e0f2fe; border:1px solid #93c5fd; color:#1d4ed8; display:none; }
+    .file-info.show { display:flex; }
+    .file-info .file-name { flex:1; font-weight:500; }
+    .ocr-status { background:#fefce8; border:1px solid #fde68a; color:#b45309; display:none; }
+    .ocr-status.show { display:flex; }
+    .ocr-status .spinner { width:20px; height:20px; border:3px solid #b45309; border-top:3px solid transparent; border-radius:50%; animation:spin 1s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg);} }
+    button:not(.icon-btn):not(#reset-btn), a.button { background:#3b82f6; color:#fff; border:none; border-radius:8px; padding:.85rem 1.8rem; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; text-decoration:none; font-weight:600; font-size:1rem; box-shadow:0 4px 8px rgba(59,130,246,0.2); transition:all .2s; margin-top:1.5rem; }
+    button:hover:not(.icon-btn):not(#reset-btn), a.button:hover { background:#2563eb; transform:translateY(-2px); box-shadow:0 6px 12px rgba(59,130,246,0.3); }
+    button:disabled, a.button:disabled { background:#93c5fd; cursor:not-allowed; transform:none; box-shadow:none; }
+    .btn-group { text-align:right; margin-top:1.5rem; display:flex; justify-content:flex-end; gap:.75rem; }
+    .btn-group button { background:#64748b; box-shadow:none; }
+    .btn-group button:hover { background:#475569; transform:translateY(-2px); }
+    .spinner { display:none; width:18px; height:18px; border:3px solid #fff; border-top:3px solid transparent; border-radius:50%; animation:spin 1s linear infinite; vertical-align:middle; margin-left:.8rem; }
+    #tts-spinner { border-color:#3b82f6; border-top-color:transparent; }
+    .box, .model-box { background:#f1f5f9; border:1px solid #e2e8f0; border-radius:10px; padding:1.5rem; margin-top:2rem; box-shadow:inset 0 1px 3px rgba(0,0,0,0.05); }
+    .box h2, .model-box h2 { margin:0 0 1rem; color:#1e3a8a; font-size:1.8rem; font-weight:600; }
+    .model-box { background:#fff; border:1px solid #d1d5db; font-size:1.1rem; line-height:1.8; }
+    /* 인라인 Print 옵션 */
+    .print-options-inline { margin-top:1.5rem; padding:1.25rem; background:#f0f9ff; border:1px solid #bfdbfe; border-radius:8px; display:flex; flex-wrap:wrap; gap:1rem; align-items:center; }
+    .print-options-inline label { display:flex; align-items:center; gap:.5rem; font-weight:500; color:#475569; cursor:pointer; }
+    .print-options-inline input[type="checkbox"] { transform:scale(1.2); cursor:pointer; }
+    .print-options-inline button { margin-left:auto; background:#10b981; }
+    .print-options-inline button:hover { background:#059669; }
+    /* 최종 코너 */
+    #final-section .audio-controls-area { margin-top:1.5rem; display:flex; flex-direction:column; gap:1rem; align-items:flex-start; width:100%; }
+    #final-section #tts-play-btn { width:fit-content; background-color:#6366f1; box-shadow:0 4px 8px rgba(99,102,241,0.2); }
+    #final-section #tts-play-btn:hover { background-color:#4f46e5; }
+    #final-section #tts-audio-final { width:100%; border-radius:8px; border:1px solid #a78bfa; background:#f5f3ff; box-shadow:0 2px 4px rgba(0,0,0,0.05); }
+    #final-section #tts-download-btn { color:#3b82f6; text-decoration:none; font-weight:500; margin-top:-.5rem; }
+    #final-section #tts-download-btn:hover { color:#2563eb; text-decoration:underline; }
+    #final-section .print-button-bottom { margin-top:2.5rem; text-align:center; width:100%; }
+    #final-section .print-button-bottom .button { width:fit-content; }
+    /* 컬러 코딩 피드백 */
+    .feedback-item { display:block; margin:.75rem 0; padding:.75rem; border-radius:4px; }
+    .feedback-grammar    { background:#ffe5e5; color:#b00000; }
+    .feedback-vocab      { background:#e5f0ff; color:#0044bb; }
+    .feedback-expression { background:#e5ffe5; color:#007700; }
+    .feedback-praise     { background:#fff5e5; color:#aa5500; }
+    @media print {
+      nav, button, a.button, #reset-btn, .action-icons, .btn-group, .print-options-inline, #tts-audio-final, #tts-download-btn { display:none!important; }
+      body { background:#fff; margin:0; padding:1rem; color:#000; font-family:serif; }
+      #container { box-shadow:none; border:none; padding:0; max-width:100%; }
+      h1, h2 { color:#000!important; text-align:left; }
+      .user-info { display:block!important; margin-bottom:1rem; }
+      .user-info input { border:none; padding:0; margin-bottom:.5rem; }
+      .input-area { border:1px dashed #ccc; background:#fff; padding:1rem; min-height:auto; }
+      .box, .model-box { background:#fff; border:1px solid #ccc; padding:1rem; margin-top:1rem; box-shadow:none; }
+    }
+  </style>
 </head>
-
 <body>
-    <div id="container">
-        <h1>✨ Writing Assistant ✨</h1>
-        <button id="reset-btn">Reset</button>
-
-        <nav>
-            <button id="tab-feedback" class="tab active">피드백 받기</button>
-            <button id="tab-final" class="tab">최종 결과물 생성</button>
-        </nav>
-
-        <section id="feedback-section" class="section active">
-            <form id="feedback-form">
-                <label for="contentText-feedback">❇️영작한 내용을 입력하거나 찍어서 업로드해 주세요.</label>
-                <div class="user-info">
-                    <input type="text" id="user-name-feedback" placeholder="이름" />
-                    <input type="text" id="user-school-feedback" placeholder="학교(학년)" />
-                </div>
-                <div class="action-icons">
-                    <button type="button" class="icon-btn" title="사진 촬영">📸
-                        <input type="file" id="contentFile-camera-feedback" accept="image/*" capture="environment" />
-                    </button>
-                    <button type="button" class="icon-btn" title="이미지 선택">🖼️
-                        <input type="file" id="contentFile-gallery-feedback" accept="image/*" />
-                    </button>
-                </div>
-                <textarea id="contentText-feedback" class="input-area" placeholder="여기에 텍스트를 입력하세요."></textarea>
-                <div class="file-info" id="file-info-feedback"><span class="file-name"></span></div>
-                <div class="ocr-status" id="ocr-status-feedback">
-                    <div class="spinner"></div><span>이미지에서 텍스트를 추출 중입니다...</span>
-                </div>
-                <button type="submit" id="submit-feedback-btn">피드백 받기 <span id="submit-spinner-feedback"
-                        class="spinner"></span></button>
-            </form>
-            <div id="feedback-result"></div>
-        </section>
-
-        <section id="final-section" class="section">
-            <form id="final-form">
-                <label for="contentText-final">❇️최종 결과물을 위해 텍스트를 입력하거나 찍어서 업로드해 주세요.</label>
-                <div class="user-info">
-                    <input type="text" id="user-name-final" placeholder="이름" />
-                    <input type="text" id="user-school-final" placeholder="학교" />
-                </div>
-                <div class="action-icons">
-                    <button type="button" class="icon-btn" title="사진 촬영">📸
-                        <input type="file" id="contentFile-camera-final" accept="image/*" capture="environment" />
-                    </button>
-                    <button type="button" class="icon-btn" title="이미지 선택">🖼️
-                        <input type="file" id="contentFile-gallery-final" accept="image/*" />
-                    </button>
-                </div>
-                <textarea id="contentText-final" class="input-area" placeholder="여기에 텍스트를 입력하세요."></textarea>
-                <div class="file-info" id="file-info-final"><span class="file-name"></span></div>
-                <div class="ocr-status" id="ocr-status-final">
-                    <div class="spinner"></div><span>이미지에서 텍스트를 추출 중입니다...</span>
-                </div>
-                <button type="submit" id="submit-final-btn">최종 결과 생성 <span id="submit-spinner-final"
-                        class="spinner"></span></button>
-            </form>
-            <div id="final-result"></div>
-        </section>
-    </div>
-
-    <script>
-        const WORKER_URL = 'https://writing-feedback-app.sehyunglee2015.workers.dev';
-        const PROXY_URL = WORKER_URL + '/proxy';
-        window.feedbackFileURL = '';
-        window.finalFileURL = '';
-
-        // Reset
-        document.getElementById('reset-btn').addEventListener('click', () => {
-            ['feedback', 'final'].forEach(sec => {
-                document.getElementById(`contentText-${sec}`).value = '';
-                document.getElementById(`file-info-${sec}`).classList.remove('show');
-                document.getElementById(`ocr-status-${sec}`).classList.remove('show');
-                document.getElementById(`contentText-${sec}`).classList.remove('has-image');
-                window[`${sec}FileURL`] = '';
-                document.getElementById(`${sec}-result`).innerHTML = '';
-                document.getElementById(`user-name-${sec}`).value = '';
-                document.getElementById(`user-school-${sec}`).value = '';
-            });
-        });
-
-        // Tab
-        document.getElementById('tab-feedback').addEventListener('click', () => {
-            document.getElementById('feedback-section').classList.add('active');
-            document.getElementById('tab-feedback').classList.add('active');
-            document.getElementById('final-section').classList.remove('active');
-            document.getElementById('tab-final').classList.remove('active');
-        });
-        document.getElementById('tab-final').addEventListener('click', () => {
-            document.getElementById('final-section').classList.add('active');
-            document.getElementById('tab-final').classList.add('active');
-            document.getElementById('feedback-section').classList.remove('active');
-            document.getElementById('tab-feedback').classList.remove('active');
-        });
-
-        // File upload & OCR
-        ['feedback', 'final'].forEach(section => {
-            ['camera', 'gallery'].forEach(src => {
-                document.getElementById(`contentFile-${src}-${section}`).addEventListener('change', e => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    const url = URL.createObjectURL(file);
-                    window[`${section}FileURL`] = url;
-                    const info = document.getElementById(`file-info-${section}`);
-                    info.querySelector('.file-name').textContent = file.name;
-                    info.classList.add('show');
-                    document.getElementById(`contentText-${section}`).classList.add('has-image');
-                    doOCR(file, section);
-                });
-            });
-        });
-        async function doOCR(file, section) {
-            const status = document.getElementById(`ocr-status-${section}`);
-            status.classList.add('show');
-            try {
-                const b64 = await new Promise((res, rej) => {
-                    const reader = new FileReader();
-                    reader.onload = () => res(reader.result.split(',')[1]);
-                    reader.onerror = rej;
-                    reader.readAsDataURL(file);
-                });
-                const resp = await fetch(PROXY_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        model: 'gpt-4o-mini',
-                        messages: [{
-                            role: 'user',
-                            content: [{
-                                type: 'text',
-                                text: '이미지에서 텍스트만 추출해줘. 추가 코멘트는 빼줘.'
-                            }, {
-                                type: 'image_url',
-                                image_url: { url: `data:${file.type};base64,${b64}` }
-                            }]
-                        }],
-                        max_tokens: 500
-                    })
-                });
-                const { choices } = await resp.json();
-                document.getElementById(`contentText-${section}`).value = (choices[0]?.message?.content || '').trim();
-            } catch (e) {
-                document.getElementById(`contentText-${section}`).value = 'OCR 오류: ' + e.message;
-            } finally {
-                status.classList.remove('show');
-            }
-        }
-
-        // Feedback submit
-        document.getElementById('feedback-form').addEventListener('submit', async e => {
-            e.preventDefault();
-            const contentText = document.getElementById('contentText-feedback').value.trim();
-            if (!contentText) {
-                 alert("영작한 내용을 입력하거나 이미지 업로드 후 실행해주세요!");
-                 return;
-            }
-            const btn = document.getElementById('submit-feedback-btn'),
-                  sp = document.getElementById('submit-spinner-feedback');
-            btn.disabled = true;
-            sp.style.display = 'inline-block';
-            try {
-                const res = await fetch(`${WORKER_URL}/api/feedback`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contentText })
-                });
-                const { feedback, modelAnswer } = await res.json();
-                const container = document.getElementById('feedback-result');
-                container.innerHTML = `
-  <p style="color:#FF0000;font-weight:600;text-align:left;">
-    📢AI는 실수를 할 수 있습니다. 꼭 생성된 내용을 확인 후 필요한 부분은 수정하셔서 이용해주세요~!
-  </p>
-  <div class="box" id="fb-box">
-    <h2>피드백</h2>
-    <div id="fb-content">${feedback.replace(/\n/g,'<br>')}</div>
+  <div id="container">
+    <h1>✨ Writing Assistant ✨</h1>
+    <button id="reset-btn">Reset</button>
+    <nav>
+      <button id="tab-feedback" class="tab active">피드백 코너</button>
+      <button id="tab-final" class="tab">최종 산출물 코너</button>
+    </nav>
+    <!-- 피드백 섹션 -->
+    <section id="feedback-section" class="section active">
+      <form id="feedback-form">
+        <label for="contentText-feedback">❇️영작한 내용을 입력하거나 찍어서 업로드해 주세요.</label>
+        <div class="user-info">
+          <input type="text" id="user-name-feedback" placeholder="이름" />
+          <input type="text" id="user-school-feedback" placeholder="학교(학년)" />
+        </div>
+        <div class="action-icons">
+          <button type="button" class="icon-btn">📸<input type="file" id="contentFile-camera-feedback" accept="image/*" capture/></button>
+          <button type="button" class="icon-btn">🖼️<input type="file" id="contentFile-gallery-feedback" accept="image/*"/></button>
+        </div>
+        <textarea id="contentText-feedback" class="input-area" placeholder="여기에 텍스트를 입력하세요."></textarea>
+        <div class="file-info" id="file-info-feedback"><span class="file-name"></span></div>
+        <div class="ocr-status" id="ocr-status-feedback"><div class="spinner"></div><span>텍스트 추출 중...</span></div>
+        <button type="submit" id="submit-feedback-btn">피드백 받기 <span id="submit-spinner-feedback" class="spinner"></span></button>
+      </form>
+      <div id="feedback-result"></div>
+    </section>
+    <!-- 최종 섹션 -->
+    <section id="final-section" class="section">
+      <form id="final-form">
+        <label for="contentText-final">❇️최종 결과물을 위해 텍스트를 입력하거나 찍어서 업로드해 주세요.</label>
+        <div class="user-info">
+          <input type="text" id="user-name-final" placeholder="이름" />
+          <input type="text" id="user-school-final" placeholder="학교" />
+        </div>
+        <div class="action-icons">
+          <button type="button" class="icon-btn">📸<input type="file" id="contentFile-camera-final" accept="image/*" capture/></button>
+          <button type="button" class="icon-btn">🖼️<input type="file" id="contentFile-gallery-final" accept="image/*"/></button>
+        </div>
+        <textarea id="contentText-final" class="input-area" placeholder="여기에 텍스트를 입력하세요."></textarea>
+        <div class="file-info" id="file-info-final"><span class="file-name"></span></div>
+        <div class="ocr-status" id="ocr-status-final"><div class="spinner"></div><span>텍스트 추출 중...</span></div>
+        <button type="submit" id="submit-final-btn">최종 결과 생성 <span id="submit-spinner-final" class="spinner"></span></button>
+      </form>
+      <div id="final-result"></div>
+    </section>
   </div>
-  <div class="box" id="fb-corr-box">
-    <h2>수정글</h2>
-    <div class="model-box" id="fb-corrected">${modelAnswer.replace(/\n/g,'<br>')}</div>
-  </div>
-  <button id="print-feedback-btn">인쇄</button>
-  <div class="print-options-inline" id="print-options-feedback" style="display:none;">
-      <label><input type="checkbox" id="print_orig_fb" checked> 원본</label>
-      <label><input type="checkbox" id="print_fb_fb" checked> 피드백</label>
-      <label><input type="checkbox" id="print_corr_fb" checked> 수정글</label>
-      <button id="confirm-print-feedback-btn">인쇄하기</button>
-  </div>
-`;
-
-                // Edit/Save 버튼 텍스트 변경 (피드백 및 수정글)
-                ['fb', 'fb-corrected'].forEach(id => {
-                    const content = document.getElementById(id === 'fb' ? 'fb-content' : 'fb-corrected');
-                    content.setAttribute('contenteditable', 'false');
-                    const edit = document.createElement('button');
-                    edit.textContent = 'Edit';
-                    const save = document.createElement('button');
-                    save.textContent = 'Save';
-                    save.style.display = 'none';
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'btn-group';
-                    wrapper.append(edit, save);
-                    document.getElementById(id === 'fb' ? 'fb-box' : 'fb-corr-box').append(wrapper);
-                    edit.addEventListener('click', () => {
-                        content.setAttribute('contenteditable', 'true');
-                        edit.style.display = 'none';
-                        save.style.display = 'inline-block';
-                    });
-                    save.addEventListener('click', () => {
-                        content.setAttribute('contenteditable', 'false');
-                        save.style.display = 'none';
-                        edit.style.display = 'inline-block';
-                    });
-                });
-                // Print inline
-                document.getElementById('print-feedback-btn').addEventListener('click', () => {
-                    document.getElementById('print-options-feedback').style.display = 'flex';
-                });
-                document.getElementById('confirm-print-feedback-btn').addEventListener('click', () => {
-                    const orig = document.getElementById('print_orig_fb').checked;
-                    const fbCheck = document.getElementById('print_fb_fb').checked;
-                    const corr = document.getElementById('print_corr_fb').checked;
-                    const name = document.getElementById('user-name-feedback').value;
-                    const school = document.getElementById('user-school-feedback').value;
-                    let html = `<!doctype html><html><head><meta charset="utf-8"/><title>인쇄</title><style>body{font-family:sans-serif;padding:2rem;}@media print{button{display:none}}</style></head><body>`;
-                    html += `<p>이름: ${name} &nbsp; 학교: ${school}</p>`;
-                    if (orig) {
-                        html += window.feedbackFileURL ?
-                            `<img src="${window.feedbackFileURL}" style="max-width:100%;"/>` :
-                            `<pre>${document.getElementById('contentText-feedback').value}</pre>`;
-                    }
-                    if (fbCheck) {
-                        html += '<h2>피드백</h2>' + document.getElementById('fb-content').outerHTML;
-                    }
-                    if (corr) {
-                        html += '<h2>수정글</h2>' + document.getElementById('fb-corrected').outerHTML;
-                    }
-                    html += `<script>window.print();window.onafterprint=()=>window.close();<\/script></body></html>`;
-                    const win = window.open();
-                    win.document.write(html);
-                    win.document.close();
-                    document.getElementById('print-options-feedback').style.display = 'none';
-                });
-            } catch (e) {
-                alert('피드백 요청 중 오류가 발생했습니다.');
-            } finally {
-                btn.disabled = false;
-                document.getElementById('submit-spinner-feedback').style.display = 'none';
-            }
-        });
-
-        // Final submit
-        document.getElementById('final-form').addEventListener('submit', async e => {
-            e.preventDefault();
-            const contentText = document.getElementById('contentText-final').value.trim();
-            if (!contentText) {
-                 alert("영작한 내용을 입력하거나 이미지 업로드 후 실행해주세요!");
-                 return;
-            }
-            const btn = document.getElementById('submit-final-btn'),
-          sp = document.getElementById('submit-spinner-final');
-    btn.disabled = true;
-    sp.style.display = 'inline-block';
-    try {
-        const res = await fetch(`${WORKER_URL}/api/feedback`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contentText })
-        });
-        const { feedback, modelAnswer } = await res.json();
-        const cont = document.getElementById('final-result');
-        cont.innerHTML = `
-  <p style="color:#b45309;font-weight:600;text-align:center;">
-    AI는 실수를 할 수 있습니다. 꼭 생성된 내용을 확인 후 필요한 부분은 수정하셔서 이용해주세요~!
-  </p>
-  <div class="box" id="fn-box">
-    <h2>수정글</h2>
-    <div class="model-box" id="fn-corrected">${modelAnswer.replace(/\n/g,'<br>')}</div>
-  </div>
-  <div class="btn-group" id="fn-edit-group"></div>
-  <div class="audio-controls-area">
-      <button id="tts-play-btn">원어민 음성 듣기</button><span id="tts-spinner" class="spinner"></span>
-      <audio id="tts-audio-final" controls style="display:none;"></audio>
-      <a id="tts-download-btn" style="display:none;">음원 다운로드</a>
-  </div>
-  <div class="print-button-bottom">
-      <a id="print-final-btn" class="button">인쇄</a>
-  </div>
-  <div class="print-options-inline" id="print-options-final" style="display:none;">
-      <label><input type="checkbox" id="print_orig_fn" checked> 원본</label>
-      <label><input type="checkbox" id="print_corr_fn" checked> 수정글</label>
-      <button id="confirm-print-final-btn">인쇄하기</button>
-  </div>
-`;
-
-                // Edit/Save 버튼 텍스트 변경 (최종 수정글)
-                const fnContent = document.getElementById('fn-corrected');
-                fnContent.setAttribute('contenteditable', 'false');
-                const editBtn = document.createElement('button');
-                editBtn.textContent = 'Edit';
-                const saveBtn = document.createElement('button');
-                saveBtn.textContent = 'Save';
-                saveBtn.style.display = 'none';
-                const wrapper = document.getElementById('fn-edit-group');
-                wrapper.append(editBtn, saveBtn);
-                editBtn.addEventListener('click', () => {
-                    fnContent.setAttribute('contenteditable', 'true');
-                    editBtn.style.display = 'none';
-                    saveBtn.style.display = 'inline-block';
-                });
-                saveBtn.addEventListener('click', () => {
-                    fnContent.setAttribute('contenteditable', 'false');
-                    saveBtn.style.display = 'none';
-                    editBtn.style.display = 'inline-block';
-                });
-                // TTS
-                const playBtn = document.getElementById('tts-play-btn'),
-                      spinner = document.getElementById('tts-spinner'),
-                      dl = document.getElementById('tts-download-btn'),
-                      audio = document.getElementById('tts-audio-final');
-
-                playBtn.addEventListener('click', async () => {
-                    playBtn.disabled = true;
-                    spinner.style.display = 'inline-block';
-                    try {
-                        const textFinal = document.getElementById('fn-corrected').innerText;
-                        const r = await fetch(`${WORKER_URL}/api/tts`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ text: textFinal })
-                        });
-                        const blob = await r.blob();
-                        const url = URL.createObjectURL(blob);
-                        audio.src = url;
-                        audio.style.display = 'block';
-                        // 자동 재생 제거 - 사용자가 재생 컨트롤로 직접 재생
-                        dl.style.display = 'inline-block';
-                        const userName = document.getElementById('user-name-final').value.trim() || 'writing';
-                        dl.href = url;
-                        dl.download = `${userName}.mp3`;
-                    } catch (e) {
-                        alert('TTS 에러: ' + e.message);
-                    } finally {
-                        playBtn.disabled = false;
-                        spinner.style.display = 'none';
-                    }
-                });
-                // Print inline final
-                document.getElementById('print-final-btn').addEventListener('click', () => {
-                    document.getElementById('print-options-final').style.display = 'flex';
-                });
-                document.getElementById('confirm-print-final-btn').addEventListener('click', () => {
-                    const orig = document.getElementById('print_orig_fn').checked;
-                    const corr = document.getElementById('print_corr_fn').checked;
-                    const name = document.getElementById('user-name-final').value;
-                    const school = document.getElementById('user-school-final').value;
-                    let html = `<!doctype html><html><head><meta charset="utf-8"/><title>인쇄</title><style>body{font-family:sans-serif;padding:2rem;}@media print{button{display:none}}</style></head><body>`;
-                    html += `<p>이름: ${name} &nbsp; 학교: ${school}</p>`;
-                    if (orig) {
-                        html += window.finalFileURL ?
-                            `<img src="${window.finalFileURL}" style="max-width:100%;"/>` :
-                            `<pre>${document.getElementById('contentText-final').value}</pre>`;
-                    }
-                    if (corr) {
-                        html += '<h2>수정글</h2>' + document.getElementById('fn-corrected').outerHTML;
-                    }
-                    html += `<script>window.print();window.onafterprint=()=>window.close();<\/script></body></html>`;
-                    const win = window.open();
-                    win.document.write(html);
-                    win.document.close();
-                    document.getElementById('print-options-final').style.display = 'none';
-                });
-
-            } catch (e) {
-                alert('최종 결과물 요청 중 오류가 발생했습니다.');
-            } finally {
-                btn.disabled = false;
-                document.getElementById('submit-spinner-final').style.display = 'none';
-            }
-        });
-    </script>
+  <script>
+    const WORKER_URL='https://writing-feedback-app.sehyunglee2015.workers.dev';
+    const PROXY_URL=WORKER_URL+'/proxy';
+    window.feedbackFileURL=''; window.finalFileURL='';
+    // 탭 전환
+    document.getElementById('tab-feedback').onclick=()=>{document.getElementById('feedback-section').classList.add('active');document.getElementById('tab-feedback').classList.add('active');document.getElementById('final-section').classList.remove('active');document.getElementById('tab-final').classList.remove('active');};
+    document.getElementById('tab-final').onclick=()=>{document.getElementById('final-section').classList.add('active');document.getElementById('tab-final').classList.add('active');document.getElementById('feedback-section').classList.remove('active');document.getElementById('tab-feedback').classList.remove('active');};
+    // Reset
+    document.getElementById('reset-btn').onclick=()=>{['feedback','final'].forEach(sec=>{document.getElementById(`contentText-${sec}`).value='';document.getElementById(`file-info-${sec}`).classList.remove('show');document.getElementById(`ocr-status-${sec}`).classList.remove('show');document.getElementById(`contentText-${sec}`).classList.remove('has-image');window[`${sec}FileURL`]='';document.getElementById(`${sec}-result`).innerHTML='';document.getElementById(`user-name-${sec}`).value='';document.getElementById(`user-school-${sec}`).value='';});};
+    // 파일 업로드 & OCR
+    ['feedback','final'].forEach(section=>{['camera','gallery'].forEach(src=>{document.getElementById(`contentFile-${src}-${section}`).addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;const url=URL.createObjectURL(file);window[`${section}FileURL`]=url;const info=document.getElementById(`file-info-${section}`);info.querySelector('.file-name').textContent=file.name;info.classList.add('show');document.getElementById(`contentText-${section}`).classList.add('has-image');await doOCR(file,section);} )});});
+    async function doOCR(file,section){const status=document.getElementById(`ocr-status-${section}`);status.classList.add('show');try{const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});const resp=await fetch(PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:[{type:'text',text:'이미지에서 텍스트만 추출해줘. 추가 코멘트는 빼줘.'},{type:'image_url',image_url:{url:`data:${file.type};base64,${b64}`}}]}],max_tokens:500})});const {choices}=await resp.json();document.getElementById(`contentText-${section}`).value=(choices[0]?.message?.content||'').trim()}catch(e){document.getElementById(`contentText-${section}`).value='OCR 오류: '+e.message;}finally{status.classList.remove('show');}}
+    // 카테고리 분류
+    function categorize(line){const key=line.split(':')[0].trim().toLowerCase();if(key.includes('문법')||key.includes('grammar'))return'grammar';if(key.includes('어휘')||key.includes('vocab'))return'vocab';if(key.includes('표현')||key.includes('expression'))return'expression';if(key.includes('잘')||key.includes('praise'))return'praise';return'grammar';}
+    // 피드백 제출
+    document.getElementById('feedback-form').addEventListener('submit',async e=>{e.preventDefault();const text=document.getElementById('contentText-feedback').value.trim();if(!text){alert('내용 입력 또는 이미지 업로드 후 실행!');return;}const btn=document.getElementById('submit-feedback-btn'),sp=document.getElementById('submit-spinner-feedback');btn.disabled=true;sp.style.display='inline-block';try{const res=await fetch(`${WORKER_URL}/api/feedback`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contentText:text})});const{feedback,modelAnswer}=await res.json();const container=document.getElementById('feedback-result');container.innerHTML=`<p style="color:#b00000;font-weight:600;">AI가 완벽하지 않을 수 있습니다. 결과를 검토 후 사용하세요.</p><div class="box" id="fb-box"><h2>피드백</h2></div><div class="box" id="fb-corr-box"><h2>수정글</h2><div class="model-box" id="fb-corrected">${modelAnswer.replace(/\n/g,'<br>')}</div></div><div class="btn-group" id="fb-btns"></div><button id="print-feedback-btn">인쇄</button><div class="print-options-inline" id="print-options-feedback"><label><input type="checkbox" id="print_orig_fb" checked> 원본</label><label><input type="checkbox" id="print_fb_fb" checked> 피드백</label><label><input type="checkbox" id="print_corr_fb" checked> 수정글</label><button id="confirm-print-feedback-btn">인쇄하기</button></div>`;
+        // 색깔코딩 피드백
+        const fbBox=document.getElementById('fb-box');feedback.split('\n').forEach(line=>{if(!line.trim())return;const div=document.createElement('div');div.className=`feedback-item feedback-${categorize(line)}`;div.textContent=line;fbBox.appendChild(div);} );
+        // Edit/Save 버튼
+        ['fb-content','fb-corrected'].forEach(id=>{const el=document.getElementById(id);el.setAttribute('contenteditable','false');const edit=document.createElement('button');edit.textContent='Edit';const save=document.createElement('button');save.textContent='Save';save.style.display='none';const wrap=document.getElementById(id==='fb-content'?'fb-btns':'fb-btns');wrap.append(edit,save);edit.onclick=()=>{el.setAttribute('contenteditable','true');edit.style.display='none';save.style.display='inline-block';};save.onclick=()=>{el.setAttribute('contenteditable','false');save.style.display='none';edit.style.display='inline-block';};});
+        // Print inline
+        document.getElementById('print-feedback-btn').onclick=()=>document.getElementById('print-options-feedback').style.display='flex';
+        document.getElementById('confirm-print-feedback-btn').onclick=()=>{const orig=document.getElementById('print_orig_fb').checked;const fbChk=document.getElementById('print_fb_fb').checked;const corr=document.getElementById('print_corr_fb').checked;const name=document.getElementById('user-name-feedback').value;const school=document.getElementById('user-school-feedback').value;let html=`<!doctype html><html><head><meta charset="utf-8"/><title>인쇄</title><style>body{font-family:sans-serif;padding:2rem}@media print{button{display:none}}</style></head><body>`;html+=`<p>이름:${name}&nbsp;학교:${school}</p>`;if(orig)html+=window.feedbackFileURL?`<img src="${window.feedbackFileURL}"/>`:`<pre>${document.getElementById('contentText-feedback').value}</pre>`;if(fbChk)html+=`<h2>피드백</h2>`+Array.from(fbBox.querySelectorAll('.feedback-item')).map(d=>d.outerHTML).join('');if(corr)html+=`<h2>수정글</h2>`+document.getElementById('fb-corrected').outerHTML;html+=`<script>window.print();window.onafterprint=()=>window.close();<\/script></body></html>`;const w=window.open();w.document.write(html);w.document.close();document.getElementById('print-options-feedback').style.display='none';};
+    }catch(e){alert('피드백 오류:'+e);}finally{btn.disabled=false;sp.style.display='none';}});
+    // 최종 생성
+    document.getElementById('final-form').addEventListener('submit',async e=>{e.preventDefault();const text=document.getElementById('contentText-final').value.trim();if(!text){alert('내용 입력 또는 이미지 업로드 후 실행!');return;}const btn=document.getElementById('submit-final-btn'),sp=document.getElementById('submit-spinner-final');btn.disabled=true;sp.style.display='inline-block';try{const res=await fetch(`${WORKER_URL}/api/feedback`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contentText:text})});const{modelAnswer}=await res.json();const cont=document.getElementById('final-result');cont.innerHTML=`<p style="color:#b45309;font-weight:600;text-align:center;">AI가 완벽하지 않을 수 있습니다. 생성 결과 확인 후 활용해주세요.</p><div class="box" id="fn-box"><h2>수정글</h2><div class="model-box" id="fn-corrected">${modelAnswer.replace(/\n/g,'<br>')}</div></div><div class="btn-group" id="fn-btns"></div><div class="audio-controls-area"><button id="tts-play-btn">원어민 음성 듣기</button><span id="tts-spinner" class="spinner"></span><audio id="tts-audio-final" controls style="display:none;"></audio><a id="tts-download-btn" style="display:none;">음원 다운로드</a></div><div class="print-button-bottom"><a id="print-final-btn" class="button">인쇄</a></div><div class="print-options-inline" id="print-options-final"><label><input type="checkbox" id="print_orig_fn" checked> 원본</label><label><input type="checkbox" id="print_corr_fn" checked> 수정글</label><button id="confirm-print-final-btn">인쇄하기</button></div>`;
+      // Edit/Save
+      const fnContent=document.getElementById('fn-corrected');fnContent.setAttribute('contenteditable','false');const edit=document.createElement('button');edit.textContent='Edit';const save=document.createElement('button');save.textContent='Save';save.style.display='none';document.getElementById('fn-btns').append(edit,save);edit.onclick=()=>{fnContent.setAttribute('contenteditable','true');edit.style.display='none';save.style.display='inline-block';};save.onclick=()=>{fnContent.setAttribute('contenteditable','false');save.style.display='none';edit.style.display='inline-block';};
+      // TTS
+      const play=document.getElementById('tts-play-btn'),spin=document.getElementById('tts-spinner'),dl=document.getElementById('tts-download-btn'),audioEl=document.getElementById('tts-audio-final');play.onclick=async()=>{play.disabled=true;spin.style.display='inline-block';try{const r=await fetch(`${WORKER_URL}/api/tts`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:fnContent.innerText})});const blob=await r.blob();const url=URL.createObjectURL(blob);audioEl.src=url;audioEl.style.display='block';dl.style.display='inline-block';dl.href=url;dl.download=`${document.getElementById('user-name-final').value||'tts'}.mp3`; }catch(e){alert('TTS 오류:'+e);}finally{play.disabled=false;spin.style.display='none';}};
+      // Print final
+      document.getElementById('print-final-btn').onclick=()=>document.getElementById('print-options-final').style.display='flex';
+      document.getElementById('confirm-print-final-btn').onclick=()=>{const orig=document.getElementById('print_orig_fn').checked;const corr=document.getElementById('print_corr_fn').checked;const name=document.getElementById('user-name-final').value;const school=document.getElementById('user-school-final').value;let html=`<!doctype html><html><head><meta charset="utf-8"/><title>인쇄</title><style>body{font-family:sans-serif;padding:2rem}@media print{button{display:none}}</style></head><body>`;html+=`<p>이름:${name}&nbsp;학교:${school}</p>`;if(orig)html+=window.finalFileURL?`<img src="${window.finalFileURL}"/>`:`<pre>${document.getElementById('contentText-final').value}</pre>`;if(corr)html+=`<h2>수정글</h2>`+document.getElementById('fn-corrected').outerHTML;html+=`<script>window.print();window.onafterprint=()=>window.close();<\/script></body></html>`;const w=window.open();w.document.write(html);w.document.close();document.getElementById('print-options-final').style.display='none';};
+    }catch(e){alert('최종 오류:'+e);}finally{btn.disabled=false;sp.style.display='none';}});
+  </script>
 </body>
-
 </html>
