@@ -8,11 +8,15 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <style>
         /* --- 기본 스타일 및 레이아웃 --- */
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
             background-color: #f8fafc;
             margin: 0;
-            padding: 2.5rem;
+            padding: 1rem;
             display: flex;
             justify-content: center;
             align-items: flex-start;
@@ -27,68 +31,106 @@
             background-color: #ffffff;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            padding: 2.5rem;
+            padding: 1.5rem;
             position: relative;
             border: 1px solid #e2e8f0;
         }
 
-        /* 헤더 섹션 */
-        .header-section {
-            text-align: center;
-            margin-bottom: 2rem;
-            position: relative;
+        /* 모바일 최적화 */
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+            
+            #container {
+                padding: 1rem;
+                border-radius: 8px;
+                margin: 0;
+            }
         }
 
-        .header-section h1 {
+        h1 {
+            text-align: center;
             color: #1e3a8a;
-            margin-bottom: 0.5rem;
-            font-size: 2.25rem;
+            margin-bottom: 2rem;
+            font-size: 1.8rem;
             font-weight: 700;
         }
 
-        /* Reset 버튼 우측 정렬 */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        /* --- Reset 버튼 --- */
         #reset-btn {
             position: absolute;
-            top: 0;
-            right: 0;
+            top: 1rem;
+            right: 1rem;
             background-color: #ef4444;
             color: #ffffff;
             border: none;
             border-radius: 6px;
-            padding: 0.6rem 1.2rem;
+            padding: 0.5rem 1rem;
             cursor: pointer;
             transition: background-color 0.2s ease-in-out;
             font-weight: 500;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            #reset-btn {
+                top: 0.5rem;
+                right: 0.5rem;
+                padding: 0.4rem 0.8rem;
+                font-size: 0.75rem;
+            }
         }
 
         #reset-btn:hover {
             background-color: #dc2626;
         }
 
-        /* --- 탭 스타일 강화 --- */
+        /* --- 탭 --- */
         nav {
             text-align: center;
             margin-bottom: 2rem;
             display: flex;
             justify-content: center;
-            gap: 1.5rem;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                gap: 0.5rem;
+                margin-bottom: 1.5rem;
+            }
         }
 
         .tab {
             background-color: #e0e7ff;
             color: #3b82f6;
             border: 2px solid transparent;
-            padding: 0.8rem 1.8rem;
+            padding: 0.7rem 1.5rem;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.9rem;
             transition: all 0.3s ease-in-out;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             position: relative;
             overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            .tab {
+                padding: 0.6rem 1rem;
+                font-size: 0.8rem;
+                flex: 1;
+            }
         }
 
         .tab.active {
@@ -100,6 +142,14 @@
             font-weight: 700;
         }
 
+        .tab:hover:not(.active) {
+            background-color: #bfdbfe;
+            color: #1e40af;
+            border-color: #93c5fd;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+        }
+
         .tab.active::after {
             content: "";
             position: absolute;
@@ -109,14 +159,6 @@
             height: 4px;
             background-color: #ffffff;
             border-radius: 2px 2px 0 0;
-        }
-
-        .tab:hover:not(.active) {
-            background-color: #bfdbfe;
-            color: #1e40af;
-            border-color: #93c5fd;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
         }
 
         .section {
@@ -133,12 +175,19 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* --- 사용자 정보 입력 --- */
+        /* --- 사용자 정보 입력 반응형 --- */
         .user-info {
             display: flex;
             gap: 1rem;
             margin-top: 1rem;
             margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .user-info {
+                flex-direction: column;
+                gap: 0.8rem;
+            }
         }
 
         .user-info input {
@@ -151,6 +200,13 @@
             transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         }
 
+        @media (max-width: 768px) {
+            .user-info input {
+                padding: 0.6rem;
+                font-size: 0.9rem;
+            }
+        }
+
         .user-info input:focus {
             outline: none;
             border-color: #3b82f6;
@@ -160,8 +216,8 @@
         /* --- 입력 영역 --- */
         .input-area {
             width: 100%;
-            min-height: 180px;
-            padding: 1.25rem;
+            min-height: 150px;
+            padding: 1rem;
             border: 2px solid #cbd5e1;
             border-radius: 10px;
             background-color: #f8fafc;
@@ -169,9 +225,17 @@
             transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
             box-sizing: border-box;
             font-family: inherit;
-            font-size: 1.05rem;
+            font-size: 1rem;
             line-height: 1.7;
             color: #334155;
+        }
+
+        @media (max-width: 768px) {
+            .input-area {
+                min-height: 120px;
+                padding: 0.8rem;
+                font-size: 0.9rem;
+            }
         }
 
         .input-area:focus {
@@ -185,13 +249,19 @@
             border-color: #2563eb;
         }
 
-        /* --- 아이콘 버튼 컨테이너 --- */
+        /* --- 아이콘 버튼 개선 --- */
         .action-icons {
             display: flex;
             justify-content: flex-end;
             gap: 1rem;
             margin-bottom: 1rem;
-            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .action-icons {
+                justify-content: center;
+                gap: 2rem;
+            }
         }
 
         .icon-btn-container {
@@ -218,6 +288,14 @@
             color: #64748b;
         }
 
+        @media (max-width: 768px) {
+            .icon-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 1.8rem;
+            }
+        }
+
         .icon-btn:hover {
             background-color: #f1f5f9;
             transform: translateY(-2px);
@@ -235,11 +313,16 @@
         }
 
         .icon-btn-label {
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             color: #64748b;
             font-weight: 500;
             text-align: center;
-            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            .icon-btn-label {
+                font-size: 0.75rem;
+            }
         }
 
         /* --- 파일 정보 & OCR 상태 --- */
@@ -248,10 +331,18 @@
             margin-top: 1rem;
             padding: 0.75rem;
             border-radius: 8px;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
             gap: 0.75rem;
+        }
+
+        @media (max-width: 768px) {
+            .file-info,
+            .ocr-status {
+                font-size: 0.8rem;
+                padding: 0.6rem;
+            }
         }
 
         .file-info {
@@ -268,6 +359,7 @@
         .file-info .file-name {
             flex: 1;
             font-weight: 500;
+            word-break: break-all;
         }
 
         .ocr-status {
@@ -303,7 +395,7 @@
             color: #ffffff;
             border: none;
             border-radius: 8px;
-            padding: 0.85rem 1.8rem;
+            padding: 0.8rem 1.5rem;
             cursor: pointer;
             transition: all 0.2s ease-in-out;
             margin-top: 1.5rem;
@@ -314,6 +406,15 @@
             font-weight: 600;
             font-size: 1rem;
             box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            button:not(.icon-btn):not(#reset-btn),
+            a.button {
+                padding: 0.7rem 1.2rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
         }
 
         button:hover:not(.icon-btn):not(#reset-btn),
@@ -339,6 +440,13 @@
             gap: 0.75rem;
         }
 
+        @media (max-width: 768px) {
+            .btn-group {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+        }
+
         .btn-group button {
             margin-top: 0;
             background-color: #64748b;
@@ -350,7 +458,7 @@
             transform: translateY(-2px);
         }
 
-        /* --- 스피너 --- */
+        /* --- 스피너 (TTS) --- */
         .spinner {
             display: none;
             width: 18px;
@@ -368,20 +476,68 @@
             border-top-color: transparent;
         }
 
-        /* --- 피드백 카테고리 스타일 --- */
-        .feedback-container {
-            margin-top: 1rem;
+        /* --- 결과 박스 --- */
+        .box,
+        .model-box {
+            background-color: #f1f5f9;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
+        @media (max-width: 768px) {
+            .box,
+            .model-box {
+                padding: 1rem;
+                margin-top: 1.5rem;
+            }
+        }
+
+        .box h2,
+        .model-box h2 {
+            margin: 0 0 1rem;
+            color: #1e3a8a;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .box h2,
+            .model-box h2 {
+                font-size: 1.3rem;
+            }
+        }
+
+        .model-box {
+            background-color: #ffffff;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            border: 1px solid #d1d5db;
+        }
+
+        @media (max-width: 768px) {
+            .model-box {
+                font-size: 1rem;
+            }
+        }
+
+        /* --- 피드백 카테고리 스타일 --- */
         .feedback-category {
             padding: 15px;
             margin-bottom: 15px;
             border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
             position: relative;
             transition: all 0.3s ease;
-            border-left-width: 5px;
-            border-left-style: solid;
+        }
+
+        @media (max-width: 768px) {
+            .feedback-category {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
         }
 
         .feedback-category:hover {
@@ -394,13 +550,19 @@
             align-items: center;
             font-size: 1.2rem;
             margin-top: 0;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             color: #2d3748;
         }
 
+        @media (max-width: 768px) {
+            .feedback-category h3 {
+                font-size: 1.1rem;
+            }
+        }
+
         .feedback-category h3 i {
-            margin-right: 10px;
-            font-size: 1.4rem;
+            margin-right: 8px;
+            font-size: 1.2rem;
         }
 
         /* 총평 스타일 */
@@ -413,13 +575,26 @@
             box-shadow: 0 3px 8px rgba(0,0,0,0.1);
         }
 
+        @media (max-width: 768px) {
+            .overview-category {
+                padding: 12px;
+                margin-bottom: 15px;
+            }
+        }
+
         .overview-category h3 {
             display: flex;
             align-items: center;
             color: #5b21b6;
             font-size: 1.3rem;
             margin-top: 0;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .overview-category h3 {
+                font-size: 1.15rem;
+            }
         }
 
         .overview-category h3 i {
@@ -429,22 +604,22 @@
         /* 피드백 카테고리별 색상 */
         .grammar {
             background-color: #fdeded;
-            border-left-color: #e74c3c;
+            border-left: 5px solid #e74c3c;
         }
 
         .vocabulary {
             background-color: #ebf5fb;
-            border-left-color: #3498db;
+            border-left: 5px solid #3498db;
         }
 
         .expression {
             background-color: #f4ecf7;
-            border-left-color: #9b59b6;
+            border-left: 5px solid #9b59b6;
         }
 
         .strengths {
             background-color: #ebfaf0;
-            border-left-color: #2ecc71;
+            border-left: 5px solid #2ecc71;
         }
 
         /* 원문 인용 스타일 */
@@ -458,6 +633,13 @@
             border-radius: 4px;
         }
 
+        @media (max-width: 768px) {
+            .original-text {
+                padding: 8px 12px;
+                font-size: 0.9rem;
+            }
+        }
+
         .original-text::before {
             content: '원문';
             display: block;
@@ -468,7 +650,7 @@
             color: #64748b;
         }
 
-        /* --- 수정글 섹션 스타일 --- */
+        /* 수정글 섹션 스타일 */
         .corrected-section {
             background-color: #ecfdf5;
             border-left: 5px solid #10b981;
@@ -478,6 +660,13 @@
             box-shadow: 0 3px 8px rgba(0,0,0,0.1);
         }
 
+        @media (max-width: 768px) {
+            .corrected-section {
+                padding: 12px;
+                margin-top: 20px;
+            }
+        }
+
         .corrected-section h3 {
             display: flex;
             align-items: center;
@@ -485,6 +674,12 @@
             font-size: 1.3rem;
             margin-top: 0;
             margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .corrected-section h3 {
+                font-size: 1.15rem;
+            }
         }
 
         .corrected-section h3 i {
@@ -502,30 +697,11 @@
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
         }
 
-        /* --- 결과 박스 --- */
-        .box,
-        .model-box {
-            background-color: #f1f5f9;
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-top: 2rem;
-            border: 1px solid #e2e8f0;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-
-        .box h2,
-        .model-box h2 {
-            margin: 0 0 1rem;
-            color: #1e3a8a;
-            font-size: 1.8rem;
-            font-weight: 600;
-        }
-
-        .model-box {
-            background-color: #ffffff;
-            font-size: 1.1rem;
-            line-height: 1.8;
-            border: 1px solid #d1d5db;
+        @media (max-width: 768px) {
+            .corrected-content {
+                padding: 15px;
+                font-size: 1rem;
+            }
         }
 
         /* --- 인라인 Print 옵션 --- */
@@ -541,6 +717,14 @@
             align-items: center;
         }
 
+        @media (max-width: 768px) {
+            .print-options-inline {
+                padding: 1rem;
+                gap: 0.8rem;
+                justify-content: center;
+            }
+        }
+
         .print-options-inline label {
             display: flex;
             align-items: center;
@@ -548,6 +732,12 @@
             font-weight: 500;
             color: #475569;
             cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .print-options-inline label {
+                font-size: 0.9rem;
+            }
         }
 
         .print-options-inline input[type="checkbox"] {
@@ -561,11 +751,26 @@
             background-color: #10b981;
         }
 
+        @media (max-width: 768px) {
+            .print-options-inline button {
+                margin-left: 0;
+                margin-top: 0.5rem;
+                width: 100%;
+            }
+        }
+
         .print-options-inline button:hover {
             background-color: #059669;
         }
 
         /* --- 최종 산출물 코너 특정 스타일 --- */
+        #final-section .button-area {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-top: 1.5rem;
+        }
+
         #final-section .audio-controls-area {
             margin-top: 1.5rem;
             display: flex;
@@ -575,11 +780,24 @@
             width: 100%;
         }
 
+        @media (max-width: 768px) {
+            #final-section .audio-controls-area {
+                align-items: center;
+                text-align: center;
+            }
+        }
+
         #final-section #tts-play-btn {
             width: fit-content;
             margin-top: 0;
             box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2);
             background-color: #6366f1;
+        }
+
+        @media (max-width: 768px) {
+            #final-section #tts-play-btn {
+                width: 100%;
+            }
         }
 
         #final-section #tts-play-btn:hover {
@@ -615,246 +833,187 @@
             text-align: left;
             width: 100%;
         }
+
+        @media (max-width: 768px) {
+            #final-section .print-button-bottom {
+                text-align: center;
+            }
+        }
         
         #final-section .print-button-bottom .button {
             width: fit-content;
         }
 
-        /* --- 모바일 반응형 디자인 --- */
         @media (max-width: 768px) {
-            body {
-                padding: 1rem;
-            }
-            
-            #container {
-                padding: 1.5rem;
-                margin: 0;
-                max-width: 100%;
-                box-shadow: none;
-                border-radius: 8px;
-            }
-            
-            .header-section h1 {
-                font-size: 1.6rem;
-                margin-bottom: 0.3rem;
-                line-height: 1.3;
-                padding-right: 80px;
-            }
-
-            #reset-btn {
-                position: absolute;
-                top: 10px;
-                right: 0;
-                padding: 0.7rem 1rem;
-                font-size: 0.85rem;
-            }
-            
-            .user-info {
-                flex-direction: column;
-                gap: 0.75rem;
-                margin-bottom: 1rem;
-            }
-            
-            .user-info input {
+            #final-section .print-button-bottom .button {
                 width: 100%;
-                padding: 0.8rem;
-                font-size: 1rem;
-                border-radius: 6px;
-            }
-            
-            nav {
-                flex-direction: column;
-                gap: 0.5rem;
-                margin-bottom: 1.5rem;
-            }
-            
-            .tab {
-                padding: 0.7rem 1.2rem;
-                font-size: 0.9rem;
-                width: 100%;
-                text-align: center;
-            }
-            
-            .input-area {
-                min-height: 150px;
-                padding: 1rem;
-                font-size: 1rem;
-            }
-            
-            .action-icons {
-                justify-content: center;
-                gap: 1rem;
-                flex-wrap: wrap;
-            }
-            
-            .icon-btn-container {
-                gap: 0.3rem;
-            }
-            
-            .icon-btn {
-                width: 60px;
-                height: 60px;
-                font-size: 1.8rem;
-            }
-            
-            .icon-btn-label {
-                font-size: 0.8rem;
-            }
-            
-            button:not(.icon-btn):not(#reset-btn),
-            a.button {
-                padding: 0.9rem 1.5rem;
-                font-size: 1rem;
-                width: 100%;
-                margin-top: 1rem;
-            }
-            
-            .feedback-category,
-            .overview-category {
-                padding: 12px;
-                margin-bottom: 12px;
-            }
-            
-            .feedback-category h3,
-            .overview-category h3 {
-                font-size: 1.1rem;
-            }
-            
-            .print-options-inline {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 0.75rem;
-            }
-            
-            .print-options-inline button {
-                width: 100%;
-                margin-left: 0;
-                margin-top: 0.5rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            body {
-                padding: 0.5rem;
-            }
-            
-            #container {
-                padding: 1rem;
-            }
-            
-            .header-section h1 {
-                font-size: 1.4rem;
-                padding-right: 70px;
-            }
-
-            #reset-btn {
-                padding: 0.6rem 0.8rem;
-                font-size: 0.8rem;
-            }
-            
-            .tab {
-                padding: 0.6rem 1rem;
-                font-size: 0.85rem;
-            }
-            
-            .input-area {
-                min-height: 120px;
-                padding: 0.75rem;
             }
         }
 
         /* 인쇄 시 스타일 */
         @media print {
-            @page {
+            nav, button, a.button, #reset-btn, .action-icons, .btn-group,
+            .print-options-inline, #tts-audio-final + #tts-download-btn {
+                display: none !important;
+            }
+
+            body {
+                background-color: #ffffff;
                 margin: 0;
+                padding: 0;
+                color: #000000;
+                font-family: 'Segoe UI', sans-serif;
+            }
+
+            @page {
+                margin: 120px 20px 80px 20px;
                 size: A4;
             }
-            
-            body {
+
+            #container {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+                max-width: 100%;
                 margin: 0;
-                padding: 20px;
-                font-family: 'Segoe UI', sans-serif;
-                background: white;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
             }
-            
+
+            /* 머리글 스타일 */
             .print-header {
-                display: flex !important;
-                align-items: center;
-                padding: 15px 0;
-                border-bottom: 2px solid #1e3a8a;
-                margin-bottom: 20px;
-                page-break-inside: avoid;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 80px;
+                padding: 15px 20px;
+                border-bottom: 2px solid #e5e7eb;
+                background-color: #ffffff;
+                z-index: 1000;
             }
-            
+
             .print-header .logo {
+                float: left;
                 height: 50px;
-                margin-right: 15px;
-                flex-shrink: 0;
+                width: auto;
             }
-            
+
             .print-header .title {
+                text-align: center;
+                margin: 0;
+                line-height: 50px;
                 font-size: 18px;
                 font-weight: bold;
                 color: #1e3a8a;
-                margin: 0;
+                clear: none;
             }
-            
-            nav, button, a.button, #reset-btn, .action-icons, .btn-group,
-            .print-options-inline, input[type="checkbox"], label {
-                display: none !important;
+
+            /* 바닥글 스타일 */
+            .print-footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                padding: 15px 20px;
+                border-top: 2px solid #e5e7eb;
+                background-color: #ffffff;
+                font-size: 12px;
+                z-index: 1000;
             }
-            
-            .feedback-category, .overview-category, .corrected-section {
+
+            .print-footer .message {
+                float: left;
+                color: #16a34a;
+                font-style: italic;
+                font-weight: 600;
+                max-width: 60%;
+            }
+
+            .print-footer .brand {
+                float: right;
+                color: #1e3a8a;
+                font-weight: bold;
+            }
+
+            /* 메인 콘텐츠 영역 */
+            .print-content {
+                margin-top: 20px;
+                margin-bottom: 20px;
                 page-break-inside: avoid;
-                margin-bottom: 15px;
+            }
+
+            h1, h2 {
+                color: #000000 !important;
+                text-align: left;
+                page-break-after: avoid;
+            }
+
+            .box, .model-box, .feedback-category, .overview-category, .corrected-section {
+                background-color: #ffffff;
+                border: 1px solid #cccccc;
+                padding: 15px;
+                margin: 15px 0;
+                box-shadow: none;
+                page-break-inside: avoid;
                 border-left-width: 5px !important;
                 border-left-style: solid !important;
             }
-            
+
             .overview-category { border-left-color: #8b5cf6 !important; }
             .grammar { border-left-color: #e74c3c !important; }
             .vocabulary { border-left-color: #3498db !important; }
             .expression { border-left-color: #9b59b6 !important; }
             .strengths { border-left-color: #2ecc71 !important; }
             .corrected-section { border-left-color: #10b981 !important; }
-            
+
+            .user-info {
+                display: block;
+                margin-bottom: 1rem;
+            }
+
+            .user-info input {
+                border: none;
+                padding: 0;
+                margin-bottom: 0.5rem;
+                background: transparent;
+            }
+
+            .input-area {
+                border: 1px dashed #cccccc;
+                background-color: #ffffff;
+                padding: 15px;
+                min-height: auto;
+            }
+
             .original-text {
                 background-color: #f8fafc !important;
                 border-left: 3px solid #94a3b8 !important;
                 padding: 10px !important;
                 margin: 10px 0 !important;
                 font-style: italic !important;
+                page-break-inside: avoid;
             }
-            
-            h1, h2, h3 {
+
+            .feedback-category h3, .overview-category h3, .corrected-section h3 {
+                font-weight: bold !important;
+                margin-top: 0 !important;
+                margin-bottom: 10px !important;
                 page-break-after: avoid;
-                color: #1e3a8a !important;
             }
-            
-            img {
+
+            .uploaded-image {
                 max-width: 100% !important;
                 height: auto !important;
                 page-break-inside: avoid;
                 margin: 10px 0;
-                border: 1px solid #ddd;
-                border-radius: 8px;
             }
-        }
-
-        .print-header {
-            display: none;
         }
     </style>
 </head>
 
 <body>
     <div id="container">
-        <div class="header-section">
-            <h1>✨ 윤선생 리얼스피치 Writing Assistant ✨</h1>
-            <button id="reset-btn">Reset</button>
-        </div>
+        <h1>✨ 윤선생 리얼스피치 Writing Assistant ✨</h1>
+        <button id="reset-btn">Reset</button>
 
         <nav>
             <button id="tab-feedback" class="tab active">피드백 받기</button>
@@ -870,13 +1029,15 @@
                 </div>
                 <div class="action-icons">
                     <div class="icon-btn-container">
-                        <button type="button" class="icon-btn" title="사진 촬영">📸
+                        <button type="button" class="icon-btn" title="사진 촬영">
+                            <i class="fas fa-camera"></i>
                             <input type="file" id="contentFile-camera-feedback" accept="image/*" capture="environment" />
                         </button>
                         <span class="icon-btn-label">사진 촬영</span>
                     </div>
                     <div class="icon-btn-container">
-                        <button type="button" class="icon-btn" title="이미지 선택">🖼️
+                        <button type="button" class="icon-btn" title="이미지 업로드">
+                            <i class="fas fa-image"></i>
                             <input type="file" id="contentFile-gallery-feedback" accept="image/*" />
                         </button>
                         <span class="icon-btn-label">이미지 업로드</span>
@@ -902,13 +1063,15 @@
                 </div>
                 <div class="action-icons">
                     <div class="icon-btn-container">
-                        <button type="button" class="icon-btn" title="사진 촬영">📸
+                        <button type="button" class="icon-btn" title="사진 촬영">
+                            <i class="fas fa-camera"></i>
                             <input type="file" id="contentFile-camera-final" accept="image/*" capture="environment" />
                         </button>
                         <span class="icon-btn-label">사진 촬영</span>
                     </div>
                     <div class="icon-btn-container">
-                        <button type="button" class="icon-btn" title="이미지 선택">🖼️
+                        <button type="button" class="icon-btn" title="이미지 업로드">
+                            <i class="fas fa-image"></i>
                             <input type="file" id="contentFile-gallery-final" accept="image/*" />
                         </button>
                         <span class="icon-btn-label">이미지 업로드</span>
@@ -931,6 +1094,216 @@
         const PROXY_URL = WORKER_URL + '/proxy';
         window.feedbackFileURL = '';
         window.finalFileURL = '';
+
+        // 이미지 자동회전 함수
+        function getOrientation(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const view = new DataView(e.target.result);
+                if (view.getUint16(0, false) != 0xFFD8) {
+                    return callback(-2);
+                }
+                const length = view.byteLength;
+                let offset = 2;
+                while (offset < length) {
+                    if (view.getUint16(offset+2, false) <= 8) return callback(-1);
+                    const marker = view.getUint16(offset, false);
+                    offset += 2;
+                    if (marker == 0xFFE1) {
+                        if (view.getUint32(offset += 2, false) != 0x45786966) {
+                            return callback(-1);
+                        }
+                        const little = view.getUint16(offset += 6, false) == 0x4949;
+                        offset += view.getUint32(offset + 4, little);
+                        const tags = view.getUint16(offset, little);
+                        offset += 2;
+                        for (let i = 0; i < tags; i++) {
+                            if (view.getUint16(offset + (i * 12), little) == 0x0112) {
+                                return callback(view.getUint16(offset + (i * 12) + 8, little));
+                            }
+                        }
+                    } else if ((marker & 0xFF00) != 0xFF00) {
+                        break;
+                    } else {
+                        offset += view.getUint16(offset, false);
+                    }
+                }
+                return callback(-1);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function resetOrientation(srcBase64, srcOrientation, callback) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // 회전에 따른 캔버스 크기 설정
+                if (4 < srcOrientation && srcOrientation < 9) {
+                    canvas.width = img.height;
+                    canvas.height = img.width;
+                } else {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                }
+
+                // 회전 변환
+                switch (srcOrientation) {
+                    case 2: ctx.transform(-1, 0, 0, 1, img.width, 0); break;
+                    case 3: ctx.transform(-1, 0, 0, -1, img.width, img.height); break;
+                    case 4: ctx.transform(1, 0, 0, -1, 0, img.height); break;
+                    case 5: ctx.transform(0, 1, 1, 0, 0, 0); break;
+                    case 6: ctx.transform(0, 1, -1, 0, img.height, 0); break;
+                    case 7: ctx.transform(0, -1, -1, 0, img.height, img.width); break;
+                    case 8: ctx.transform(0, -1, 1, 0, 0, img.width); break;
+                    default: break;
+                }
+
+                ctx.drawImage(img, 0, 0);
+                canvas.toBlob(callback, 'image/jpeg', 0.9);
+            };
+            img.src = srcBase64;
+        }
+
+        // 피드백 텍스트 정리 함수
+        function cleanFeedbackText(text) {
+            // 숫자만 있는 줄 제거
+            text = text.replace(/^\s*\d+\.?\s*$/gm, '');
+            // 연속된 공백 줄 하나로 줄이기
+            text = text.replace(/\n\s*\n\s*\n+/g, '\n\n');
+            // 문장 앞의 불필요한 번호 패턴 제거
+            text = text.replace(/^\s*\d+[\.\)]\s*/gm, '');
+            return text.trim();
+        }
+
+        // 피드백 내용 처리 함수
+        function processFeedback(feedback, originalText) {
+            const originalLines = originalText.trim().split(/\n+/);
+            
+            const overviewPattern = /(?:총평|전체\s*평가|종합\s*평가)\s*:[\s\S]*?(?=(?:문법\s*오류|어휘\s*개선|표현\s*향상|잘한\s*점)\s*:|$)/i;
+            const grammarPattern = /문법\s*오류\s*:[\s\S]*?(?=(?:총평|전체\s*평가|종합\s*평가|어휘\s*개선|표현\s*향상|잘한\s*점)\s*:|$)/i;
+            const vocabPattern = /어휘\s*개선\s*:[\s\S]*?(?=(?:총평|전체\s*평가|종합\s*평가|문법\s*오류|표현\s*향상|잘한\s*점)\s*:|$)/i;
+            const expressionPattern = /표현\s*향상\s*:[\s\S]*?(?=(?:총평|전체\s*평가|종합\s*평가|문법\s*오류|어휘\s*개선|잘한\s*점)\s*:|$)/i;
+            const strengthsPattern = /잘한\s*점\s*:[\s\S]*?(?=(?:총평|전체\s*평가|종합\s*평가|문법\s*오류|어휘\s*개선|표현\s*향상)\s*:|$)/i;
+            
+            let html = '<div class="feedback-container">';
+            
+            const overview = feedback.match(overviewPattern);
+            if (overview && overview[0].trim().length > 0) {
+                const overviewContent = cleanFeedbackText(overview[0].replace(/(?:총평|전체\s*평가|종합\s*평가)\s*:/i, '').trim());
+                if (overviewContent) {
+                    html += `
+                        <div class="overview-category">
+                            <h3><i class="fas fa-star"></i> 총평</h3>
+                            <div>${overviewContent.replace(/\n/g, '<br>')}</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            const grammar = feedback.match(grammarPattern);
+            if (grammar && grammar[0].trim().length > 0) {
+                const grammarContent = cleanFeedbackText(grammar[0].replace(/문법\s*오류\s*:/i, '').trim());
+                if (grammarContent) {
+                    const grammarPoints = extractFeedbackPoints(grammarContent, originalLines);
+                    html += `
+                        <div class="feedback-category grammar">
+                            <h3><i class="fas fa-exclamation-circle"></i> 문법 오류</h3>
+                            ${grammarPoints}
+                        </div>
+                    `;
+                }
+            }
+            
+            const vocab = feedback.match(vocabPattern);
+            if (vocab && vocab[0].trim().length > 0) {
+                const vocabContent = cleanFeedbackText(vocab[0].replace(/어휘\s*개선\s*:/i, '').trim());
+                if (vocabContent) {
+                    const vocabPoints = extractFeedbackPoints(vocabContent, originalLines);
+                    html += `
+                        <div class="feedback-category vocabulary">
+                            <h3><i class="fas fa-book"></i> 어휘 개선</h3>
+                            ${vocabPoints}
+                        </div>
+                    `;
+                }
+            }
+            
+            const expression = feedback.match(expressionPattern);
+            if (expression && expression[0].trim().length > 0) {
+                const expressionContent = cleanFeedbackText(expression[0].replace(/표현\s*향상\s*:/i, '').trim());
+                if (expressionContent) {
+                    const expressionPoints = extractFeedbackPoints(expressionContent, originalLines);
+                    html += `
+                        <div class="feedback-category expression">
+                            <h3><i class="fas fa-pencil-alt"></i> 표현 향상</h3>
+                            ${expressionPoints}
+                        </div>
+                    `;
+                }
+            }
+            
+            const strengths = feedback.match(strengthsPattern);
+            if (strengths && strengths[0].trim().length > 0) {
+                const strengthsContent = cleanFeedbackText(strengths[0].replace(/잘한\s*점\s*:/i, '').trim());
+                if (strengthsContent) {
+                    const strengthsPoints = extractFeedbackPoints(strengthsContent, originalLines);
+                    html += `
+                        <div class="feedback-category strengths">
+                            <h3><i class="fas fa-thumbs-up"></i> 잘한 점</h3>
+                            ${strengthsPoints}
+                        </div>
+                    `;
+                }
+            }
+            
+            html += '</div>';
+            return html;
+        }
+
+        function extractFeedbackPoints(content, originalLines) {
+            content = cleanFeedbackText(content);
+            const points = content.split(/\n\s*\n+/).filter(p => p.trim());
+            let html = '';
+            
+            points.forEach(point => {
+                point = point.replace(/^\s*\d+[\.\)]\s*/gm, '');
+                const englishQuotes = point.match(/["']([^"']+)["']|`([^`]+)`|\b([A-Za-z][\w\s,.!?;:'"()-]*?[.!?])\b/g);
+                
+                let originalTextFound = '';
+                
+                if (englishQuotes && englishQuotes.length > 0) {
+                    const cleanQuotes = englishQuotes.map(q => q.replace(/^["'`]|["'`]$/g, '').trim());
+                    
+                    for (const line of originalLines) {
+                        for (const quote of cleanQuotes) {
+                            if (quote.length > 3 && line.includes(quote)) {
+                                originalTextFound = line.trim();
+                                break;
+                            }
+                        }
+                        if (originalTextFound) break;
+                    }
+                }
+                
+                html += `
+                    ${originalTextFound ? `<div class="original-text">${originalTextFound}</div>` : ''}
+                    <div class="feedback-point">${point.replace(/\n/g, '<br>')}</div>
+                    <hr style="border: 0; height: 1px; background-color: #e2e8f0; margin: 10px 0;">
+                `;
+            });
+            
+            html = html.replace(/<hr[^>]*>$/i, '');
+            return html;
+        }
+
+        function formatCorrectedText(text) {
+            let formatted = text.replace(/\n/g, '<br>');
+            formatted = formatted.replace(/\(([^)]+)\)/g, '(<span class="highlight">$1</span>)');
+            formatted = formatted.replace(/\*([^*]+)\*/g, '<span class="highlight">$1</span>');
+            return formatted;
+        }
 
         // Reset
         document.getElementById('reset-btn').addEventListener('click', () => {
@@ -960,585 +1333,78 @@
             document.getElementById('tab-feedback').classList.remove('active');
         });
 
-        // 네트워크 상태 확인 함수
-        function checkNetworkConnection() {
-            return navigator.onLine;
-        }
-
-        // 텍스트 정리 함수 - 불필요한 빈칸 제거
-        function cleanExtractedText(text) {
-            if (!text || typeof text !== 'string') return '';
-            
-            // 연속된 공백을 하나로 줄이기
-            text = text.replace(/\s+/g, ' ');
-            
-            // 줄 시작과 끝의 공백 제거
-            text = text.replace(/^\s+|\s+$/gm, '');
-            
-            // 불필요한 줄바꿈 정리
-            text = text.replace(/\n\s*\n\s*\n+/g, '\n\n');
-            
-            // 문장 사이의 불필요한 공백 제거
-            text = text.replace(/([.!?])\s+([A-Z])/g, '$1 $2');
-            
-            return text.trim();
-        }
-
-        // 개선된 OCR 처리 함수
-        async function doOCR(file, section) {
-            const status = document.getElementById(`ocr-status-${section}`);
-            const textArea = document.getElementById(`contentText-${section}`);
-            
-            status.classList.add('show');
-            
-            try {
-                // 파일 크기 검증 (최대 10MB)
-                if (file.size > 10 * 1024 * 1024) {
-                    throw new Error('파일 크기가 너무 큽니다. 10MB 이하의 이미지를 사용해주세요.');
-                }
-                
-                // 파일 타입 검증
-                if (!file.type.startsWith('image/')) {
-                    throw new Error('이미지 파일만 업로드 가능합니다.');
-                }
-                
-                // 네트워크 연결 확인
-                if (!checkNetworkConnection()) {
-                    throw new Error('인터넷 연결을 확인하고 다시 시도해주세요.');
-                }
-                
-                // Base64 변환
-                const b64 = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                        try {
-                            const result = reader.result;
-                            if (!result || typeof result !== 'string') {
-                                reject(new Error('파일 읽기에 실패했습니다.'));
-                                return;
-                            }
-                            const base64 = result.split(',')[1];
-                            if (!base64) {
-                                reject(new Error('Base64 변환에 실패했습니다.'));
-                                return;
-                            }
-                            resolve(base64);
-                        } catch (error) {
-                            reject(new Error('파일 처리 중 오류가 발생했습니다: ' + error.message));
-                        }
-                    };
-                    reader.onerror = () => reject(new Error('파일 읽기에 실패했습니다.'));
-                    reader.readAsDataURL(file);
-                });
-                
-                // API 요청
-                const requestBody = {
-                    model: 'gpt-4o-mini',
-                    messages: [{
-                        role: 'user',
-                        content: [{
-                            type: 'text',
-                            text: '이미지에서 텍스트만 정확히 추출해줘. 줄바꿈과 문장 구조를 원본 그대로 유지하고, 추가 설명이나 코멘트는 절대 포함하지 말고 텍스트만 반환해줘.'
-                        }, {
-                            type: 'image_url',
-                            image_url: { url: `data:${file.type};base64,${b64}` }
-                        }]
-                    }],
-                    max_tokens: 1000,
-                    temperature: 0.1
-                };
-                
-                const resp = await fetch(PROXY_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestBody)
-                });
-                
-                // HTTP 상태 확인
-                if (!resp.ok) {
-                    const errorText = await resp.text();
-                    console.error('API 응답 오류:', resp.status, errorText);
-                    
-                    if (resp.status === 429) {
-                        throw new Error('API 사용량 한도를 초과했습니다. 잠시 후 다시 시도해주세요.');
-                    } else if (resp.status === 400) {
-                        throw new Error('잘못된 요청입니다. 이미지 파일을 확인해주세요.');
-                    } else if (resp.status === 401) {
-                        throw new Error('API 인증에 실패했습니다. 관리자에게 문의하세요.');
-                    } else {
-                        throw new Error(`서버 오류가 발생했습니다. (상태 코드: ${resp.status})`);
-                    }
-                }
-                
-                // JSON 파싱
-                let data;
-                try {
-                    const responseText = await resp.text();
-                    if (!responseText.trim()) {
-                        throw new Error('서버에서 빈 응답을 받았습니다.');
-                    }
-                    data = JSON.parse(responseText);
-                } catch (parseError) {
-                    console.error('JSON 파싱 오류:', parseError);
-                    throw new Error('서버 응답을 처리할 수 없습니다. 다시 시도해주세요.');
-                }
-                
-                // 응답 데이터 검증
-                if (!data) {
-                    throw new Error('서버에서 유효하지 않은 응답을 받았습니다.');
-                }
-                
-                if (data.error) {
-                    console.error('API 오류:', data.error);
-                    throw new Error('API 오류: ' + (data.error.message || '알 수 없는 오류'));
-                }
-                
-                if (!data.choices || !Array.isArray(data.choices) || data.choices.length === 0) {
-                    console.error('잘못된 응답 구조:', data);
-                    throw new Error('서버에서 예상하지 못한 응답 형식을 받았습니다.');
-                }
-                
-                const choice = data.choices[0];
-                if (!choice || !choice.message || typeof choice.message.content !== 'string') {
-                    console.error('잘못된 선택 구조:', choice);
-                    throw new Error('텍스트 추출 결과를 받을 수 없습니다.');
-                }
-                
-                const extractedText = cleanExtractedText(choice.message.content);
-                if (!extractedText) {
-                    textArea.value = '이미지에서 텍스트를 찾을 수 없습니다. 텍스트가 명확히 보이는 이미지를 사용해주세요.';
-                } else {
-                    textArea.value = extractedText;
-                }
-                
-            } catch (error) {
-                console.error('OCR 처리 오류:', error);
-                
-                // 사용자 친화적인 오류 메시지
-                let userMessage = '이미지 처리 중 오류가 발생했습니다.';
-                
-                if (error.message.includes('네트워크')) {
-                    userMessage = '네트워크 연결을 확인하고 다시 시도해주세요.';
-                } else if (error.message.includes('파일')) {
-                    userMessage = error.message;
-                } else if (error.message.includes('API')) {
-                    userMessage = error.message;
-                } else {
-                    userMessage = '텍스트 추출에 실패했습니다. 다른 이미지를 시도해보거나 직접 텍스트를 입력해주세요.';
-                }
-                
-                textArea.value = userMessage;
-                
-                // 사용자에게 알림
-                setTimeout(() => {
-                    alert(userMessage + '\n\n직접 텍스트를 입력하거나 다른 이미지를 시도해보세요.');
-                }, 100);
-                
-            } finally {
-                status.classList.remove('show');
-            }
-        }
-
         // File upload & OCR
         ['feedback', 'final'].forEach(section => {
             ['camera', 'gallery'].forEach(src => {
-                document.getElementById(`contentFile-${src}-${section}`).addEventListener('change', async e => {
+                document.getElementById(`contentFile-${src}-${section}`).addEventListener('change', e => {
                     const file = e.target.files[0];
                     if (!file) return;
                     
-                    const url = URL.createObjectURL(file);
-                    window[`${section}FileURL`] = url;
-                    const info = document.getElementById(`file-info-${section}`);
-                    info.querySelector('.file-name').textContent = file.name;
-                    info.classList.add('show');
-                    document.getElementById(`contentText-${section}`).classList.add('has-image');
-                    
-                    await doOCR(file, section);
+                    // 이미지 회전 처리
+                    getOrientation(file, function(orientation) {
+                        if (orientation > 1) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                resetOrientation(e.target.result, orientation, function(resetBlob) {
+                                    const url = URL.createObjectURL(resetBlob);
+                                    window[`${section}FileURL`] = url;
+                                    const info = document.getElementById(`file-info-${section}`);
+                                    info.querySelector('.file-name').textContent = file.name;
+                                    info.classList.add('show');
+                                    document.getElementById(`contentText-${section}`).classList.add('has-image');
+                                    doOCR(resetBlob, section);
+                                });
+                            };
+                            reader.readAsDataURL(file);
+                        } else {
+                            const url = URL.createObjectURL(file);
+                            window[`${section}FileURL`] = url;
+                            const info = document.getElementById(`file-info-${section}`);
+                            info.querySelector('.file-name').textContent = file.name;
+                            info.classList.add('show');
+                            document.getElementById(`contentText-${section}`).classList.add('has-image');
+                            doOCR(file, section);
+                        }
+                    });
                 });
             });
         });
 
-        // 텍스트 정리 함수 - 불필요한 숫자와 공백 제거
-        function cleanFeedbackText(text) {
-            if (!text) return '';
-            
-            // 숫자만 있는 줄 제거 (예: "1.", "2." 등)
-            text = text.replace(/^\s*\d+\.?\s*$/gm, '');
-            
-            // 연속된 공백 줄 하나로 줄이기
-            text = text.replace(/\n\s*\n\s*\n+/g, '\n\n');
-            
-            // 문장 앞의 불필요한 번호 패턴 제거 (예: "1. ", "2) " 등)
-            text = text.replace(/^\s*\d+[\.\)]\s*/gm, '');
-            
-            return text.trim();
-        }
-
-        // 피드백 포인트에서 원문과 피드백을 추출하는 함수
-        function extractFeedbackPoints(content, originalLines) {
-            // 내용 정리 먼저 적용
-            content = cleanFeedbackText(content);
-            
-            // 공백 라인으로 개별 피드백 항목 분리
-            const points = content.split(/\n\s*\n+/).filter(p => p.trim());
-            let html = '';
-            
-            points.forEach(point => {
-                // 포인트 내부의 불필요한 숫자 패턴도 정리
-                point = point.replace(/^\s*\d+[\.\)]\s*/gm, '');
-                
-                // 영문 인용구 찾기 - 더 정확한 패턴
-                const englishQuotes = point.match(/["']([^"']+)["']|`([^`]+)`|\b([A-Za-z][\w\s,.!?;:'"()-]*?[.!?])\b/g);
-                
-                // 원문 텍스트 검색
-                let originalTextFound = '';
-                
-                if (englishQuotes && englishQuotes.length > 0) {
-                    // 인용구에서 따옴표 등 제거하고 정규화
-                    const cleanQuotes = englishQuotes.map(q => q.replace(/^["'`]|["'`]$/g, '').trim());
-                    
-                    // 원문에서 일치하는 문장 찾기 (부분 일치도 허용)
-                    for (const line of originalLines) {
-                        for (const quote of cleanQuotes) {
-                            // 최소 길이 조건 추가 (너무 짧은 단어 매칭 방지)
-                            if (quote.length > 3 && line.includes(quote)) {
-                                originalTextFound = line.trim();
-                                break;
-                            }
-                        }
-                        if (originalTextFound) break;
-                    }
-                }
-                
-                html += `
-                    ${originalTextFound ? `<div class="original-text">${originalTextFound}</div>` : ''}
-                    <div class="feedback-point">${point.replace(/\n/g, '<br>')}</div>
-                    <hr style="border: 0; height: 1px; background-color: #e2e8f0; margin: 10px 0;">
-                `;
-            });
-            
-            // 마지막 구분선 제거
-            html = html.replace(/<hr[^>]*>$/i, '');
-            
-            return html;
-        }
-
-        // 피드백 내용 처리 함수
-        function processFeedback(feedback, originalText) {
-            // 원문을 줄별로 분리하여 배열로 저장
-            const originalLines = originalText.trim().split(/\n+/);
-            
-            // 개선된 패턴 매칭 - 더 명확한 구분을 위해 패턴 강화
-            const overviewPattern = /(?:총평|전체\s*평가|종합\s*평가)\s*:[\s\S]*?(?=(?:문법\s*오류|어휘\s*개선|표현\s*향상|잘한\s*점)\s*:|$)/i;
-            const grammarPattern = /문법\s*오류\s*:[\s\S]*?(?=(?:총평|전체\s*평가|종합\s*평가|어휘\s*개선|표현\s*향상|잘한\s*점)\s*:|$)/i;
-            const vocabPattern = /어휘\s*개선\s*:[\s\S]*?(?=(?:총평|전체\s*평가|종합\s*평가|문법\s*오류|표현\s*향상|잘한\s*점)\s*:|$)/i;
-            const expressionPattern = /표현\s*향상\s*:[\s\S]*?(?=(?:총평|전체\s*평가|종합\s*평가|문법\s*오류|어휘\s*개선|잘한\s*점)\s*:|$)/i;
-            const strengthsPattern = /잘한\s*점\s*:[\s\S]*?(?=(?:총평|전체\s*평가|종합\s*평가|문법\s*오류|어휘\s*개선|표현\s*향상)\s*:|$)/i;
-            
-            let html = '<div class="feedback-container">';
-            
-            // 총평 섹션 (최상단)
-            const overview = feedback.match(overviewPattern);
-            if (overview && overview[0].trim().length > 0) {
-                // "총평:" 텍스트 제거 후 내용만 추출
-                const overviewContent = overview[0].replace(/(?:총평|전체\s*평가|종합\s*평가)\s*:/i, '').trim();
-                if (overviewContent) {
-                    html += `
-                        <div class="overview-category">
-                            <h3><i class="fas fa-star"></i> 총평</h3>
-                            <div>${overviewContent.replace(/\n/g, '<br>')}</div>
-                        </div>
-                    `;
-                }
+        async function doOCR(file, section) {
+            const status = document.getElementById(`ocr-status-${section}`);
+            status.classList.add('show');
+            try {
+                const b64 = await new Promise((res, rej) => {
+                    const reader = new FileReader();
+                    reader.onload = () => res(reader.result.split(',')[1]);
+                    reader.onerror = rej;
+                    reader.readAsDataURL(file);
+                });
+                const resp = await fetch(PROXY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        messages: [{
+                            role: 'user',
+                            content: [{
+                                type: 'text',
+                                text: '이미지에서 텍스트만 추출해줘. 추가 코멘트는 빼줘.'
+                            }, {
+                                type: 'image_url',
+                                image_url: { url: `data:${file.type};base64,${b64}` }
+                            }]
+                        }],
+                        max_tokens: 500
+                    })
+                });
+                const { choices } = await resp.json();
+                document.getElementById(`contentText-${section}`).value = (choices[0]?.message?.content || '').trim();
+            } catch (e) {
+                document.getElementById(`contentText-${section}`).value = 'OCR 오류: ' + e.message;
+            } finally {
+                status.classList.remove('show');
             }
-            
-            // 문법 오류 섹션 - 원문 포함, 개선된 매칭
-            const grammar = feedback.match(grammarPattern);
-            if (grammar && grammar[0].trim().length > 0) {
-                // "문법 오류:" 텍스트 제거 후 내용만 추출
-                const grammarContent = grammar[0].replace(/문법\s*오류\s*:/i, '').trim();
-                if (grammarContent) {
-                    const grammarPoints = extractFeedbackPoints(grammarContent, originalLines);
-                    
-                    html += `
-                        <div class="feedback-category grammar">
-                            <h3><i class="fas fa-exclamation-circle"></i> 문법 오류</h3>
-                            ${grammarPoints}
-                        </div>
-                    `;
-                }
-            }
-            
-            // 어휘 개선 섹션 - 원문 포함, 개선된 매칭
-            const vocab = feedback.match(vocabPattern);
-            if (vocab && vocab[0].trim().length > 0) {
-                // "어휘 개선:" 텍스트 제거 후 내용만 추출
-                const vocabContent = vocab[0].replace(/어휘\s*개선\s*:/i, '').trim();
-                if (vocabContent) {
-                    const vocabPoints = extractFeedbackPoints(vocabContent, originalLines);
-                    
-                    html += `
-                        <div class="feedback-category vocabulary">
-                            <h3><i class="fas fa-book"></i> 어휘 개선</h3>
-                            ${vocabPoints}
-                        </div>
-                    `;
-                }
-            }
-            
-            // 표현 향상 섹션 - 원문 포함, 개선된 매칭
-            const expression = feedback.match(expressionPattern);
-            if (expression && expression[0].trim().length > 0) {
-                // "표현 향상:" 텍스트 제거 후 내용만 추출
-                const expressionContent = expression[0].replace(/표현\s*향상\s*:/i, '').trim();
-                if (expressionContent) {
-                    const expressionPoints = extractFeedbackPoints(expressionContent, originalLines);
-                    
-                    html += `
-                        <div class="feedback-category expression">
-                            <h3><i class="fas fa-pencil-alt"></i> 표현 향상</h3>
-                            ${expressionPoints}
-                        </div>
-                    `;
-                }
-            }
-            
-            // 잘한 점 섹션 - 원문 포함, 개선된 매칭
-            const strengths = feedback.match(strengthsPattern);
-            if (strengths && strengths[0].trim().length > 0) {
-                // "잘한 점:" 텍스트 제거 후 내용만 추출 
-                const strengthsContent = strengths[0].replace(/잘한\s*점\s*:/i, '').trim();
-                if (strengthsContent) {
-                    const strengthsPoints = extractFeedbackPoints(strengthsContent, originalLines);
-                    
-                    html += `
-                        <div class="feedback-category strengths">
-                            <h3><i class="fas fa-thumbs-up"></i> 잘한 점</h3>
-                            ${strengthsPoints}
-                        </div>
-                    `;
-                }
-            }
-            
-            html += '</div>';
-            return html;
-        }
-
-        // 수정글 텍스트 서식화 함수
-        function formatCorrectedText(text) {
-            // 줄바꿈을 <br> 태그로 변환
-            let formatted = text.replace(/\n/g, '<br>');
-            
-            // 중요 수정 사항에 강조 표시
-            // 예: 괄호 안의 내용 강조
-            formatted = formatted.replace(/\(([^)]+)\)/g, '(<span style="background-color: #fef9c3; padding: 0 3px; border-radius: 3px;">$1</span>)');
-            
-            // 특수 마커로 표시된 부분 강조 (예: *강조*)
-            formatted = formatted.replace(/\*([^*]+)\*/g, '<span style="background-color: #fef9c3; padding: 0 3px; border-radius: 3px;">$1</span>');
-            
-            return formatted;
-        }
-
-        // 인쇄용 이미지 회전 함수
-        function getRotatedImageForPrint(imageUrl, callback) {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                // 이미지 크기에 따라 회전 각도 결정
-                const isLandscape = img.width > img.height;
-                
-                if (isLandscape) {
-                    // 가로 이미지인 경우 90도 시계방향 회전
-                    canvas.width = img.height;
-                    canvas.height = img.width;
-                    ctx.translate(canvas.width / 2, canvas.height / 2);
-                    ctx.rotate(90 * Math.PI / 180);
-                    ctx.drawImage(img, -img.width / 2, -img.height / 2);
-                } else {
-                    // 세로 이미지는 그대로
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
-                }
-                
-                const rotatedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-                callback(rotatedDataUrl);
-            };
-            img.src = imageUrl;
-        }
-
-        // 통합 인쇄 HTML 생성 함수
-        function generatePrintHTML(imageUrl, orig, fbCheck, corr, name, school, type) {
-            let html = `<!doctype html>
-            <html>
-            <head>
-                <meta charset="utf-8"/>
-                <title>윤선생 리얼스피치 - ${type === 'feedback' ? '피드백' : '최종 결과'}</title>
-                <style>
-                    @page {
-                        margin: 0;
-                        size: A4;
-                    }
-                    
-                    body {
-                        margin: 0;
-                        padding: 20px;
-                        font-family: 'Segoe UI', sans-serif;
-                        background: white;
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
-                    }
-                    
-                    .print-header {
-                        display: flex;
-                        align-items: center;
-                        padding: 15px 0;
-                        border-bottom: 2px solid #1e3a8a;
-                        margin-bottom: 20px;
-                        page-break-inside: avoid;
-                    }
-                    
-                    .print-header .logo {
-                        height: 50px;
-                        margin-right: 15px;
-                        flex-shrink: 0;
-                    }
-                    
-                    .print-header .title {
-                        font-size: 18px;
-                        font-weight: bold;
-                        color: #1e3a8a;
-                        margin: 0;
-                    }
-                    
-                    /* 피드백 카테고리 스타일 */
-                    .feedback-category {
-                        padding: 10px 15px;
-                        margin-bottom: 15px;
-                        border-radius: 8px;
-                        border-left-width: 5px;
-                        border-left-style: solid;
-                        page-break-inside: avoid;
-                    }
-                    
-                    .overview-category {
-                        padding: 15px;
-                        margin-bottom: 20px;
-                        border-radius: 8px;
-                        border-left: 5px solid #8b5cf6;
-                        background-color: #f5f3ff;
-                        page-break-inside: avoid;
-                    }
-                    
-                    .grammar { border-left-color: #e74c3c; background-color: #fdeded; }
-                    .vocabulary { border-left-color: #3498db; background-color: #ebf5fb; }
-                    .expression { border-left-color: #9b59b6; background-color: #f4ecf7; }
-                    .strengths { border-left-color: #2ecc71; background-color: #ebfaf0; }
-                    
-                    .corrected-section {
-                        padding: 15px;
-                        margin-bottom: 20px;
-                        border-radius: 8px;
-                        border-left: 5px solid #10b981;
-                        background-color: #ecfdf5;
-                        page-break-inside: avoid;
-                    }
-                    
-                    h2 { color: #1e3a8a; margin-top: 1.5rem; page-break-after: avoid; }
-                    h3 { color: #2d3748; margin: 0 0 10px 0; page-break-after: avoid; }
-                    
-                    .original-text {
-                        background-color: rgba(248, 250, 252, 0.8);
-                        border-left: 3px solid #94a3b8;
-                        padding: 10px 15px;
-                        margin: 10px 0;
-                        font-style: italic;
-                        color: #475569;
-                        border-radius: 4px;
-                    }
-                    
-                    .original-text::before {
-                        content: '원문';
-                        display: block;
-                        font-weight: 600;
-                        font-style: normal;
-                        font-size: 0.85rem;
-                        margin-bottom: 5px;
-                        color: #64748b;
-                    }
-                    
-                    hr { border: 0; height: 1px; background-color: #e2e8f0; margin: 10px 0; }
-                    
-                    .model-box, .corrected-content {
-                        background-color: #ffffff;
-                        font-size: 1.1rem;
-                        line-height: 1.8;
-                        border: 1px solid #d1d5db;
-                        padding: 1.5rem;
-                        border-radius: 10px;
-                    }
-                    
-                    img {
-                        max-width: 100%;
-                        height: auto;
-                        page-break-inside: avoid;
-                        margin: 10px 0;
-                        border: 1px solid #ddd;
-                        border-radius: 8px;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="print-header">
-                    <img src="https://page1.genspark.site/v1/base64_upload/78cc0523b080d22fe6d247fc2d9bf3c4" alt="윤선생 로고" class="logo">
-                    <h1 class="title">윤선생 리얼스피치 2025</h1>
-                </div>
-                
-                <div class="print-content">
-                    <h2>${type === 'feedback' ? '피드백 결과' : '최종 결과'}</h2>
-                    <p><strong>이름:</strong> ${name} &nbsp; <strong>학교:</strong> ${school}</p>`;
-            
-            if (orig) {
-                if (imageUrl) {
-                    html += `<div style="margin: 15px 0;"><img src="${imageUrl}" alt="원본 이미지" style="max-width:100%;"/></div>`;
-                } else {
-                    const textContent = type === 'feedback' ? 
-                        document.getElementById('contentText-feedback').value : 
-                        document.getElementById('contentText-final').value;
-                    html += `<div style="white-space:pre-wrap;padding:15px;border:1px solid #ccc;border-radius:8px;background:#f8fafc;margin:15px 0;">${textContent}</div>`;
-                }
-            }
-            
-            if (fbCheck && type === 'feedback') {
-                html += '<h2>피드백</h2>' + document.getElementById('fb-content').outerHTML;
-            }
-            
-            if (corr) {
-                const correctedContent = type === 'feedback' ? 
-                    document.getElementById('fb-corrected').outerHTML : 
-                    document.getElementById('fn-corrected').outerHTML;
-                html += `<h2>수정글</h2><div class="corrected-section"><div class="corrected-content">${correctedContent}</div></div>`;
-            }
-            
-            html += `
-                </div>
-                <script>
-                    window.onload = function() {
-                        setTimeout(() => {
-                            window.print();
-                            window.onafterprint = () => window.close();
-                        }, 500);
-                    };
-                <\/script>
-            </body>
-            </html>`;
-            
-            const win = window.open('', '_blank');
-            win.document.write(html);
-            win.document.close();
         }
 
         // Feedback submit
@@ -1562,7 +1428,6 @@
                 const { feedback, modelAnswer } = await res.json();
                 const container = document.getElementById('feedback-result');
                 
-                // 원문과 함께 피드백 처리
                 const formattedFeedback = processFeedback(feedback, contentText);
                 
                 container.innerHTML = `
@@ -1586,9 +1451,8 @@
                     </div>
                 `;
 
-                // Edit/Save 버튼 텍스트 변경 (피드백 및 수정글)
-                ['fb', 'fb-corrected'].forEach(id => {
-                    const content = document.getElementById(id === 'fb' ? 'fb-content' : 'fb-corrected');
+                ['fb-content', 'fb-corrected'].forEach(id => {
+                    const content = document.getElementById(id);
                     content.setAttribute('contenteditable', 'false');
                     const edit = document.createElement('button');
                     edit.textContent = 'Edit';
@@ -1598,7 +1462,7 @@
                     const wrapper = document.createElement('div');
                     wrapper.className = 'btn-group';
                     wrapper.append(edit, save);
-                    document.getElementById(id === 'fb' ? 'fb-box' : 'fb-corr-box').append(wrapper);
+                    document.getElementById(id === 'fb-content' ? 'fb-box' : 'fb-corr-box').append(wrapper);
                     edit.addEventListener('click', () => {
                         content.setAttribute('contenteditable', 'true');
                         edit.style.display = 'none';
@@ -1610,13 +1474,11 @@
                         edit.style.display = 'inline-block';
                     });
                 });
-                
-                // Print inline
+
                 document.getElementById('print-feedback-btn').addEventListener('click', () => {
                     document.getElementById('print-options-feedback').style.display = 'flex';
                 });
-                
-                // 피드백 페이지 인쇄 함수 수정
+
                 document.getElementById('confirm-print-feedback-btn').addEventListener('click', () => {
                     const orig = document.getElementById('print_orig_fb').checked;
                     const fbCheck = document.getElementById('print_fb_fb').checked;
@@ -1624,18 +1486,193 @@
                     const name = document.getElementById('user-name-feedback').value;
                     const school = document.getElementById('user-school-feedback').value;
                     
-                    // 이미지가 있으면 회전된 버전 생성
-                    if (orig && window.feedbackFileURL) {
-                        getRotatedImageForPrint(window.feedbackFileURL, (rotatedImageUrl) => {
-                            generatePrintHTML(rotatedImageUrl, orig, fbCheck, corr, name, school, 'feedback');
-                        });
-                    } else {
-                        generatePrintHTML(null, orig, fbCheck, corr, name, school, 'feedback');
+                    let html = `<!doctype html>
+                    <html>
+                    <head>
+                        <meta charset="utf-8"/>
+                        <title>윤선생 리얼스피치 - 피드백</title>
+                        <style>
+                            body { 
+                                font-family: 'Segoe UI', sans-serif; 
+                                margin: 0;
+                                padding: 0;
+                                background-color: #ffffff;
+                                color: #000000;
+                            }
+                            
+                            @page {
+                                margin: 120px 20px 80px 20px;
+                                size: A4;
+                            }
+                            
+                            .print-header {
+                                position: fixed;
+                                top: 0;
+                                left: 0;
+                                right: 0;
+                                height: 80px;
+                                padding: 15px 20px;
+                                border-bottom: 2px solid #e5e7eb;
+                                background-color: #ffffff;
+                                z-index: 1000;
+                            }
+                            
+                            .print-header .logo {
+                                float: left;
+                                height: 50px;
+                                width: auto;
+                            }
+                            
+                            .print-header .title {
+                                text-align: center;
+                                margin: 0;
+                                line-height: 50px;
+                                font-size: 18px;
+                                font-weight: bold;
+                                color: #1e3a8a;
+                            }
+                            
+                            .print-footer {
+                                position: fixed;
+                                bottom: 0;
+                                left: 0;
+                                right: 0;
+                                padding: 15px 20px;
+                                border-top: 2px solid #e5e7eb;
+                                background-color: #ffffff;
+                                font-size: 12px;
+                                z-index: 1000;
+                            }
+                            
+                            .print-footer .message {
+                                float: left;
+                                color: #16a34a;
+                                font-style: italic;
+                                font-weight: 600;
+                                max-width: 60%;
+                            }
+                            
+                            .print-footer .brand {
+                                float: right;
+                                color: #1e3a8a;
+                                font-weight: bold;
+                            }
+                            
+                            .print-content {
+                                margin: 20px 0;
+                                padding: 0 20px;
+                            }
+                            
+                            .feedback-category, .overview-category, .corrected-section {
+                                padding: 15px;
+                                margin-bottom: 15px;
+                                border-radius: 8px;
+                                border-left-width: 5px;
+                                border-left-style: solid;
+                                page-break-inside: avoid;
+                                background-color: #ffffff;
+                                border: 1px solid #cccccc;
+                            }
+                            
+                            .overview-category { border-left-color: #8b5cf6; }
+                            .grammar { border-left-color: #e74c3c; }
+                            .vocabulary { border-left-color: #3498db; }
+                            .expression { border-left-color: #9b59b6; }
+                            .strengths { border-left-color: #2ecc71; }
+                            .corrected-section { border-left-color: #10b981; }
+                            
+                            h2 { color: #1e3a8a; margin-top: 1.5rem; page-break-after: avoid; }
+                            h3 { color: #2d3748; margin: 0 0 10px 0; page-break-after: avoid; }
+                            
+                            .original-text {
+                                background-color: #f8fafc;
+                                border-left: 3px solid #94a3b8;
+                                padding: 10px 15px;
+                                margin: 10px 0;
+                                font-style: italic;
+                                color: #475569;
+                                border-radius: 4px;
+                                page-break-inside: avoid;
+                            }
+                            
+                            .original-text::before {
+                                content: '원문';
+                                display: block;
+                                font-weight: 600;
+                                font-style: normal;
+                                font-size: 0.85rem;
+                                margin-bottom: 5px;
+                                color: #64748b;
+                            }
+                            
+                            hr { border: 0; height: 1px; background-color: #e2e8f0; margin: 10px 0; }
+                            
+                            .uploaded-image {
+                                max-width: 100%;
+                                height: auto;
+                                page-break-inside: avoid;
+                                margin: 10px 0;
+                            }
+                            
+                            .user-info-print {
+                                margin-bottom: 20px;
+                                padding: 10px 0;
+                                border-bottom: 1px solid #e5e7eb;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="print-header">
+                            <img src="https://page1.genspark.site/v1/base64_upload/78cc0523b080d22fe6d247fc2d9bf3c4" alt="윤선생 로고" class="logo">
+                            <h1 class="title">윤선생 리얼스피치 2025</h1>
+                            <div style="clear:both;"></div>
+                        </div>
+                        
+                        <div class="print-content">
+                            <div class="user-info-print">
+                                <strong>이름:</strong> ${name} &nbsp;&nbsp; <strong>학교:</strong> ${school}
+                            </div>`;
+                    
+                    if (orig) {
+                        html += window.feedbackFileURL ?
+                            `<div><h3>원본 이미지</h3><img src="${window.feedbackFileURL}" class="uploaded-image" alt="업로드된 이미지"></div>` :
+                            `<div><h3>원본 텍스트</h3><div style="white-space:pre-wrap;padding:15px;border:1px solid #ccc;border-radius:8px;background:#f8fafc;margin-bottom:20px;">${document.getElementById('contentText-feedback').value}</div></div>`;
                     }
                     
+                    if (fbCheck) {
+                        html += '<h2>피드백</h2><div>' + document.getElementById('fb-content').outerHTML + '</div>';
+                    }
+                    
+                    if (corr) {
+                        html += '<h2>수정글</h2><div class="corrected-section"><h3>수정글</h3>' + document.getElementById('fb-corrected').outerHTML + '</div>';
+                    }
+                    
+                    html += `
+                        </div>
+                        
+                        <div class="print-footer">
+                            <div class="message">훌륭해요! 매일 조금씩 발전하고 있어요. 계속 도전하세요!</div>
+                            <div class="brand">윤선생 리얼스피치 2025</div>
+                            <div style="clear:both;"></div>
+                        </div>
+                        
+                        <script>
+                            window.onload = function() {
+                                window.print();
+                                window.onafterprint = function() {
+                                    window.close();
+                                };
+                            };
+                        <\/script>
+                    </body>
+                    </html>`;
+                    
+                    const win = window.open();
+                    win.document.write(html);
+                    win.document.close();
                     document.getElementById('print-options-feedback').style.display = 'none';
                 });
-                
+
             } catch (e) {
                 alert('피드백 요청 중 오류가 발생했습니다.');
             } finally {
@@ -1653,42 +1690,41 @@
                  return;
             }
             const btn = document.getElementById('submit-final-btn'),
-          sp = document.getElementById('submit-spinner-final');
-    btn.disabled = true;
-    sp.style.display = 'inline-block';
-    try {
-        const res = await fetch(`${WORKER_URL}/api/feedback`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contentText })
-        });
-        const { feedback, modelAnswer } = await res.json();
-        const cont = document.getElementById('final-result');
-        cont.innerHTML = `
-            <p style="text-align: left;">
-                📢 AI는 실수를 할 수 있습니다. 꼭 생성된 내용을 확인 후 필요한 부분은 수정하셔서 이용해주세요~!
-            </p>
-            <div class="corrected-section" id="fn-box">
-                <h3><i class="fas fa-check-circle"></i> 수정글</h3>
-                <div class="corrected-content" id="fn-corrected">${formatCorrectedText(modelAnswer)}</div>
-            </div>
-            <div class="btn-group" id="fn-edit-group"></div>
-            <div class="audio-controls-area">
-                <button id="tts-play-btn">원어민 음성 듣기</button><span id="tts-spinner" class="spinner"></span>
-                <audio id="tts-audio-final" controls style="display:none;"></audio>
-                <a id="tts-download-btn" style="display:none;">음원 다운로드</a>
-            </div>
-            <div class="print-button-bottom">
-                <a id="print-final-btn" class="button">인쇄</a>
-            </div>
-            <div class="print-options-inline" id="print-options-final" style="display:none;">
-                <label><input type="checkbox" id="print_orig_fn" checked> 원본</label>
-                <label><input type="checkbox" id="print_corr_fn" checked> 수정글</label>
-                <button id="confirm-print-final-btn">Confirm</button>
-            </div>
-        `;
+                  sp = document.getElementById('submit-spinner-final');
+            btn.disabled = true;
+            sp.style.display = 'inline-block';
+            try {
+                const res = await fetch(`${WORKER_URL}/api/feedback`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contentText })
+                });
+                const { feedback, modelAnswer } = await res.json();
+                const cont = document.getElementById('final-result');
+                cont.innerHTML = `
+                    <p style="text-align: left;">
+                        📢 AI는 실수를 할 수 있습니다. 꼭 생성된 내용을 확인 후 필요한 부분은 수정하셔서 이용해주세요~!
+                    </p>
+                    <div class="corrected-section" id="fn-box">
+                        <h3><i class="fas fa-check-circle"></i> 수정글</h3>
+                        <div class="corrected-content" id="fn-corrected">${formatCorrectedText(modelAnswer)}</div>
+                    </div>
+                    <div class="btn-group" id="fn-edit-group"></div>
+                    <div class="audio-controls-area">
+                        <button id="tts-play-btn">원어민 음성 듣기</button><span id="tts-spinner" class="spinner"></span>
+                        <audio id="tts-audio-final" controls style="display:none;"></audio>
+                        <a id="tts-download-btn" style="display:none;">음원 다운로드</a>
+                    </div>
+                    <div class="print-button-bottom">
+                        <a id="print-final-btn" class="button">인쇄</a>
+                    </div>
+                    <div class="print-options-inline" id="print-options-final" style="display:none;">
+                        <label><input type="checkbox" id="print_orig_fn" checked> 원본</label>
+                        <label><input type="checkbox" id="print_corr_fn" checked> 수정글</label>
+                        <button id="confirm-print-final-btn">Confirm</button>
+                    </div>
+                `;
 
-                // Edit/Save 버튼 텍스트 변경 (최종 수정글)
                 const fnContent = document.getElementById('fn-corrected');
                 fnContent.setAttribute('contenteditable', 'false');
                 const editBtn = document.createElement('button');
@@ -1708,7 +1744,7 @@
                     saveBtn.style.display = 'none';
                     editBtn.style.display = 'inline-block';
                 });
-                // TTS
+
                 const playBtn = document.getElementById('tts-play-btn'),
                       spinner = document.getElementById('tts-spinner'),
                       dl = document.getElementById('tts-download-btn'),
@@ -1728,7 +1764,6 @@
                         const url = URL.createObjectURL(blob);
                         audio.src = url;
                         audio.style.display = 'block';
-                        // 자동 재생 제거 - 사용자가 재생 컨트롤로 직접 재생
                         dl.style.display = 'inline-block';
                         const userName = document.getElementById('user-name-final').value.trim() || 'writing';
                         dl.href = url;
@@ -1740,27 +1775,180 @@
                         spinner.style.display = 'none';
                     }
                 });
-                // Print inline final
+
                 document.getElementById('print-final-btn').addEventListener('click', () => {
                     document.getElementById('print-options-final').style.display = 'flex';
                 });
-                
-                // 최종 결과 페이지 인쇄 함수 수정
+
                 document.getElementById('confirm-print-final-btn').addEventListener('click', () => {
                     const orig = document.getElementById('print_orig_fn').checked;
                     const corr = document.getElementById('print_corr_fn').checked;
                     const name = document.getElementById('user-name-final').value;
                     const school = document.getElementById('user-school-final').value;
                     
-                    // 이미지가 있으면 회전된 버전 생성
-                    if (orig && window.finalFileURL) {
-                        getRotatedImageForPrint(window.finalFileURL, (rotatedImageUrl) => {
-                            generatePrintHTML(rotatedImageUrl, orig, false, corr, name, school, 'final');
-                        });
-                    } else {
-                        generatePrintHTML(null, orig, false, corr, name, school, 'final');
+                    let html = `<!doctype html>
+                    <html>
+                    <head>
+                        <meta charset="utf-8"/>
+                        <title>윤선생 리얼스피치 - 최종 결과</title>
+                        <style>
+                            body { 
+                                font-family: 'Segoe UI', sans-serif; 
+                                margin: 0;
+                                padding: 0;
+                                background-color: #ffffff;
+                                color: #000000;
+                            }
+                            
+                            @page {
+                                margin: 120px 20px 80px 20px;
+                                size: A4;
+                            }
+                            
+                            .print-header {
+                                position: fixed;
+                                top: 0;
+                                left: 0;
+                                right: 0;
+                                height: 80px;
+                                padding: 15px 20px;
+                                border-bottom: 2px solid #e5e7eb;
+                                background-color: #ffffff;
+                                z-index: 1000;
+                            }
+                            
+                            .print-header .logo {
+                                float: left;
+                                height: 50px;
+                                width: auto;
+                            }
+                            
+                            .print-header .title {
+                                text-align: center;
+                                margin: 0;
+                                line-height: 50px;
+                                font-size: 18px;
+                                font-weight: bold;
+                                color: #1e3a8a;
+                            }
+                            
+                            .print-footer {
+                                position: fixed;
+                                bottom: 0;
+                                left: 0;
+                                right: 0;
+                                padding: 15px 20px;
+                                border-top: 2px solid #e5e7eb;
+                                background-color: #ffffff;
+                                font-size: 12px;
+                                z-index: 1000;
+                            }
+                            
+                            .print-footer .message {
+                                float: left;
+                                color: #16a34a;
+                                font-style: italic;
+                                font-weight: 600;
+                                max-width: 60%;
+                            }
+                            
+                            .print-footer .brand {
+                                float: right;
+                                color: #1e3a8a;
+                                font-weight: bold;
+                            }
+                            
+                            .print-content {
+                                margin: 20px 0;
+                                padding: 0 20px;
+                            }
+                            
+                            .corrected-section {
+                                padding: 15px;
+                                margin-bottom: 20px;
+                                border-radius: 8px;
+                                border-left: 5px solid #10b981;
+                                background-color: #ffffff;
+                                border: 1px solid #cccccc;
+                                page-break-inside: avoid;
+                            }
+                            
+                            h2 { color: #1e3a8a; margin-top: 1.5rem; page-break-after: avoid; }
+                            h3 { color: #047857; margin: 0 0 15px 0; page-break-after: avoid; }
+                            
+                            .corrected-content {
+                                background-color: #ffffff;
+                                padding: 18px;
+                                border-radius: 6px;
+                                line-height: 1.8;
+                                font-size: 1.05rem;
+                                color: #1f2937;
+                                border: 1px solid #d1fae5;
+                            }
+                            
+                            .uploaded-image {
+                                max-width: 100%;
+                                height: auto;
+                                page-break-inside: avoid;
+                                margin: 10px 0;
+                            }
+                            
+                            .user-info-print {
+                                margin-bottom: 20px;
+                                padding: 10px 0;
+                                border-bottom: 1px solid #e5e7eb;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="print-header">
+                            <img src="https://page1.genspark.site/v1/base64_upload/78cc0523b080d22fe6d247fc2d9bf3c4" alt="윤선생 로고" class="logo">
+                            <h1 class="title">윤선생 리얼스피치 2025</h1>
+                            <div style="clear:both;"></div>
+                        </div>
+                        
+                        <div class="print-content">
+                            <div class="user-info-print">
+                                <strong>이름:</strong> ${name} &nbsp;&nbsp; <strong>학교:</strong> ${school}
+                            </div>`;
+                    
+                    if (orig) {
+                        html += window.finalFileURL ?
+                            `<div><h3>원본 이미지</h3><img src="${window.finalFileURL}" class="uploaded-image" alt="업로드된 이미지"></div>` :
+                            `<div><h3>원본 텍스트</h3><div style="white-space:pre-wrap;padding:15px;border:1px solid #ccc;border-radius:8px;background:#f8fafc;margin-bottom:20px;">${document.getElementById('contentText-final').value}</div></div>`;
                     }
                     
+                    if (corr) {
+                        html += `
+                        <div class="corrected-section">
+                            <h3>수정글</h3>
+                            <div class="corrected-content">${document.getElementById('fn-corrected').innerHTML}</div>
+                        </div>`;
+                    }
+                    
+                    html += `
+                        </div>
+                        
+                        <div class="print-footer">
+                            <div class="message">훌륭해요! 매일 조금씩 발전하고 있어요. 계속 도전하세요!</div>
+                            <div class="brand">윤선생 리얼스피치 2025</div>
+                            <div style="clear:both;"></div>
+                        </div>
+                        
+                        <script>
+                            window.onload = function() {
+                                window.print();
+                                window.onafterprint = function() {
+                                    window.close();
+                                };
+                            };
+                        <\/script>
+                    </body>
+                    </html>`;
+                    
+                    const win = window.open();
+                    win.document.write(html);
+                    win.document.close();
                     document.getElementById('print-options-final').style.display = 'none';
                 });
 
