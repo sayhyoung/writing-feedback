@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>윤선생 WriteBack</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+       <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+   
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- Google Fonts - 한글 지원 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2ST2J98RHE"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+
+  gtag('config', 'G-2ST2J98RHE');
+</script>
+
+<!-- 기본 폰트 설정 -->
+<style>
+    * {
+        font-family: 'Noto Sans KR', '맑은 고딕', 'Malgun Gothic', Arial, sans-serif;
+    }
+</style>
+        
+    <link rel="stylesheet" href="style.css">
+
+
+</head>
+
+<body>
+    <div id="container">
+        <div class="header-section">
+            <h1>✨ 윤선생 WriteBack ✨</h1>
+        </div>
+
+        <!-- <div class="suggestion-btn-container">
+            <a href="https://forms.gle/Ju8wWBRKwpiTYppf8" target="_blank" rel="noopener noreferrer" class="suggestion-btn">
+                <i class="fas fa-lightbulb"></i> 개선 제안
+            </a>
+        </div> -->
+
+        <div class="reset-btn-container">
+            <button id="reset-btn">Reset</button>
+        </div>
+
+        <nav>
+            <button id="tab-feedback" class="tab active">피드백 받기</button>
+            <button id="tab-final" class="tab">최종 결과물 생성</button>
+        </nav>
+
+        <section id="feedback-section" class="section active">
+            <form id="feedback-form">
+                <label for="contentText-feedback"> 📪영작한 내용을 입력하거나 찍어서 업로드해 주세요.</label>
+                <div class="user-info">
+                    <input type="text" id="user-name-feedback" placeholder="이름" />
+                    <input type="text" id="user-school-feedback" placeholder="학교(학년)" />
+                </div>
+                <div class="action-icons">
+                    <div class="icon-btn-container">
+                        <button type="button" class="icon-btn" title="사진 촬영">📸
+                            <input type="file" id="contentFile-camera-feedback" accept="image/*" capture="environment" />
+                        </button>
+                        <span class="icon-btn-label">사진 촬영</span>
+                    </div>
+                    <div class="icon-btn-container">
+                        <button type="button" class="icon-btn" title="이미지 선택">🖼️
+                            <input type="file" id="contentFile-gallery-feedback" accept="image/*" />
+                        </button>
+                        <span class="icon-btn-label">이미지 업로드</span>
+                    </div>
+                </div>
+                <textarea id="contentText-feedback" class="input-area" placeholder="여기에 텍스트를 입력하세요."></textarea>
+                <div class="file-info" id="file-info-feedback"><span class="file-name"></span></div>
+                <div class="ocr-status" id="ocr-status-feedback">
+                    <div class="spinner"></div><span>이미지에서 텍스트를 추출 중입니다...</span>
+                </div>
+                <button type="submit" id="submit-feedback-btn">피드백 받기 <span id="submit-spinner-feedback"
+                        class="spinner"></span></button>
+            </form>
+            <div id="feedback-result"></div>
+        </section>
+
+        <section id="final-section" class="section">
+            <form id="final-form">
+                <label for="contentText-final">❇️최종 결과물을 위해 텍스트를 입력하거나 찍어서 업로드해 주세요.</label>
+                <div class="user-info">
+                    <input type="text" id="user-name-final" placeholder="이름" />
+                    <input type="text" id="user-school-final" placeholder="학교" />
+                </div>
+                <div class="action-icons">
+                    <div class="icon-btn-container">
+                        <button type="button" class="icon-btn" title="사진 촬영">📸
+                            <input type="file" id="contentFile-camera-final" accept="image/*" capture="environment" />
+                        </button>
+                        <span class="icon-btn-label">사진 촬영</span>
+                    </div>
+                    <div class="icon-btn-container">
+                        <button type="button" class="icon-btn" title="이미지 선택">🖼️
+                            <input type="file" id="contentFile-gallery-final" accept="image/*" />
+                        </button>
+                        <span class="icon-btn-label">이미지 업로드</span>
+                    </div>
+                </div>
+                <textarea id="contentText-final" class="input-area" placeholder="여기에 텍스트를 입력하세요."></textarea>
+                <div class="file-info" id="file-info-final"><span class="file-name"></span></div>
+                <div class="ocr-status" id="ocr-status-final">
+                    <div class="spinner"></div><span>이미지에서 텍스트를 추출 중입니다...</span>
+                </div>
+                <button type="submit" id="submit-final-btn">최종 결과 생성 <span id="submit-spinner-final"
+                        class="spinner"></span></button>
+            </form>
+            <div id="final-result"></div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
