@@ -146,6 +146,25 @@ document.addEventListener('DOMContentLoaded', () => {
         return /android/i.test(navigator.userAgent);
     }
 
+    /**
+     * ✅ iOS(아이폰·아이패드) 여부 확인
+     * 최신 아이패드는 userAgent가 Mac으로 보고되므로,
+     * 터치 지원 MacIntel 조건까지 포함해 아이패드를 판별한다.
+     */
+    function isIOS() {
+        const ua = navigator.userAgent;
+        if (/iPhone|iPad|iPod/i.test(ua)) return true;
+        return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    }
+
+    /**
+     * ✅ 모바일(안드로이드·iOS)에서는 인쇄 창 대신 PDF 파일을 바로 생성한다.
+     * PC는 기존 인쇄(window.print) 흐름을 유지한다.
+     */
+    function shouldGeneratePDF() {
+        return isAndroid() || isIOS();
+    }
+
 
     // 텍스트 정리 함수
     function cleanExtractedText(text) {
@@ -1054,7 +1073,7 @@ function getRotatedImageForPrint(file) {
     function openHistoryDetail(modal, rec) {
         const body = modal.querySelector('.history-body');
         const hasAudio = !!rec.audioBase64;
-        const isAnd = isAndroid();
+        const isPdf = shouldGeneratePDF();
         const dlSpeedHtml = `
             <div class="dl-speed-wrap">
                 <button class="button history-audio-dl">⬇ 전체 음원 다운로드 <span class="spinner history-dl-spin"></span></button>
@@ -1077,7 +1096,7 @@ function getRotatedImageForPrint(file) {
                     ${hasAudio ? '<audio class="history-audio" controls></audio>' : ''}
                     ${hasAudio ? '<button class="button history-shadow">🎧 문장별 듣기 (쉐도잉)</button>' : ''}
                     ${hasAudio ? dlSpeedHtml : '<p class="dl-help">이 결과물에는 저장된 음원이 없어요. (생성 당시 \'원어민 음성 듣기\'를 실행하지 않음)</p>'}
-                    <button class="button history-print">${isAnd ? 'PDF 다운로드' : '인쇄하기'}</button>
+                    <button class="button history-print">${isPdf ? 'PDF 저장' : '인쇄하기'}</button>
                 </div>
                 <p class="dl-help">💡 다운로드 파일은 기기의 '다운로드' 폴더(아이폰은 '파일' 앱)에 저장됩니다.</p>
             </div>`;
@@ -1130,7 +1149,7 @@ function getRotatedImageForPrint(file) {
         body.querySelector('.history-print').addEventListener('click', async () => {
             const options = { orig: !!(rec.originalText && rec.originalText.trim()), corr: true, fbCheck: false };
             const userInfo = { name: rec.name || '', school: rec.school || '', type: 'final' };
-            if (isAndroid()) {
+            if (shouldGeneratePDF()) {
                 await generateAndDownloadPDF(null, rec.originalText || '', null, rec.correctedHtml || '', options, userInfo);
             } else {
                 await generateAndPrintHTML(null, rec.originalText || '', null, rec.correctedHtml || '', options, userInfo);
@@ -2025,8 +2044,11 @@ document.getElementById('feedback-form').addEventListener('submit', async e => {
         const data = await res.json();
         const container = document.getElementById('feedback-result');
 
-        // 기기에 따라 버튼 텍스트와 ID를 동적으로 결정
-        const actionButtonText = isAndroid() ? 'PDF 다운로드' : '인쇄하기';
+        // 기기에 따라 버튼 텍스트와 ID를 동적으로 결정 (모바일=PDF 저장, PC=인쇄)
+        const actionButtonText = shouldGeneratePDF() ? 'PDF 저장' : '인쇄하기';
+        const actionButtonInfo = shouldGeneratePDF()
+            ? `'PDF 저장'을 누르면 PDF 파일로 저장하여 공유할 수 있습니다.`
+            : `'인쇄하기'를 누르면 프린터로 인쇄하거나 PDF파일로 저장하여 공유할 수 있습니다.`;
         const actionButtonId = `action-feedback-btn`;
 
         container.innerHTML = `
@@ -2047,9 +2069,9 @@ document.getElementById('feedback-form').addEventListener('submit', async e => {
                 <label><input type="checkbox" id="print_corr_fb" checked> 수정글</label>
                 <button id="${actionButtonId}" class="button">${actionButtonText}</button>
 
-                <p class="print-info-text">'인쇄하기'를 누르면 프린터로 인쇄하거나 PDF파일로 저장하여 공유할 수 있습니다.</p>
+                <p class="print-info-text">${actionButtonInfo}</p>
             </div>`;
-        
+
         // 결과가 생성된 후, 필요한 이벤트 리스너들을 연결
         addActionListener('feedback', contentText);
         addEditSaveLogic('fb-box', 'fb-content');
@@ -2093,8 +2115,11 @@ document.getElementById('final-form').addEventListener('submit', async e => {
         const data = await res.json();
         const container = document.getElementById('final-result');
 
-        // 기기에 따라 버튼 텍스트와 ID를 동적으로 결정
-        const actionButtonText = isAndroid() ? 'PDF 다운로드' : '인쇄하기';
+        // 기기에 따라 버튼 텍스트와 ID를 동적으로 결정 (모바일=PDF 저장, PC=인쇄)
+        const actionButtonText = shouldGeneratePDF() ? 'PDF 저장' : '인쇄하기';
+        const actionButtonInfo = shouldGeneratePDF()
+            ? `'PDF 저장'을 누르면 PDF 파일로 저장하여 공유할 수 있습니다.`
+            : `'인쇄하기'를 누르면 프린터로 인쇄하거나 PDF파일로 저장하여 공유할 수 있습니다.`;
         const actionButtonId = `action-final-btn`;
 
         container.innerHTML = `
@@ -2128,7 +2153,7 @@ document.getElementById('final-form').addEventListener('submit', async e => {
                 <label><input type="checkbox" id="print_orig_fn" checked> 원본</label>
                 <label><input type="checkbox" id="print_corr_fn" checked> 수정글</label>
                 <button id="${actionButtonId}" class="button">${actionButtonText}</button>
-                <p class="print-info-text">'인쇄하기'를 누르면 프린터로 인쇄하거나 PDF파일로 저장하여 공유할 수 있습니다.</p>
+                <p class="print-info-text">${actionButtonInfo}</p>
             </div>`;
 
         // 결과가 생성된 후, 필요한 이벤트 리스너들을 연결
@@ -2205,11 +2230,11 @@ document.getElementById('final-form').addEventListener('submit', async e => {
             const feedbackHtml = type === 'feedback' ? document.getElementById('fb-content')?.innerHTML : null;
             const correctedHtml = document.getElementById(type === 'feedback' ? 'fb-corrected' : 'fn-corrected')?.innerHTML;
 
-            if (isAndroid()) {
-                // 안드로이드일 경우 PDF 다운로드 함수 호출
+            if (shouldGeneratePDF()) {
+                // 모바일(안드로이드·iOS)일 경우 PDF 파일 생성 함수 호출
                 await generateAndDownloadPDF(imageFile, originalText, feedbackHtml, correctedHtml, options, userInfo);
             } else {
-                // PC 또는 iOS일 경우 인쇄 함수 호출
+                // PC일 경우 인쇄 함수 호출
                 await generateAndPrintHTML(imageFile, originalText, feedbackHtml, correctedHtml, options, userInfo);
             }
         });
