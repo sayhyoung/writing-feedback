@@ -3,7 +3,24 @@
     "allow": [
       "Bash(dir /B \"D:\\\\AI_sandbox\\\\writeback-project\")",
       "Bash(git -C \"D:/AI_sandbox/writeback-project\" status)",
-      "Bash(git --version)"
+      "Bash(git --version)",
+      "WebSearch",
+      "WebFetch(domain:docs.cloud.google.com)",
+      "Bash(firebase --version)",
+      "Bash(firebase projects:list)",
+      "Bash(cd /d D:\\\\AI_sandbox\\\\writeback-project)",
+      "Bash(firebase deploy *)",
+      "Bash(firebase functions:list)",
+      "Bash(npm list *)",
+      "Bash(firebase functions:log --only ttsFunction --limit 30)",
+      "Bash(firebase functions:log --only ttsFunction)",
+      "WebFetch(domain:ai.google.dev)",
+      "WebFetch(domain:almcorp.com)",
+      "WebFetch(domain:blog.google)",
+      "Bash(firebase functions:log --only feedbackFunction)",
+      "Bash(node --check public/script.js)",
+      "Bash(node --check functions/index.js)",
+      "Bash(git add *)"
     ]
   }
 }

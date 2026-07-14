@@ -11,6 +11,7 @@
    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
     <!-- Google Fonts - 한글 지원 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -51,8 +52,13 @@ gtag('js', new Date());
             </a>
         </div> -->
 
-        <div class="reset-btn-container">
-            <button id="reset-btn">Reset</button>
+        <div class="topbar">
+            <button id="history-btn" class="history-btn" title="내 결과물" aria-label="내 결과물">
+                <i class="fas fa-folder-open"></i><span class="history-btn-label">내 결과물</span>
+            </button>
+            <div class="reset-btn-container">
+                <button id="reset-btn">Reset</button>
+            </div>
         </div>
 
         <nav>
@@ -97,7 +103,7 @@ gtag('js', new Date());
                 <label for="contentText-final">❇️최종 결과물을 위해 텍스트를 입력하거나 찍어서 업로드해 주세요.</label>
                 <div class="user-info">
                     <input type="text" id="user-name-final" placeholder="이름" />
-                    <input type="text" id="user-school-final" placeholder="학교" />
+                    <input type="text" id="user-school-final" placeholder="학교(학년)" />
                 </div>
                 <div class="action-icons">
                     <div class="icon-btn-container">

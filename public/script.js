@@ -13,6 +13,128 @@ document.addEventListener('DOMContentLoaded', () => {
     // 전역 변수 초기화
     window.feedbackFileURL = '';
     window.finalFileURL = '';
+    window.LOGO_DATA_URI = '';
+
+    // 인쇄/PDF에 임베드할 로고를 base64로 미리 로딩 (외부 요청 지연 회피)
+    fetch('logo.png')
+        .then(r => r.ok ? r.blob() : null)
+        .then(blob => {
+            if (!blob) return;
+            const reader = new FileReader();
+            reader.onload = () => { window.LOGO_DATA_URI = reader.result; };
+            reader.readAsDataURL(blob);
+        })
+        .catch(() => {});
+
+    function formatDateKR(d = new Date()) {
+        return `${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, '0')}. ${String(d.getDate()).padStart(2, '0')}.`;
+    }
+
+    // 쉐도잉용 캐시 (한 번 받은 MP3 + timepoints 재사용)
+    // text: 음원의 원본(수정글) 텍스트, rateCache: 다운로드용 속도별 재생성 결과 캐시
+    let shadowingCache = { audioUrl: null, timepoints: [], sentences: [], text: '', rateCache: {} };
+    function clearShadowingCache() {
+        if (shadowingCache.audioUrl) URL.revokeObjectURL(shadowingCache.audioUrl);
+        shadowingCache = { audioUrl: null, timepoints: [], sentences: [], text: '', rateCache: {} };
+    }
+
+    // 다운로드용 속도(speakingRate)별 TTS 재생성 결과를 받아 캐시 (반복 호출 비용 방지)
+    async function getTTSForRate(rate) {
+        const key = String(rate);
+        if (shadowingCache.rateCache[key]) return shadowingCache.rateCache[key];
+        const text = shadowingCache.text;
+        if (!text) throw new Error('음원 원본 텍스트가 없습니다.');
+        const res = await fetch(`${API_BASE_URL}/ttsFunction`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, speakingRate: rate })
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: res.statusText }));
+            throw new Error(err.error || '음원 생성 실패');
+        }
+        const data = await res.json();
+        const entry = {
+            audioBase64: data.audioBase64,
+            timepoints: Array.isArray(data.timepoints) ? data.timepoints : [],
+            sentences: Array.isArray(data.sentences) ? data.sentences : [],
+        };
+        shadowingCache.rateCache[key] = entry;
+        return entry;
+    }
+
+    // ===== IndexedDB: 로컬 "내 결과물" 보관함 =====
+    const HISTORY_DB = 'writeback-history';
+    const HISTORY_STORE = 'results';
+    let currentResultId = null; // 현재 화면에 표시 중인 최종 결과의 저장 id
+
+    function openHistoryDB() {
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open(HISTORY_DB, 1);
+            req.onupgradeneeded = () => {
+                const db = req.result;
+                if (!db.objectStoreNames.contains(HISTORY_STORE)) {
+                    db.createObjectStore(HISTORY_STORE, { keyPath: 'id', autoIncrement: true });
+                }
+            };
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+    async function historyAdd(record) {
+        const db = await openHistoryDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(HISTORY_STORE, 'readwrite');
+            const req = tx.objectStore(HISTORY_STORE).add(record);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+    async function historyUpdate(id, patch) {
+        if (id == null) return;
+        const db = await openHistoryDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(HISTORY_STORE, 'readwrite');
+            const store = tx.objectStore(HISTORY_STORE);
+            const getReq = store.get(id);
+            getReq.onsuccess = () => {
+                const rec = getReq.result;
+                if (!rec) { resolve(); return; }
+                Object.assign(rec, patch);
+                const putReq = store.put(rec);
+                putReq.onsuccess = () => resolve();
+                putReq.onerror = () => reject(putReq.error);
+            };
+            getReq.onerror = () => reject(getReq.error);
+        });
+    }
+    async function historyGetAll() {
+        const db = await openHistoryDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(HISTORY_STORE, 'readonly');
+            const req = tx.objectStore(HISTORY_STORE).getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+        });
+    }
+    async function historyGet(id) {
+        const db = await openHistoryDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(HISTORY_STORE, 'readonly');
+            const req = tx.objectStore(HISTORY_STORE).get(id);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => reject(req.error);
+        });
+    }
+    async function historyDelete(id) {
+        const db = await openHistoryDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(HISTORY_STORE, 'readwrite');
+            const req = tx.objectStore(HISTORY_STORE).delete(id);
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
+    }
 
     // --- 헬퍼 함수들 ---
 
@@ -102,6 +224,90 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function escapeHTML(s) {
+        return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function highlightQuotes(s) {
+        return s
+            .replace(/"([^"\n]+?)"/g, '<span class="fb-quote">"$1"</span>')
+            .replace(/'([^'\n]+?)'/g, '<span class="fb-quote">‘$1’</span>');
+    }
+
+    // 모델이 markdown을 출력할 경우 HTML로 변환 (서버 프롬프트가 금지하지만 안전망)
+    function renderMarkdownContent(text) {
+        if (!text || typeof text !== 'string') return '';
+        let html = escapeHTML(text)
+            .replace(/^\s*\*\*\s*$/gm, '')                       // 짝 없는 빈 줄의 **만 있는 라인 제거
+            .replace(/\*\*([^\*\n]+?)\*\*/g, '<strong>$1</strong>') // **bold**
+            .replace(/^[ \t]*[\*\-][ \t]+/gm, '• ')              // * 또는 - 불릿 → •
+            .replace(/^[ \t]*#+[ \t]+/gm, '');                   // # 헤더 마커 제거
+        html = highlightQuotes(html);
+        return html.replace(/\n/g, '<br>');
+    }
+
+    // 원문 / 설명 / 수정 제안 구조를 카드로 렌더 (없으면 null 반환 → 폴백)
+    function renderStructuredItems(text) {
+        if (!text || typeof text !== 'string') return null;
+        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+        const items = [];
+        let cur = null;
+        let lastKey = null;
+        const startRe = /^(\d+)[.)]\s*(?:원문|문장|예시)\s*:\s*(.*)$/;
+        const labelRe = {
+            '원문': /^(?:원문|문장|예시)\s*:\s*(.*)$/,
+            '설명': /^(?:설명|이유|문제점)\s*:\s*(.*)$/,
+            '수정': /^(?:수정\s*제안|수정|개선|대안|제안)\s*:\s*(.*)$/,
+        };
+
+        for (const line of lines) {
+            const m = line.match(startRe);
+            if (m) {
+                if (cur) items.push(cur);
+                cur = { num: m[1], 원문: m[2], 설명: '', 수정: '' };
+                lastKey = '원문';
+                continue;
+            }
+            let matched = false;
+            for (const [k, re] of Object.entries(labelRe)) {
+                const lm = line.match(re);
+                if (lm) {
+                    if (!cur) cur = { num: items.length + 1, 원문: '', 설명: '', 수정: '' };
+                    cur[k] = lm[1];
+                    lastKey = k;
+                    matched = true;
+                    break;
+                }
+            }
+            if (matched) continue;
+            if (cur && lastKey) {
+                cur[lastKey] += (cur[lastKey] ? ' ' : '') + line;
+            } else {
+                return null; // 구조 미발견 → 폴백
+            }
+        }
+        if (cur) items.push(cur);
+        if (items.length === 0) return null;
+        // 최소한 원문/수정 중 하나는 채워져 있는지 확인 (아니면 구조가 아님)
+        if (!items.some(it => it.원문 || it.수정)) return null;
+
+        return items.map(it => `
+            <div class="fb-item">
+                <div class="fb-num">${it.num}</div>
+                <div class="fb-rows">
+                    ${it.원문 ? `<div class="fb-row"><span class="fb-tag fb-tag-error">❌ 원문</span><span class="fb-content">${highlightQuotes(escapeHTML(it.원문))}</span></div>` : ''}
+                    ${it.설명 ? `<div class="fb-row"><span class="fb-tag fb-tag-info">💡 설명</span><span class="fb-content">${highlightQuotes(escapeHTML(it.설명))}</span></div>` : ''}
+                    ${it.수정 ? `<div class="fb-row"><span class="fb-tag fb-tag-correct">✨ 수정</span><span class="fb-content">${highlightQuotes(escapeHTML(it.수정))}</span></div>` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderFeedbackContent(text) {
+        const structured = renderStructuredItems(text);
+        if (structured) return structured;
+        return renderMarkdownContent(text);
+    }
+
     // 상세 피드백 파싱 함수
     function processFeedback(feedback) {
         if (!feedback || typeof feedback !== 'string') return '<p>피드백을 처리할 수 없습니다.</p>';
@@ -117,10 +323,14 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const [title, { pattern, icon, color }] of Object.entries(patterns)) {
             const match = feedback.match(pattern);
             if (match && match[1] && match[1].trim()) {
+                // 캡처 컨텐츠 앞뒤 ** 마커 제거 후 구조화 렌더 시도
+                const cleaned = match[1].trim()
+                    .replace(/^\*+\s*/, '')
+                    .replace(/\s*\*+$/, '');
                 html += `
                     <div class="feedback-category ${color}">
                         <h3><i class="fas ${icon}"></i> ${title}</h3>
-                        <div>${match[1].trim().replace(/\n/g, '<br>')}</div>
+                        <div class="fb-section-body">${renderFeedbackContent(cleaned)}</div>
                     </div>
                 `;
             }
@@ -263,7 +473,73 @@ function getRotatedImageForPrint(file) {
             content.style.backgroundColor = 'transparent';
             saveBtn.style.display = 'none';
             editBtn.style.display = 'inline-block';
+
+            // 최종 수정글이 편집되면 보관함 기록도 갱신하고 음원 캐시는 무효화
+            if (content.id === 'fn-corrected' && currentResultId != null) {
+                historyUpdate(currentResultId, {
+                    correctedText: content.innerText || '',
+                    correctedHtml: content.innerHTML || '',
+                    audioBase64: null,
+                    timepoints: [],
+                    sentences: [],
+                }).catch(() => {});
+            }
         });
+    }
+
+    function base64ToBlob(base64, mimeType) {
+        const byteString = atob(base64);
+        const bytes = new Uint8Array(byteString.length);
+        for (let i = 0; i < byteString.length; i++) bytes[i] = byteString.charCodeAt(i);
+        return new Blob([bytes], { type: mimeType });
+    }
+
+    // AudioBuffer의 일부 구간을 16-bit PCM WAV Blob으로 인코딩
+    function audioBufferToWavBlob(buffer, startSec, endSec) {
+        const sampleRate = buffer.sampleRate;
+        const numCh = buffer.numberOfChannels;
+        const startSample = Math.max(0, Math.floor(startSec * sampleRate));
+        const endSample = Math.min(buffer.length, Math.floor(endSec * sampleRate));
+        const frameCount = Math.max(0, endSample - startSample);
+
+        const bytesPerSample = 2;
+        const dataSize = frameCount * numCh * bytesPerSample;
+        const headerSize = 44;
+        const totalSize = headerSize + dataSize;
+        const ab = new ArrayBuffer(totalSize);
+        const view = new DataView(ab);
+
+        let p = 0;
+        function w8(s) { for (let i = 0; i < s.length; i++) view.setUint8(p++, s.charCodeAt(i)); }
+        function w32(n) { view.setUint32(p, n, true); p += 4; }
+        function w16(n) { view.setUint16(p, n, true); p += 2; }
+
+        w8('RIFF'); w32(36 + dataSize); w8('WAVE');
+        w8('fmt '); w32(16); w16(1); w16(numCh); w32(sampleRate);
+        w32(sampleRate * numCh * bytesPerSample); w16(numCh * bytesPerSample); w16(16);
+        w8('data'); w32(dataSize);
+
+        // 채널별 Float32 → Interleaved Int16 변환
+        const channels = [];
+        for (let ch = 0; ch < numCh; ch++) channels.push(buffer.getChannelData(ch));
+        for (let i = 0; i < frameCount; i++) {
+            const sIdx = startSample + i;
+            for (let ch = 0; ch < numCh; ch++) {
+                let s = channels[ch][sIdx];
+                if (s > 1) s = 1; else if (s < -1) s = -1;
+                view.setInt16(p, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+                p += 2;
+            }
+        }
+        return new Blob([ab], { type: 'audio/wav' });
+    }
+
+    // 문장 텍스트 → 파일명 안전한 슬러그 (영문 단어 앞 4-5개)
+    function slugifySentence(text) {
+        if (!text) return 'sentence';
+        const words = text.replace(/[^a-zA-Z0-9가-힣 ]/g, '').trim().split(/\s+/).slice(0, 5);
+        const slug = words.join('_').replace(/[^a-zA-Z0-9_가-힣]/g, '').slice(0, 40);
+        return slug || 'sentence';
     }
 
     // TTS 리스너 추가 함수
@@ -271,7 +547,6 @@ function getRotatedImageForPrint(file) {
         const ttsBtn = document.getElementById('tts-play-btn');
         if (!ttsBtn) return;
 
-        // 기존 이벤트 리스너 제거
         const newTtsBtn = ttsBtn.cloneNode(true);
         ttsBtn.parentNode.replaceChild(newTtsBtn, ttsBtn);
 
@@ -279,7 +554,7 @@ function getRotatedImageForPrint(file) {
             const playBtn = document.getElementById('tts-play-btn');
             const spinner = document.getElementById('tts-spinner');
             const correctedElement = document.getElementById('fn-corrected');
-            
+
             if (!correctedElement) {
                 alert('수정된 텍스트를 찾을 수 없습니다.');
                 return;
@@ -295,27 +570,570 @@ function getRotatedImageForPrint(file) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text: textFinal })
                 });
-                
-                if (!res.ok) throw new Error('음성 파일 생성 실패');
-                
-                const blob = await res.blob();
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({ error: res.statusText }));
+                    throw new Error(err.error || '음성 파일 생성 실패');
+                }
+
+                const data = await res.json();
+                const blob = base64ToBlob(data.audioBase64, 'audio/mpeg');
+
+                clearShadowingCache();
                 const url = URL.createObjectURL(blob);
+                const timepoints = Array.isArray(data.timepoints) ? data.timepoints : [];
+                const sentences = Array.isArray(data.sentences) ? data.sentences : [];
+                shadowingCache = {
+                    audioUrl: url,
+                    timepoints,
+                    sentences,
+                    text: textFinal,
+                    // 기본 음원(speakingRate 0.9)을 다운로드 캐시에 시드 → 재호출 방지
+                    rateCache: { '0.9': { audioBase64: data.audioBase64, timepoints, sentences } },
+                };
+
+                // 로컬 보관함에 음원 저장 (재처리 없이 재다운로드)
+                historyUpdate(currentResultId, {
+                    audioBase64: data.audioBase64,
+                    timepoints,
+                    sentences,
+                }).catch(() => {});
+
                 const audio = document.getElementById('tts-audio-final');
-                const dl = document.getElementById('tts-download-btn');
-                
-                if (audio && dl) {
+                const dlWrap = document.getElementById('tts-download-wrap');
+                const shadowingBtn = document.getElementById('shadowing-open-btn');
+
+                if (audio) {
                     audio.src = url;
                     audio.style.display = 'block';
-                    dl.style.display = 'inline-block';
-                    dl.href = url;
-                    dl.download = `${generatePDFFileName(document.getElementById('user-name-final')?.value || '')}.mp3`;
                 }
+                if (dlWrap) dlWrap.style.display = 'flex';
+                if (shadowingBtn && shadowingCache.sentences.length > 0) {
+                    shadowingBtn.style.display = 'inline-block';
+                }
+
+                attachFullDownloadHandler();
 
             } catch (err) {
                 alert('TTS 오류: ' + err.message);
             } finally {
                 playBtn.disabled = false;
                 spinner.style.display = 'none';
+            }
+        });
+    }
+
+    // 전체 음원 다운로드 — 선택한 속도(speakingRate)로 서버 재생성 후 저장
+    function attachFullDownloadHandler() {
+        const btn = document.getElementById('tts-download-btn');
+        if (!btn || btn.dataset.wired === '1') return;
+        btn.dataset.wired = '1';
+        btn.addEventListener('click', async () => {
+            const speedSel = document.getElementById('tts-dl-speed');
+            const spinner = document.getElementById('tts-dl-spinner');
+            const rate = parseFloat(speedSel?.value) || 0.9;
+            btn.disabled = true;
+            if (spinner) spinner.style.display = 'inline-block';
+            try {
+                const tts = await getTTSForRate(rate);
+                const blob = base64ToBlob(tts.audioBase64, 'audio/mpeg');
+                const url = URL.createObjectURL(blob);
+                const name = document.getElementById('user-name-final')?.value || '';
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${generatePDFFileName(name)}_${rate}x.mp3`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            } catch (err) {
+                alert('음원 다운로드 중 오류: ' + (err.message || err));
+            } finally {
+                btn.disabled = false;
+                if (spinner) spinner.style.display = 'none';
+            }
+        });
+    }
+
+    function addShadowingListener() {
+        const btn = document.getElementById('shadowing-open-btn');
+        if (!btn) return;
+        const fresh = btn.cloneNode(true);
+        btn.parentNode.replaceChild(fresh, btn);
+        fresh.addEventListener('click', openShadowingModal);
+    }
+
+    function openShadowingModal() {
+        if (!shadowingCache.audioUrl || shadowingCache.sentences.length === 0) {
+            alert('먼저 "원어민 음성 듣기"를 눌러 음성을 생성해주세요.');
+            return;
+        }
+
+        const existing = document.getElementById('shadowing-modal');
+        if (existing) existing.remove();
+
+        const { sentences, timepoints, audioUrl } = shadowingCache;
+
+        const rows = sentences.map((s, i) => `
+            <li class="shadow-row" data-index="${i}">
+                <button class="shadow-play" data-index="${i}" aria-label="문장 ${i + 1} 재생">▶</button>
+                <span class="shadow-num">${i + 1}.</span>
+                <span class="shadow-text">${s.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</span>
+            </li>`).join('');
+
+        const modal = document.createElement('div');
+        modal.id = 'shadowing-modal';
+        modal.className = 'shadow-overlay';
+        modal.innerHTML = `
+            <div class="shadow-dialog" role="dialog" aria-modal="true" aria-label="문장별 듣기">
+                <div class="shadow-header">
+                    <h3>🎧 문장별 듣기 (쉐도잉)</h3>
+                    <button class="shadow-close" aria-label="닫기">&times;</button>
+                </div>
+                <div class="shadow-controls">
+                    <label class="shadow-speed-label">속도
+                        <select class="shadow-speed">
+                            <option value="0.75">0.75x</option>
+                            <option value="0.9">0.9x</option>
+                            <option value="1" selected>1.0x</option>
+                            <option value="1.15">1.15x</option>
+                        </select>
+                    </label>
+                    <button class="shadow-play-all"><span class="shadow-pa-icon">▶</span> <span class="shadow-pa-label">전체 재생</span></button>
+                </div>
+                <p class="shadow-tip">💡 한 문장을 듣고 따라 말해보세요. 같은 버튼을 다시 누르면 정지됩니다.</p>
+                <ul class="shadow-list">${rows}</ul>
+                <div class="shadow-download-row">
+                    <label class="dl-speed-label">다운로드 속도
+                        <select class="shadow-dl-speed dl-speed-select">
+                            <option value="0.7">느리게 (0.7x)</option>
+                            <option value="0.8">약간 느리게 (0.8x)</option>
+                            <option value="0.9" selected>보통 (0.9x)</option>
+                            <option value="1.0">원어민 속도 (1.0x)</option>
+                        </select>
+                    </label>
+                    <button class="shadow-download-btn">📥 문장별 음원 ZIP 다운로드<span class="shadow-download-spinner"></span></button>
+                    <p class="dl-help">💡 파일은 기기의 '다운로드' 폴더(아이폰은 '파일' 앱)에 저장됩니다.</p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        document.body.style.overflow = 'hidden';
+
+        // Web Audio API — sample-accurate 재생 (모바일 seek 오차 해결)
+        let audioCtx = null;
+        let audioBuffer = null;
+        let bufferReadyPromise = null;
+        let activeSource = null;
+        let activeStartCtxTime = 0;
+        let activeBufferStart = 0;
+        let activeBufferEnd = 0;
+        let highlightInterval = null;
+        let playbackRate = 1.0;
+        let playingIndex = null; // null | number | 'all'
+        let opToken = 0;
+        let lastHighlightIdx = -1;
+
+        // 반드시 사용자 제스처(click 핸들러) 안에서 동기적으로 호출되어야 iOS에서 동작
+        function unlockAudioSync() {
+            if (!audioCtx) {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (!AC) { alert('이 브라우저는 Web Audio API를 지원하지 않습니다.'); return false; }
+                audioCtx = new AC();
+                // iOS unlock: 1-sample silent buffer 재생으로 오디오 출력 활성화
+                try {
+                    const silent = audioCtx.createBuffer(1, 1, 22050);
+                    const src = audioCtx.createBufferSource();
+                    src.buffer = silent;
+                    src.connect(audioCtx.destination);
+                    src.start(0);
+                } catch (_) {}
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(() => {});
+            }
+            if (!bufferReadyPromise) {
+                bufferReadyPromise = (async () => {
+                    const resp = await fetch(audioUrl);
+                    const arr = await resp.arrayBuffer();
+                    return new Promise((resolve, reject) => {
+                        audioCtx.decodeAudioData(arr, buf => {
+                            audioBuffer = buf;
+                            resolve(buf);
+                        }, reject);
+                    });
+                })();
+            }
+            return true;
+        }
+        async function ensureBufferReady() {
+            if (audioBuffer) return audioBuffer;
+            if (!bufferReadyPromise) return null;
+            return bufferReadyPromise;
+        }
+
+        function clearHighlight() {
+            modal.querySelectorAll('.shadow-row').forEach(r => r.classList.remove('playing'));
+            lastHighlightIdx = -1;
+        }
+        function highlightRow(idx) {
+            modal.querySelectorAll('.shadow-row').forEach((r, i) => {
+                r.classList.toggle('playing', i === idx);
+            });
+            lastHighlightIdx = idx;
+        }
+        function updateButtons() {
+            modal.querySelectorAll('.shadow-play').forEach(b => {
+                const idx = parseInt(b.dataset.index, 10);
+                b.innerHTML = (playingIndex === idx) ? '⏹' : '▶';
+            });
+            const allBtn = modal.querySelector('.shadow-play-all');
+            const isAll = (playingIndex === 'all');
+            allBtn.querySelector('.shadow-pa-icon').textContent = isAll ? '⏹' : '▶';
+            allBtn.querySelector('.shadow-pa-label').textContent = isAll ? '정지' : '전체 재생';
+            allBtn.classList.toggle('active', isAll);
+        }
+        function stopActiveSource() {
+            if (activeSource) {
+                try { activeSource.onended = null; } catch (_) {}
+                try { activeSource.stop(); } catch (_) {}
+                try { activeSource.disconnect(); } catch (_) {}
+                activeSource = null;
+            }
+            if (highlightInterval !== null) {
+                clearInterval(highlightInterval);
+                highlightInterval = null;
+            }
+        }
+        function stopPlayback() {
+            opToken++;
+            stopActiveSource();
+            playingIndex = null;
+            clearHighlight();
+            updateButtons();
+        }
+        function playRange(startSec, endSec, onNaturalEnd) {
+            stopActiveSource();
+            const dur = Math.max(0.05, endSec - startSec);
+            const source = audioCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.playbackRate.value = playbackRate;
+            source.connect(audioCtx.destination);
+            source.onended = () => {
+                if (activeSource === source && onNaturalEnd) onNaturalEnd();
+            };
+            activeSource = source;
+            activeStartCtxTime = audioCtx.currentTime;
+            activeBufferStart = startSec;
+            activeBufferEnd = endSec;
+            source.start(0, startSec, dur);
+        }
+        async function playSentence(i) {
+            if (playingIndex === i) {
+                stopPlayback();
+                return;
+            }
+            const myToken = ++opToken;
+
+            let buf;
+            try { buf = await ensureBufferReady(); }
+            catch (err) { console.error('디코딩 실패:', err); alert('오디오 디코딩 실패: ' + (err.message || err)); return; }
+            if (myToken !== opToken) return;
+            if (!buf || !audioCtx) return;
+
+            const start = timepoints[i]?.timeSeconds ?? 0;
+            const next = timepoints[i + 1]?.timeSeconds;
+            const end = (typeof next === 'number') ? next : buf.duration;
+
+            playingIndex = i;
+            highlightRow(i);
+            updateButtons();
+
+            playRange(start, end, () => {
+                if (playingIndex === i) stopPlayback();
+            });
+        }
+        async function playAll() {
+            if (playingIndex === 'all') {
+                stopPlayback();
+                return;
+            }
+            const myToken = ++opToken;
+
+            let buf;
+            try { buf = await ensureBufferReady(); }
+            catch (err) { console.error('디코딩 실패:', err); alert('오디오 디코딩 실패: ' + (err.message || err)); return; }
+            if (myToken !== opToken) return;
+            if (!buf || !audioCtx) return;
+
+            playingIndex = 'all';
+            lastHighlightIdx = -1;
+            updateButtons();
+            highlightRow(0);
+
+            playRange(0, buf.duration, () => {
+                if (playingIndex === 'all') stopPlayback();
+            });
+
+            highlightInterval = setInterval(() => {
+                if (!activeSource) return;
+                const elapsed = (audioCtx.currentTime - activeStartCtxTime) * playbackRate;
+                const t = activeBufferStart + elapsed;
+                let idx = 0;
+                for (let i = 0; i < timepoints.length; i++) {
+                    if ((timepoints[i].timeSeconds ?? 0) <= t) idx = i;
+                    else break;
+                }
+                if (idx !== lastHighlightIdx) highlightRow(idx);
+            }, 80);
+        }
+        function closeModal() {
+            stopPlayback();
+            if (audioCtx) { try { audioCtx.close(); } catch (_) {} audioCtx = null; }
+            audioBuffer = null;
+            bufferReadyPromise = null;
+            document.body.style.overflow = '';
+            modal.remove();
+        }
+
+        modal.querySelectorAll('.shadow-play').forEach(b => {
+            b.addEventListener('click', e => {
+                if (!unlockAudioSync()) return; // 동기 unlock — iOS gesture 요구사항
+                const idx = parseInt(e.currentTarget.dataset.index, 10);
+                playSentence(idx);
+            });
+        });
+        modal.querySelector('.shadow-play-all').addEventListener('click', () => {
+            if (!unlockAudioSync()) return;
+            playAll();
+        });
+        modal.querySelector('.shadow-download-btn').addEventListener('click', async (e) => {
+            const btn = e.currentTarget;
+            if (btn.disabled) return;
+            if (typeof window.JSZip === 'undefined') {
+                alert('ZIP 라이브러리를 로드하지 못했습니다. 잠시 후 다시 시도해주세요.');
+                return;
+            }
+            if (!unlockAudioSync()) return; // 디코딩 트리거 (audioCtx 생성)
+            btn.disabled = true;
+            const spinner = btn.querySelector('.shadow-download-spinner');
+            if (spinner) spinner.classList.add('on');
+            try {
+                const rate = parseFloat(modal.querySelector('.shadow-dl-speed')?.value) || 0.9;
+                // 선택 속도로 서버 재생성(캐시) → 해당 속도의 오디오/타임포인트로 분할
+                const tts = await getTTSForRate(rate);
+                const rateSentences = tts.sentences.length ? tts.sentences : sentences;
+                const rateTimepoints = tts.timepoints.length ? tts.timepoints : timepoints;
+                const blob = base64ToBlob(tts.audioBase64, 'audio/mpeg');
+                const arr = await blob.arrayBuffer();
+                const buf = await new Promise((resolve, reject) =>
+                    audioCtx.decodeAudioData(arr, resolve, reject));
+                if (!buf) throw new Error('오디오 버퍼가 준비되지 않았습니다.');
+                const zip = new window.JSZip();
+                for (let i = 0; i < rateSentences.length; i++) {
+                    const start = rateTimepoints[i]?.timeSeconds ?? 0;
+                    const next = rateTimepoints[i + 1]?.timeSeconds;
+                    const end = (typeof next === 'number') ? next : buf.duration;
+                    const wavBlob = audioBufferToWavBlob(buf, start, end);
+                    const num = String(i + 1).padStart(2, '0');
+                    const slug = slugifySentence(rateSentences[i]);
+                    zip.file(`${num}_${slug}.wav`, wavBlob);
+                }
+                const userName = document.getElementById('user-name-final')?.value?.trim() || '';
+                const zipName = `${generatePDFFileName(userName)}_문장별음원_${rate}x.zip`;
+                const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+                const url = URL.createObjectURL(zipBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = zipName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            } catch (err) {
+                console.error('ZIP 생성 실패:', err);
+                alert('문장별 음원 ZIP 생성 중 오류: ' + (err.message || err));
+            } finally {
+                btn.disabled = false;
+                if (spinner) spinner.classList.remove('on');
+            }
+        });
+        modal.querySelector('.shadow-close').addEventListener('click', closeModal);
+        modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+        modal.querySelector('.shadow-speed').addEventListener('change', e => {
+            playbackRate = parseFloat(e.target.value) || 1.0;
+            if (activeSource) {
+                try { activeSource.playbackRate.value = playbackRate; } catch (_) {}
+            }
+        });
+        document.addEventListener('keydown', function escHandler(e) {
+            if (e.key === 'Escape') {
+                document.removeEventListener('keydown', escHandler);
+                closeModal();
+            }
+        });
+    }
+
+    // ===== "내 결과물" 보관함 패널 =====
+    function escHtml(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function fmtHistoryDate(ts) {
+        const d = new Date(ts);
+        return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ` +
+               `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    async function openHistoryPanel() {
+        const existing = document.getElementById('history-modal');
+        if (existing) existing.remove();
+        const modal = document.createElement('div');
+        modal.id = 'history-modal';
+        modal.className = 'shadow-overlay';
+        modal.innerHTML = `
+            <div class="shadow-dialog history-dialog" role="dialog" aria-modal="true" aria-label="내 결과물">
+                <div class="shadow-header">
+                    <h3>📁 내 결과물</h3>
+                    <button class="shadow-close" aria-label="닫기">&times;</button>
+                </div>
+                <p class="shadow-tip">💡 이 기기에 저장된 결과물이에요. 재처리 없이 다시 보거나 PDF·음원을 다시 받을 수 있어요.</p>
+                <div class="history-body"><div class="history-empty">불러오는 중...</div></div>
+            </div>`;
+        document.body.appendChild(modal);
+        document.body.style.overflow = 'hidden';
+
+        function close() { document.body.style.overflow = ''; modal.remove(); }
+        modal.querySelector('.shadow-close').addEventListener('click', close);
+        modal.addEventListener('click', e => { if (e.target === modal) close(); });
+        document.addEventListener('keydown', function esc(e) {
+            if (e.key === 'Escape') { document.removeEventListener('keydown', esc); close(); }
+        });
+
+        await renderHistoryList(modal);
+    }
+
+    async function renderHistoryList(modal) {
+        const body = modal.querySelector('.history-body');
+        let records;
+        try { records = await historyGetAll(); }
+        catch (e) { body.innerHTML = '<div class="history-empty">보관함을 불러오지 못했습니다.</div>'; return; }
+        records.sort((a, b) => b.createdAt - a.createdAt);
+        if (!records.length) {
+            body.innerHTML = '<div class="history-empty">아직 저장된 결과물이 없어요.<br>최종 결과물을 생성하면 여기에 자동 저장됩니다.</div>';
+            return;
+        }
+        body.innerHTML = '<ul class="history-list">' + records.map(r => {
+            const title = [r.name, r.school].filter(Boolean).join(' · ') || '이름 없음';
+            const snippet = (r.correctedText || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+            const hasAudio = !!r.audioBase64;
+            return `<li class="history-item">
+                <div class="history-item-main">
+                    <div class="history-item-title">${escHtml(title)}</div>
+                    <div class="history-item-date">${fmtHistoryDate(r.createdAt)}${hasAudio ? ' · 🔊 음원' : ''}</div>
+                    <div class="history-item-snippet">${escHtml(snippet)}</div>
+                </div>
+                <div class="history-item-actions">
+                    <button class="button history-open" data-id="${r.id}">열기</button>
+                    <button class="button history-del" data-id="${r.id}">삭제</button>
+                </div>
+            </li>`;
+        }).join('') + '</ul>';
+
+        body.querySelectorAll('.history-open').forEach(b => b.addEventListener('click', async () => {
+            const rec = await historyGet(parseInt(b.dataset.id, 10));
+            if (rec) openHistoryDetail(modal, rec);
+        }));
+        body.querySelectorAll('.history-del').forEach(b => b.addEventListener('click', async () => {
+            if (!confirm('이 결과물을 삭제할까요?')) return;
+            await historyDelete(parseInt(b.dataset.id, 10));
+            await renderHistoryList(modal);
+        }));
+    }
+
+    function openHistoryDetail(modal, rec) {
+        const body = modal.querySelector('.history-body');
+        const hasAudio = !!rec.audioBase64;
+        const isAnd = isAndroid();
+        const dlSpeedHtml = `
+            <div class="dl-speed-wrap">
+                <button class="button history-audio-dl">⬇ 전체 음원 다운로드 <span class="spinner history-dl-spin"></span></button>
+                <label class="dl-speed-label">다운로드 속도
+                    <select class="history-dl-speed dl-speed-select">
+                        <option value="0.7">느리게 (0.7x)</option>
+                        <option value="0.8">약간 느리게 (0.8x)</option>
+                        <option value="0.9" selected>보통 (0.9x)</option>
+                        <option value="1.0">원어민 속도 (1.0x)</option>
+                    </select>
+                </label>
+            </div>`;
+        body.innerHTML = `
+            <button class="button history-back">← 목록으로</button>
+            <div class="history-detail">
+                <div class="history-detail-meta">${escHtml([rec.name, rec.school].filter(Boolean).join(' · ') || '이름 없음')} · ${fmtHistoryDate(rec.createdAt)}</div>
+                <h4>✨ 수정글</h4>
+                <div class="history-corrected">${rec.correctedHtml || escHtml(rec.correctedText || '')}</div>
+                <div class="history-detail-actions">
+                    ${hasAudio ? '<audio class="history-audio" controls></audio>' : ''}
+                    ${hasAudio ? '<button class="button history-shadow">🎧 문장별 듣기 (쉐도잉)</button>' : ''}
+                    ${hasAudio ? dlSpeedHtml : '<p class="dl-help">이 결과물에는 저장된 음원이 없어요. (생성 당시 \'원어민 음성 듣기\'를 실행하지 않음)</p>'}
+                    <button class="button history-print">${isAnd ? 'PDF 다운로드' : '인쇄하기'}</button>
+                </div>
+                <p class="dl-help">💡 다운로드 파일은 기기의 '다운로드' 폴더(아이폰은 '파일' 앱)에 저장됩니다.</p>
+            </div>`;
+
+        body.querySelector('.history-back').addEventListener('click', () => renderHistoryList(modal));
+
+        function loadCacheFromRecord() {
+            clearShadowingCache();
+            const tps = Array.isArray(rec.timepoints) ? rec.timepoints : [];
+            const sents = Array.isArray(rec.sentences) ? rec.sentences : [];
+            let url = null;
+            if (rec.audioBase64) url = URL.createObjectURL(base64ToBlob(rec.audioBase64, 'audio/mpeg'));
+            shadowingCache = {
+                audioUrl: url,
+                timepoints: tps,
+                sentences: sents,
+                text: rec.correctedText || '',
+                rateCache: rec.audioBase64 ? { '0.9': { audioBase64: rec.audioBase64, timepoints: tps, sentences: sents } } : {},
+            };
+        }
+
+        if (hasAudio) {
+            loadCacheFromRecord();
+            const audioEl = body.querySelector('.history-audio');
+            if (audioEl && shadowingCache.audioUrl) audioEl.src = shadowingCache.audioUrl;
+
+            body.querySelector('.history-shadow').addEventListener('click', () => {
+                loadCacheFromRecord();
+                openShadowingModal();
+            });
+
+            body.querySelector('.history-audio-dl').addEventListener('click', async e => {
+                const btn = e.currentTarget;
+                const spin = btn.querySelector('.history-dl-spin');
+                const rate = parseFloat(body.querySelector('.history-dl-speed')?.value) || 0.9;
+                btn.disabled = true; if (spin) spin.style.display = 'inline-block';
+                try {
+                    loadCacheFromRecord();
+                    const tts = await getTTSForRate(rate);
+                    const url = URL.createObjectURL(base64ToBlob(tts.audioBase64, 'audio/mpeg'));
+                    const a = document.createElement('a');
+                    a.href = url; a.download = `${generatePDFFileName(rec.name || '')}_${rate}x.mp3`;
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                } catch (err) { alert('음원 다운로드 오류: ' + (err.message || err)); }
+                finally { btn.disabled = false; if (spin) spin.style.display = 'none'; }
+            });
+        }
+
+        body.querySelector('.history-print').addEventListener('click', async () => {
+            const options = { orig: !!(rec.originalText && rec.originalText.trim()), corr: true, fbCheck: false };
+            const userInfo = { name: rec.name || '', school: rec.school || '', type: 'final' };
+            if (isAndroid()) {
+                await generateAndDownloadPDF(null, rec.originalText || '', null, rec.correctedHtml || '', options, userInfo);
+            } else {
+                await generateAndPrintHTML(null, rec.originalText || '', null, rec.correctedHtml || '', options, userInfo);
             }
         });
     }
@@ -334,7 +1152,16 @@ function getRotatedImageForPrint(file) {
                 imageUrl = await getRotatedImageForPrint(imageFile);
             }
             
-            const userInfoHTML = (userInfo.name?.trim() || userInfo.school?.trim()) ? `<div class="user-info-print"><strong>이름:</strong> ${userInfo.name.trim()} &nbsp;&nbsp; <strong>학교:</strong> ${userInfo.school.trim()}</div>` : '';
+            const safeName = (userInfo.name || '').trim();
+            const safeSchool = (userInfo.school || '').trim();
+            const userInfoHTML = (safeName || safeSchool) ? `
+                <div class="user-info-print">
+                    <div class="user-info-left">
+                        ${safeName ? `<span class="user-info-item"><span class="user-info-label">이름</span> ${safeName}</span>` : ''}
+                        ${safeSchool ? `<span class="user-info-item"><span class="user-info-label">학교</span> ${safeSchool}</span>` : ''}
+                    </div>
+                    <div class="user-info-date">${formatDateKR()}</div>
+                </div>` : '';
             let printContent = `<h2>${userInfo.type === 'feedback' ? '피드백 결과' : '최종 결과'}</h2>`;
 
             if (options.orig) {
@@ -361,17 +1188,143 @@ function getRotatedImageForPrint(file) {
                     <title>${generatePDFFileName(userInfo.name)}</title>
                     <style>
                         @page{margin:15mm;size:A4}
-                        body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;color:#333;line-height:1.6;font-size:11pt;}
-                        .print-header{text-align:center;padding-bottom:10px;border-bottom:2px solid #4a5568;margin-bottom:20px;}
-                        h1{font-size:18pt;color:#1e3a8a;} h2{font-size:16pt;} h3{font-size:13pt;border-left:3px solid #7c3aed;padding-left:8px;margin-top:20px;}
-                        div,p{page-break-inside:avoid;} .original-content img{max-width:70%;}
+                        body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;color:#1f2937;line-height:1.6;font-size:11pt;}
+                        /* === 브랜드 헤더 === */
+                        .print-header {
+                            display: flex;
+                            align-items: center;
+                            gap: 14pt;
+                            padding-bottom: 10pt;
+                            border-bottom: 3pt solid #1e3a8a;
+                            margin-bottom: 14pt;
+                        }
+                        .print-header .logo {
+                            width: 100pt;
+                            height: auto;
+                            flex-shrink: 0;
+                        }
+                        .print-header .title-block {
+                            flex: 1;
+                        }
+                        .print-header .brand-title {
+                            font-size: 22pt;
+                            font-weight: 700;
+                            color: #1e3a8a;
+                            margin: 0 0 2pt 0;
+                            letter-spacing: -0.5pt;
+                        }
+                        .print-header .brand-sub {
+                            font-size: 10.5pt;
+                            color: #64748b;
+                            margin: 0;
+                            font-weight: 500;
+                        }
+                        /* === 사용자 정보 줄 === */
+                        .user-info-print {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            background: #f8fafc;
+                            border-left: 3pt solid #1e3a8a;
+                            padding: 8pt 12pt;
+                            margin-bottom: 18pt;
+                            border-radius: 0 4pt 4pt 0;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+                        .user-info-left { display: flex; gap: 18pt; flex-wrap: wrap; }
+                        .user-info-item { font-size: 11pt; color: #1e293b; }
+                        .user-info-label {
+                            display: inline-block;
+                            background: #1e3a8a;
+                            color: #fff;
+                            padding: 1pt 6pt;
+                            border-radius: 3pt;
+                            font-size: 9pt;
+                            font-weight: 700;
+                            margin-right: 4pt;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+                        .user-info-date { font-size: 10pt; color: #64748b; }
+                        h2{font-size:16pt; color: #1e3a8a; margin-top: 12pt;} h3{font-size:13pt;border-left:3pt solid #7c3aed;padding-left:8pt;margin-top:18pt; page-break-after: avoid;}
+                        .original-content img{max-width:70%;}
+                        /* 분할 금지는 개별 카드에만 — 카테고리는 페이지 간 자연스럽게 분할 */
+                        .fb-item { page-break-inside: avoid; }
+                        .feedback-category { page-break-inside: auto; margin-bottom: 8pt; }
+                        .feedback-category h3 { margin-top: 12pt; }
+                        /* 피드백 카드 인쇄 스타일 */
+                        .feedback-container { display: block; }
+                        .fb-section-body { display: block; margin-top: 4pt; }
+                        .fb-item {
+                            background: #fff;
+                            border: 1px solid #e2e8f0;
+                            border-left: 3pt solid #ef4444;
+                            border-radius: 4px;
+                            padding: 8pt;
+                            margin-bottom: 8pt;
+                            display: block;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+                        .feedback-category.vocabulary .fb-item { border-left-color: #f59e0b; }
+                        .feedback-category.expression .fb-item { border-left-color: #8b5cf6; }
+                        .fb-num {
+                            display: inline-block;
+                            min-width: 18pt;
+                            height: 18pt;
+                            line-height: 18pt;
+                            text-align: center;
+                            background: #ef4444;
+                            color: #fff;
+                            border-radius: 9pt;
+                            font-weight: 700;
+                            font-size: 10pt;
+                            padding: 0 5pt;
+                            margin-right: 6pt;
+                            margin-bottom: 4pt;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+                        .feedback-category.vocabulary .fb-num { background: #f59e0b; }
+                        .feedback-category.expression .fb-num { background: #8b5cf6; }
+                        .fb-rows { display: block; }
+                        .fb-row { display: block; margin: 3pt 0; line-height: 1.5; }
+                        .fb-tag {
+                            display: inline-block;
+                            padding: 1pt 5pt;
+                            border-radius: 3pt;
+                            font-size: 9pt;
+                            font-weight: 700;
+                            margin-right: 4pt;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+                        .fb-tag-error { background: #fee2e2; color: #991b1b; }
+                        .fb-tag-info { background: #dbeafe; color: #1e40af; }
+                        .fb-tag-correct { background: #dcfce7; color: #166534; }
+                        .fb-content { display: inline; }
+                        .fb-quote {
+                            background: #f1f5f9;
+                            padding: 0 3pt;
+                            border-radius: 2pt;
+                            font-family: 'Consolas', 'Courier New', monospace;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
                     </style>
                 </head>
                 <body>
-                    <div class="print-header"><h1>🎉윤선생 WriteBack🎉</h1></div>
+                    <div class="print-header">
+                        ${window.LOGO_DATA_URI ? `<img class="logo" src="${window.LOGO_DATA_URI}" alt="윤선생"/>` : ''}
+                        <div class="title-block">
+                            <h1 class="brand-title">윤선생 WriteBack</h1>
+                            <p class="brand-sub">영작문 피드백 리포트</p>
+                        </div>
+                    </div>
                     ${userInfoHTML}
                     ${printContent}
-               
+
                 </body>
                 </html>`;
             
@@ -419,14 +1372,26 @@ async function generateAndDownloadPDF(imageFile, origText, feedbackHtml, correct
             imageUrl = await getOriginalImageForPrint(imageFile);
         }
         
-        const userInfoHTML = (userInfo.name?.trim() || userInfo.school?.trim()) ? 
-            `<div style="margin-bottom: 25px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; text-align: center; border: 1px solid #dee2e6;">
-                <strong style="color: #495057;">이름:</strong> <span style="color: #212529;">${userInfo.name?.trim() || ''}</span> &nbsp;&nbsp; 
-                <strong style="color: #495057;">학교(학년):</strong> <span style="color: #212529;">${userInfo.school?.trim() || ''}</span>
+        const safeName2 = (userInfo.name || '').trim();
+        const safeSchool2 = (userInfo.school || '').trim();
+        const userInfoHTML = (safeName2 || safeSchool2) ?
+            `<div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border-left: 4px solid #1e3a8a; padding: 12px 16px; margin: 0 0 24px 0; border-radius: 0 6px 6px 0;">
+                <div style="display: flex; gap: 22px; flex-wrap: wrap;">
+                    ${safeName2 ? `<span style="font-size: 14pt; color: #1e293b;"><span style="display: inline-block; background: #1e3a8a; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 11pt; font-weight: 700; margin-right: 6px;">이름</span> ${safeName2}</span>` : ''}
+                    ${safeSchool2 ? `<span style="font-size: 14pt; color: #1e293b;"><span style="display: inline-block; background: #1e3a8a; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 11pt; font-weight: 700; margin-right: 6px;">학교</span> ${safeSchool2}</span>` : ''}
+                </div>
+                <div style="font-size: 12pt; color: #64748b;">${formatDateKR()}</div>
             </div>` : '';
-        
-        // 메인 타이틀
-        const mainTitle = `<h1 style="color: #2563eb; margin: 20px 0 30px 0; font-size: 24pt; font-weight: 700; text-align: center; border-bottom: 3px solid #2563eb; padding-bottom: 15px;">🎉윤선생 WriteBack🎉</h1>`;
+
+        // 브랜드 헤더 (로고 + 타이틀 + 서브타이틀)
+        const mainTitle = `
+            <div style="display: flex; align-items: center; gap: 18px; padding: 0 0 14px 0; border-bottom: 4px solid #1e3a8a; margin: 0 0 20px 0;">
+                ${window.LOGO_DATA_URI ? `<img src="${window.LOGO_DATA_URI}" alt="윤선생" style="width: 140px; height: auto; flex-shrink: 0;"/>` : ''}
+                <div style="flex: 1;">
+                    <div style="font-size: 28pt; font-weight: 700; color: #1e3a8a; line-height: 1.1; margin-bottom: 4px; letter-spacing: -0.5pt;">윤선생 WriteBack</div>
+                    <div style="font-size: 13pt; color: #64748b; font-weight: 500;">영작문 피드백 리포트</div>
+                </div>
+            </div>`;
         
         let printContent = '';
 
@@ -988,11 +1953,17 @@ function addDownloadListener(type, originalText) {
         });
     }
 
+    // "내 결과물" 보관함 버튼
+    const historyBtn = document.getElementById('history-btn');
+    if (historyBtn) {
+        historyBtn.addEventListener('click', () => { openHistoryPanel().catch(() => {}); });
+    }
+
     // 리셋 버튼
     const resetBtn = document.getElementById('reset-btn');
     if (resetBtn) {
         resetBtn.addEventListener('click', () => {
-            if (confirm('정말로 모든 내용을 초기화하시겠습니까?')) {
+            if (confirm('현재 화면의 입력 내용을 초기화합니다.\n(저장된 결과물은 우측 상단 \'내 결과물\'에 그대로 남아 있어요.)\n계속할까요?')) {
                 window.location.reload();
             }
         });
@@ -1068,7 +2039,7 @@ document.getElementById('feedback-form').addEventListener('submit', async e => {
             <div class="corrected-section" id="fb-corr-box">
                 <h3><i class="fas fa-check-circle"></i> 수정글</h3>
                 <div class="edit-instruction">내용에서 원하는 부분을 수정하려면 Edit 버튼을 누른 후 입력하시고 Save를 눌러 저장해주세요.</div>
-                <div class="corrected-content" id="fb-corrected">${data.modelAnswer?.replace(/\n/g, '<br>') ?? '피드백 할 내용이 없습니다.'}</div>
+                <div class="corrected-content" id="fb-corrected">${data.modelAnswer ? renderMarkdownContent(data.modelAnswer) : '피드백 할 내용이 없습니다.'}</div>
             </div>
             <div class="print-options-inline">
                 <label><input type="checkbox" id="print_orig_fb" checked> 원본</label>
@@ -1133,13 +2104,25 @@ document.getElementById('final-form').addEventListener('submit', async e => {
                 <div class="edit-instruction">내용에서 원하는 부분을 수정하려면 Edit 버튼을 누른 후 입력하시고 Save를 눌러 저장해주세요.</div>
                 <div class="corrected-content" id="fn-corrected"
                      style="background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 8px; padding: 24px 18px; margin-top: 10px; box-shadow: 0 2px 8px rgba(16,185,129,0.07);">
-                    ${data.modelAnswer?.replace(/\n/g, '<br>') ?? '피드백 할 내용이 없습니다.'}
+                    ${data.modelAnswer ? renderMarkdownContent(data.modelAnswer) : '피드백 할 내용이 없습니다.'}
                 </div>
             </div>
             <div class="audio-controls-area">
-                <button id="tts-play-btn" class="button">원어민 음성 듣기 <span id="tts-spinner" class="spinner"></span></button>
+                <button id="tts-play-btn" class="button">🔊 원어민 음성 듣기 <span id="tts-spinner" class="spinner"></span></button>
                 <audio id="tts-audio-final" controls style="display:none;"></audio>
-                <a id="tts-download-btn" style="display:none;">음원 다운로드</a>
+                <button id="shadowing-open-btn" class="button" style="display:none;">🎧 문장별 듣기 (쉐도잉)</button>
+                <div id="tts-download-wrap" class="dl-speed-wrap" style="display:none;">
+                    <button id="tts-download-btn" class="button">⬇ 전체 음원 다운로드 <span id="tts-dl-spinner" class="spinner"></span></button>
+                    <label class="dl-speed-label">다운로드 속도
+                        <select id="tts-dl-speed" class="dl-speed-select">
+                            <option value="0.7">느리게 (0.7x)</option>
+                            <option value="0.8">약간 느리게 (0.8x)</option>
+                            <option value="0.9" selected>보통 (0.9x)</option>
+                            <option value="1.0">원어민 속도 (1.0x)</option>
+                        </select>
+                    </label>
+                </div>
+                <p class="dl-help">💡 다운로드한 파일은 기기의 '다운로드' 폴더(아이폰은 '파일' 앱)에 저장됩니다. 지난 결과물은 우측 상단 '내 결과물'에서 다시 받을 수 있어요.</p>
             </div>
             <div class="print-options-inline">
                 <label><input type="checkbox" id="print_orig_fn" checked> 원본</label>
@@ -1151,7 +2134,50 @@ document.getElementById('final-form').addEventListener('submit', async e => {
         // 결과가 생성된 후, 필요한 이벤트 리스너들을 연결
         addActionListener('final', contentText);
         addTTSListener();
+        addShadowingListener();
         addEditSaveLogic('fn-box', 'fn-corrected');
+
+        // 로컬 보관함에 최종 결과 저장 (성공한 경우만, 음원은 '원어민 음성 듣기' 시 추가 저장)
+        currentResultId = null;
+        const modelAnswer = (data.modelAnswer || '').trim();
+        const FAILURE_ANSWERS = [
+            '수정글 생성에 실패했습니다. 피드백 내용을 참고해주세요.',
+            '피드백을 제공할 영어 문장이 없습니다. 영작문을 입력해주세요.',
+        ];
+        const isValidResult = modelAnswer && !FAILURE_ANSWERS.includes(modelAnswer);
+        if (isValidResult) {
+            try {
+                const nameVal = document.getElementById('user-name-final')?.value?.trim() || '';
+                const schoolVal = document.getElementById('user-school-final')?.value?.trim() || '';
+                const correctedText = document.getElementById('fn-corrected')?.innerText || '';
+                currentResultId = await historyAdd({
+                    createdAt: Date.now(),
+                    name: nameVal,
+                    school: schoolVal,
+                    originalText: contentText,
+                    correctedText,
+                    correctedHtml: document.getElementById('fn-corrected')?.innerHTML || '',
+                    audioBase64: null,
+                    timepoints: [],
+                    sentences: [],
+                });
+            } catch (_) { currentResultId = null; }
+        }
+
+        // 수정글이 편집되면 캐시된 음성과 불일치 → 캐시 무효화
+        const fnCorrected = document.getElementById('fn-corrected');
+        if (fnCorrected) {
+            fnCorrected.addEventListener('input', () => {
+                if (!shadowingCache.audioUrl) return;
+                clearShadowingCache();
+                const audio = document.getElementById('tts-audio-final');
+                const dlWrap = document.getElementById('tts-download-wrap');
+                const shadowingBtn = document.getElementById('shadowing-open-btn');
+                if (audio) { audio.pause(); audio.removeAttribute('src'); audio.style.display = 'none'; }
+                if (dlWrap) dlWrap.style.display = 'none';
+                if (shadowingBtn) shadowingBtn.style.display = 'none';
+            });
+        }
 
     } catch (err) {
         alert('최종 결과물 생성 중 오류: ' + err.message);

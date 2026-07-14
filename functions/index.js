@@ -2,10 +2,10 @@ const { onRequest } = require("firebase-functions/v2/https");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { VertexAI } = require("@google-cloud/vertexai");
-const { TextToSpeechClient } = require("@google-cloud/text-to-speech"); // TTS 클라이언트 추가
+const { TextToSpeechClient } = require("@google-cloud/text-to-speech").v1beta1; // v1beta1 — Timepoints 기능 사용을 위해
 
 
-setGlobalOptions({ runtime: "nodejs20", region: "us-central1"}); 
+setGlobalOptions({ region: "us-central1" });
 admin.initializeApp();
 
 
@@ -13,8 +13,8 @@ const vertexAI = new VertexAI({ project: "writeback-462607" });
 const textToSpeechClient = new TextToSpeechClient();
 
 // 각 기능에 맞는 모델을 별도로 정의
-const visionModel = vertexAI.getGenerativeModel({ model: "gemini-2.0-flash-lite-001" });
-const textModel = vertexAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
+const visionModel = vertexAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+const textModel = vertexAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 // 1. OCR 함수
 exports.ocrFunction = onRequest({ cors: true }, async (req, res) => {
@@ -89,6 +89,15 @@ exports.feedbackFunction = onRequest({ cors: true }, async (req, res) => {
             "feedback": "총평: ...\\n\\n문법 오류: ...\\n\\n어휘 개선: ...\\n\\n표현 향상: ...\\n\\n잘한 점: ...",
             "modelAnswer": "..."
           }
+
+          ### 텍스트 작성 규칙 (매우 중요)
+          - 절대 마크다운 문법을 사용하지 마세요. 다음은 모두 금지됩니다: **굵게**, *기울임*, # 제목, - 목록 마커, > 인용, \`코드\`.
+          - 강조가 필요하면 작은따옴표('단어') 또는 큰따옴표("문장")만 사용하세요. 예: 'went', "I went to school."
+          - 문법 오류·어휘 개선 등에서 각 항목은 아래 형식의 plain text로 작성하세요:
+            1. 원문: "..."
+               설명: ...
+               수정 제안: "..."
+          - 모든 출력은 plain text여야 하며 HTML 태그도 사용하지 마세요.
         `;
         const userPrompt = `학생 작문 내용: ${contentText}`;
 
@@ -96,6 +105,9 @@ exports.feedbackFunction = onRequest({ cors: true }, async (req, res) => {
             contents: [
                 { role: "user", parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }
             ],
+            generationConfig: {
+                thinkingConfig: { thinkingBudget: 0 }, // 2.5-flash thinking 비활성화 → 응답 속도 개선
+            },
         };
 
         const response = await textModel.generateContent(request);
@@ -123,26 +135,67 @@ exports.feedbackFunction = onRequest({ cors: true }, async (req, res) => {
 });
 
 
-// 3. TTS 함수 (Google WaveNet 사용)
+function escapeSSML(text) {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+}
+
+function splitIntoSentences(text) {
+    const normalized = text.replace(/\s+/g, ' ').trim();
+    if (!normalized) return [];
+    const matches = normalized.match(/[^.!?]+[.!?]+(?:["')\]]+)?|[^.!?]+$/g);
+    return matches ? matches.map(s => s.trim()).filter(Boolean) : [normalized];
+}
+
+// 3. TTS 함수 (WaveNet + Timepoints — 문장별 재생 지원)
 exports.ttsFunction = onRequest({ cors: true }, async (req, res) => {
     if (req.method !== "POST") {
         return res.status(405).send("Method Not Allowed");
     }
     try {
-        const { text } = req.body;
+        const { text, speakingRate } = req.body;
         if (!text) return res.status(400).json({ error: "텍스트가 비어있습니다." });
 
+        // 다운로드용 느린 음원 지원 — 요청된 speakingRate를 안전 범위로 제한 (기본 0.9)
+        let rate = parseFloat(speakingRate);
+        if (!Number.isFinite(rate)) rate = 0.9;
+        rate = Math.min(1.5, Math.max(0.5, rate));
+
+        const sentences = splitIntoSentences(text);
+        if (sentences.length === 0) {
+            return res.status(400).json({ error: "유효한 문장이 없습니다." });
+        }
+
+        const ssml = '<speak>' + sentences
+            .map((s, i) => `<mark name="s${i}"/>${escapeSSML(s)}`)
+            .join(' ') + '</speak>';
+
         const ttsRequest = {
-            input: { text: text },
-            // WaveNet 음성: en-US-Wavenet-D (남성), en-US-Wavenet-F (여성)
-            voice: { languageCode: 'en-US', name: 'en-US-Standard-C' },
-            audioConfig: { audioEncoding: 'MP3', speakingRate: 0.9 },
+            input: { ssml },
+            voice: { languageCode: 'en-US', name: 'en-US-Wavenet-H' },
+            audioConfig: { audioEncoding: 'MP3', speakingRate: rate },
+            enableTimePointing: ['SSML_MARK'],
         };
 
         const [response] = await textToSpeechClient.synthesizeSpeech(ttsRequest);
-        
-        res.set('Content-Type', 'audio/mpeg');
-        res.send(response.audioContent);
+
+        console.log(`TTS: sentences=${sentences.length}, timepoints=${response.timepoints?.length || 0}`);
+        if (response.timepoints?.length) {
+            console.log('First 3 timepoints:', JSON.stringify(response.timepoints.slice(0, 3)));
+        }
+
+        res.json({
+            audioBase64: Buffer.from(response.audioContent).toString('base64'),
+            timepoints: (response.timepoints || []).map(tp => ({
+                markName: tp.markName,
+                timeSeconds: tp.timeSeconds,
+            })),
+            sentences,
+        });
 
     } catch (error) {
         console.error("TTS Error:", error);
